@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Organisation | HHI Netherlands</title>
+<meta name="description" content="Who is behind the Netherlands Hip Hop Dance Championship." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/style.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+<script src="assets/main.js" defer></script>
+</head>
+<body>
+
+<div class="grain" aria-hidden="true"></div>
+<div class="cursor-dot" aria-hidden="true"></div>
+<div class="cursor-ring" aria-hidden="true"></div>
+
+<!-- ============================ NAV ============================ -->
+<header class="nav" id="nav">
+  <a class="nav__logo" href="index.html" aria-label="HHI Netherlands home">HHI<b>&middot;</b>NL</a>
+  <ul class="nav__links">
+    <li><a href="index.html" data-nl="Home">Home</a></li>
+    <li><a href="events.html" data-nl="Events">Events</a></li>
+    <li><a href="registration.html" data-nl="Inschrijven">Registration</a></li>
+    <li><a href="media.html" data-nl="Media">Media</a></li>
+    <li><a href="organisation.html" class="is-active" data-nl="Organisatie">Organisation</a></li>
+    <li><a href="sponsors.html" data-nl="Sponsors">Sponsors</a></li>
+    <li><a href="contact.html" data-nl="Contact">Contact</a></li>
+  </ul>
+  <div class="nav__right">
+    <div class="lang" role="group" aria-label="Language">
+      <button class="lang__btn" data-lang="nl" aria-pressed="false">NL</button>
+      <span class="lang__sep" aria-hidden="true">/</span>
+      <button class="lang__btn is-active" data-lang="en" aria-pressed="true">EN</button>
+    </div>
+    <a class="btn btn--solid btn--sm" data-magnetic href="https://shop.compoticketing.eu/nl/shop/ticketshop/event/F206E0CDD477" target="_blank" rel="noopener">Tickets</a>
+    <button class="burger" id="burger" aria-expanded="false" aria-controls="menu" aria-label="Open menu">
+      <span></span><span></span>
+    </button>
+  </div>
+</header>
+
+<!-- ============================ MOBILE MENU ============================ -->
+<div class="menu" id="menu" aria-hidden="true">
+  <nav class="menu__links" aria-label="Mobile navigation">
+    <a class="menu__link" href="index.html" data-nl="Home">Home</a>
+    <a class="menu__link" href="events.html" data-nl="Events">Events</a>
+    <a class="menu__link" href="registration.html" data-nl="Inschrijven">Registration</a>
+    <a class="menu__link" href="media.html" data-nl="Media">Media</a>
+    <a class="menu__link" href="organisation.html" data-nl="Organisatie">Organisation</a>
+    <a class="menu__link" href="sponsors.html" data-nl="Sponsors">Sponsors</a>
+    <a class="menu__link" href="contact.html" data-nl="Contact">Contact</a>
+    <a class="menu__link" href="regulations.html" data-nl="Reglement">Regulations</a>
+    <a class="menu__link" href="results.html" data-nl="Uitslagen">Results</a>
+  </nav>
+  <div class="menu__ctas">
+    <a class="btn btn--solid" href="https://hhi-netherlands.com/registration.php" target="_blank" rel="noopener" data-nl="Schrijf je crew in">Register your crew</a>
+    <a class="btn btn--ghost" href="https://shop.compoticketing.eu/nl/shop/ticketshop/event/F206E0CDD477" target="_blank" rel="noopener">Tickets</a>
+  </div>
+  <div class="menu__socials">
+    <a href="https://www.instagram.com/hhinetherlands" target="_blank" rel="noopener">Instagram</a>
+    <a href="https://www.facebook.com/hhinetherlands/" target="_blank" rel="noopener">Facebook</a>
+    <a href="https://www.youtube.com/c/HipHopInternationalNetherlands" target="_blank" rel="noopener">YouTube</a>
+  </div>
+</div>
+
+<section class="page-hero">
+  <div class="page-hero__inner">
+    <p class="tag" data-hero-fade data-nl="Organisatie">Organisation</p>
+    <h1>
+      <span class="row"><span data-nl="De crew achter">The crew behind</span></span>
+      <span class="row"><span data-nl="<span class='accent'>de crews.</span>"><span class="accent">the crews.</span></span></span>
+    </h1>
+    <p class="page-hero__lede" data-hero-fade data-nl="Hip Hop International Netherlands heeft de offici&euml;le Nederlandse licentie van Hip Hop International en organiseert sinds 2015 het nationale kampioenschap.">Hip Hop International Netherlands holds the official Dutch license of Hip Hop International and has produced the national championship since 2015.</p>
+  </div>
+</section>
+
+<main>
+  <section class="section">
+    <div class="about">
+      <blockquote class="about__quote" data-reveal data-nl="E&eacute;n missie: Nederlandse crews <em>op het wereldpodium.</em>">One mission: Dutch crews <em>on the world stage.</em></blockquote>
+      <div class="about__body">
+        <p data-reveal data-nl="<strong>Hip Hop International</strong>, opgericht in 2002 in Los Angeles, organiseert het World Hip Hop Dance Championship &mdash; het grootste streetdance-kampioenschap ter wereld, met crews uit ruim vijftig landen."><strong>Hip Hop International</strong>, founded in Los Angeles in 2002, produces the World Hip Hop Dance Championship &mdash; the biggest street-dance competition on the planet, with crews from over fifty countries.</p>
+        <p data-reveal data-nl="Als offici&euml;le licentiehouder brengen wij dat wereldpodium naar Nederland: &eacute;&eacute;n eerlijk, professioneel kampioenschap waar elke crew dezelfde kans krijgt om zich te bewijzen.">As the official license holder we bring that world stage to the Netherlands: one fair, professional championship where every crew gets the same shot at proving themselves.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section divisions">
+    <p class="tag" data-reveal data-nl="Wat wij doen">What we do</p>
+    <div class="org-grid" style="margin-top:10px;">
+      <div class="org-card" data-reveal>
+        <p class="division__age" data-nl="Productie">Production</p>
+        <h3 data-nl="Het event">The event</h3>
+        <p data-nl="Podium, licht, geluid en een dagprogramma dat strak loopt &mdash; zodat crews alleen aan dansen hoeven te denken.">Stage, lights, sound and a schedule that runs tight &mdash; so crews only have to think about dancing.</p>
+      </div>
+      <div class="org-card" data-reveal>
+        <p class="division__age" data-nl="Wedstrijd">Competition</p>
+        <h3 data-nl="Jurering &amp; inschrijving">Judging &amp; registration</h3>
+        <p data-nl="Internationale juryleden, het offici&euml;le HHI-scoresysteem en een eerlijke, transparante inschrijving.">International judges, the official HHI scoring system and a fair, transparent registration process.</p>
+      </div>
+      <div class="org-card" data-reveal>
+        <p class="division__age" data-nl="Community">Community</p>
+        <h3 data-nl="De scene">The scene</h3>
+        <p data-nl="Van vrijwilligers tot floor-team: het kampioenschap draait op mensen uit de Nederlandse hiphopscene zelf.">From volunteers to the floor team: the championship runs on people from the Dutch hip hop scene itself.</p>
+      </div>
+    </div>
+    <div class="notice" data-reveal>
+      <b data-nl="Meedoen?">Join us</b>
+      <span data-nl="Vrijwilliger worden of samenwerken? We horen graag van je.">Want to volunteer or work together? We&rsquo;d love to hear from you.</span>
+      <a class="btn btn--sm" data-magnetic href="contact.html">Contact</a>
+    </div>
+  </section>
+</main>
+
+<!-- ============================ FOOTER ============================ -->
+<footer class="footer">
+  <p>&copy; 2015&ndash;2026 Hip Hop International Netherlands</p>
+  <nav aria-label="Footer">
+    <a href="events.html" data-nl="Events">Events</a>
+    <a href="regulations.html" data-nl="Reglement">Regulations</a>
+    <a href="results.html" data-nl="Uitslagen">Results</a>
+    <a href="registration.html" data-nl="Inschrijven">Registration</a>
+    <a href="sponsors.html">Sponsors</a>
+    <a href="https://www.instagram.com/hhinetherlands" target="_blank" rel="noopener">Instagram</a>
+    <a href="https://www.facebook.com/hhinetherlands/" target="_blank" rel="noopener">Facebook</a>
+    <a href="https://www.youtube.com/c/HipHopInternationalNetherlands" target="_blank" rel="noopener">YouTube</a>
+    <a href="https://hhi-netherlands.com/privacy-policy.php" target="_blank" rel="noopener">Privacy</a>
+  </nav>
+</footer>
+</body>
+</html>
