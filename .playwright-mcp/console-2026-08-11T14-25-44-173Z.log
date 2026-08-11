@@ -1,0 +1,2 @@
+[      25ms] [ERROR] Failed to load resource: net::ERR_FAILED @ https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js:0
+[      25ms] [ERROR] Failed to load resource: net::ERR_FAILED @ https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js:0

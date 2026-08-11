@@ -484,10 +484,12 @@ html.has-cursor .cursor-ring{ display:block; }
 .menu__socials a:hover{ color:var(--oranje); }
 body.menu-open{ overflow:hidden; }
 
-/* reveal defaults (JS animates in; no-JS still readable) */
+/* Reveal defaults. Content is visible by default and only hidden once GSAP has
+   actually loaded and is going to animate it in (html.gsap-ready). If the GSAP
+   CDN is blocked or fails, the class is never added and everything stays
+   readable — never hide content on a promise another script has to keep. */
 [data-reveal]{ opacity:1; }
-.js [data-reveal]{ opacity:0; transform:translateY(40px); }
-.js.reduced-motion [data-reveal]{ opacity:1; transform:none; }
+.gsap-ready [data-reveal]{ opacity:0; transform:translateY(40px); }
 
 /* ---------------- responsive ---------------- */
 @media (max-width:1000px){

@@ -11,7 +11,6 @@
   const CONTACT_EMAIL = "info@hhi-netherlands.com"; // TODO: replace with the real inbox
 
   const doc = document.documentElement;
-  doc.classList.add("js");
 
   const prefersReducedMotion = window.matchMedia(
     "(prefers-reduced-motion: reduce)",
@@ -23,6 +22,11 @@
   const hasScrollTrigger =
     hasGsap && typeof window.ScrollTrigger !== "undefined";
   if (hasScrollTrigger) gsap.registerPlugin(ScrollTrigger);
+
+  /* Only now commit to hiding [data-reveal] content: ScrollTrigger exists and
+     motion is wanted, so something will definitely animate it back in. If GSAP
+     failed to load, this class is never added and the content just stays put. */
+  if (hasScrollTrigger && !prefersReducedMotion) doc.classList.add("gsap-ready");
 
   /* ============================ LANGUAGE (EN / NL) ============================
      English lives in the markup; Dutch lives in each element's data-nl
@@ -478,9 +482,11 @@
       });
     });
   } else {
-    document.querySelectorAll("[data-reveal]").forEach((el) => {
-      el.style.opacity = 1;
-      el.style.transform = "none";
+    /* No GSAP (or reduced motion): the reveal CSS already leaves content
+       visible, but the counters still need their final values written out. */
+    document.querySelectorAll("[data-count]").forEach((el) => {
+      const end = Number(el.dataset.count);
+      el.textContent = `${end}${end >= 50 ? "+" : ""}`;
     });
   }
 
