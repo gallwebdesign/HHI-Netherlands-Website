@@ -21,7 +21,7 @@ export const CONTACT_EMAIL = 'info@hhi-netherlands.com';
 /** Off-site destinations, all still pointing at the legacy production host. */
 export const EXTERNAL = {
 	registration: 'https://hhi-netherlands.com/registration.php',
-	tickets: 'https://shop.compoticketing.eu/nl/shop/ticketshop/event/F206E0CDD477',
+	tickets: 'https://shop.celebratix.io/?c=2mdtq',
 	contactForm: 'https://hhi-netherlands.com/contact.php',
 	regulations: 'https://hhi-netherlands.com/regulations.php',
 	privacy: 'https://hhi-netherlands.com/privacy-policy.php',
