@@ -1,0 +1,43 @@
+{
+	"$comment": "Dutch translations, extracted from the legacy data-nl attributes. Flat dotted keys are Paraglide's input format, so adopting it later is configuration rather than rework. An empty string means no Dutch exists yet — those are the gaps the old opt-in data-nl design made invisible. English lives in the components; this file is not loaded at runtime until Dutch ships.",
+
+	"nav.home": "Home",
+	"nav.events": "Events",
+	"nav.registration": "Inschrijven",
+	"nav.media": "Media",
+	"nav.organisation": "Organisatie",
+	"nav.sponsors": "Sponsors",
+	"nav.contact": "Contact",
+	"nav.regulations": "Reglement",
+	"nav.results": "Uitslagen",
+	"nav.tickets": "",
+
+	"menu.registerCrew": "Schrijf je crew in",
+	"menu.tickets": "",
+
+	"footer.copyright": "",
+
+	"regulations.meta.title": "",
+	"regulations.meta.description": "",
+	"regulations.hero.tag": "Reglement",
+	"regulations.hero.titleTop": "De regels",
+	"regulations.hero.titleBottom": "van de vloer.",
+	"regulations.hero.lede": "Een samenvatting in gewone taal van hoe het kampioenschap werkt. Het officiële HHI Rules & Regulations-document is altijd leidend.",
+
+	"regulations.rule.divisions.title": "Divisies & leeftijden",
+	"regulations.rule.divisions.body": "Junior (7–12), Varsity (13–17), Adult (18+), plus MiniCrew en MegaCrew voor alle leeftijden. Je divisie wordt bepaald door de leeftijd van je dansers op de wedstrijddag.",
+	"regulations.rule.crewSize.title": "Crew-grootte",
+	"regulations.rule.crewSize.body": "Crews bestaan uit 5–9 dansers, MiniCrews uit precies 3, MegaCrews uit 10–40. Elke danser mag per divisie maar in één crew uitkomen.",
+	"regulations.rule.routine.title": "Routine & muziek",
+	"regulations.rule.routine.body": "Routinelengte en muziekeisen zijn per divisie vastgelegd in het officiële reglement. Muziek moet clean zijn — geen expliciete lyrics — en op tijd worden aangeleverd.",
+	"regulations.rule.judging.title": "Jurering",
+	"regulations.rule.judging.body": "Een internationaal jurypanel scoort volgens het HHI-systeem: performance en skills, met aandacht voor muzikaliteit, creativiteit, uitvoering en stijlvariatie binnen streetdance.",
+	"regulations.rule.deductions.title": "Aftrek",
+	"regulations.rule.deductions.body": "Vallen, vastlopende routines en overtredingen van het reglement kosten punten. De hoofdjury beslist en die beslissing is definitief.",
+	"regulations.rule.attire.title": "Kleding & props",
+	"regulations.rule.attire.body": "Outfits zijn vrij binnen de richtlijnen van het reglement. Losse props en decor zijn beperkt — check het officiële document voordat je bouwt.",
+
+	"regulations.notice.label": "Let op",
+	"regulations.notice.body": "Dit is een samenvatting. Het volledige, bindende reglement staat op de officiële pagina.",
+	"regulations.notice.cta": "Officieel reglement"
+}

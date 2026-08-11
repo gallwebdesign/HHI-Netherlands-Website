@@ -23,6 +23,7 @@ export const EXTERNAL = {
 	registration: 'https://hhi-netherlands.com/registration.php',
 	tickets: 'https://shop.compoticketing.eu/nl/shop/ticketshop/event/F206E0CDD477',
 	contactForm: 'https://hhi-netherlands.com/contact.php',
+	regulations: 'https://hhi-netherlands.com/regulations.php',
 	privacy: 'https://hhi-netherlands.com/privacy-policy.php',
 	instagram: 'https://www.instagram.com/hhinetherlands',
 	facebook: 'https://www.facebook.com/hhinetherlands/',
