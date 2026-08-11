@@ -2,6 +2,7 @@
 	import PageHero from '$lib/components/PageHero.svelte';
 	import { RULES } from '$lib/data/regulations';
 	import { EXTERNAL } from '$lib/config';
+	import { magnetic, reveal } from '$lib/attachments.svelte';
 
 	/* Rule numbers derive from array position — 01, 02, … — so adding
 	   or reordering a rule in the data file renumbers the page. */
@@ -28,7 +29,7 @@
 	<section class="section">
 		<div class="rules">
 			{#each RULES as rule, i (rule.title)}
-				<article class="rule" data-reveal>
+				<article class="rule" {@attach reveal()}>
 					<span class="rule__num">{num(i)}</span>
 					<div>
 						<h3>{rule.title}</h3>
@@ -37,12 +38,12 @@
 				</article>
 			{/each}
 		</div>
-		<div class="notice" data-reveal>
+		<div class="notice" {@attach reveal()}>
 			<b>Heads up</b>
 			<span>This is a summary. The full, binding rules live on the official page.</span>
 			<a
 				class="btn btn--sm"
-				data-magnetic
+				{@attach magnetic()}
 				href={EXTERNAL.regulations}
 				target="_blank"
 				rel="noopener">Official regulations</a

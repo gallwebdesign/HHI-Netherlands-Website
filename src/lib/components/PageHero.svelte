@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
+	import { heroFade, heroRow } from '$lib/attachments.svelte';
 
 	/* The 11-line .page-hero block that was copy-pasted into all eight
 	   sub-pages. Content is trusted, hand-authored copy from our own
@@ -25,14 +26,16 @@
 
 <section class="page-hero">
 	<div class="page-hero__inner">
-		<p class="tag" data-hero-fade>{@html tag}</p>
+		<p class="tag" {@attach heroFade(0)}>{@html tag}</p>
 		<h1>
-			<span class="row"><span>{@html titleTop}</span></span>
-			<span class="row"><span class={treatment}>{@html titleBottom}</span></span>
+			<span class="row"><span {@attach heroRow(0)}>{@html titleTop}</span></span>
+			<span class="row"
+				><span class={treatment} {@attach heroRow(1)}>{@html titleBottom}</span></span
+			>
 		</h1>
-		<p class="page-hero__lede" data-hero-fade>{@html lede}</p>
+		<p class="page-hero__lede" {@attach heroFade(1)}>{@html lede}</p>
 		{#if actions}
-			<div class="page-hero__actions" data-hero-fade>{@render actions()}</div>
+			<div class="page-hero__actions" {@attach heroFade(2)}>{@render actions()}</div>
 		{/if}
 	</div>
 </section>

@@ -1,14 +1,40 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { EXTERNAL, NAV_LINKS } from '$lib/config';
+	import { magnetic } from '$lib/attachments.svelte';
+	import { prefersReducedMotion } from '$lib/motion.svelte';
+	import { menu } from '$lib/menu.svelte';
 
 	/* The old markup hand-placed is-active on one link per file. Deriving it
 	   from the URL means a new page can never forget to mark itself. */
 	const isActive = (href: string) =>
 		href === '/' ? page.url.pathname === '/' : page.url.pathname.startsWith(href);
+
+	let scrolled = $state(false);
+	let hidden = $state(false);
+
+	/* Nav hides on scroll down, returns on scroll up — but never while the
+	   mobile menu is open, and never under reduced motion. */
+	$effect(() => {
+		let lastY = window.scrollY;
+		const reduced = prefersReducedMotion();
+
+		const onScroll = () => {
+			const y = window.scrollY;
+			scrolled = y > 40;
+			if (!reduced && !menu.open) {
+				hidden = y > lastY && y > 300;
+			}
+			lastY = y;
+		};
+
+		onScroll();
+		window.addEventListener('scroll', onScroll, { passive: true });
+		return () => window.removeEventListener('scroll', onScroll);
+	});
 </script>
 
-<header class="nav" id="nav">
+<header class="nav" id="nav" class:is-scrolled={scrolled} class:is-hidden={hidden && !menu.open}>
 	<a class="nav__logo" href="/" aria-label="HHI Netherlands home">HHI<b>&middot;</b>NL</a>
 	<ul class="nav__links">
 		{#each NAV_LINKS as link (link.href)}
@@ -24,7 +50,7 @@
 	<div class="nav__right">
 		<a
 			class="btn btn--solid btn--sm"
-			data-magnetic
+			{@attach magnetic()}
 			href={EXTERNAL.tickets}
 			target="_blank"
 			rel="noopener">Tickets</a
@@ -32,9 +58,11 @@
 		<button
 			class="burger"
 			id="burger"
-			aria-expanded="false"
+			class:is-open={menu.open}
+			aria-expanded={menu.open}
 			aria-controls="menu"
-			aria-label="Open menu"
+			aria-label={menu.open ? 'Close menu' : 'Open menu'}
+			onclick={() => menu.toggle()}
 		>
 			<span></span><span></span>
 		</button>

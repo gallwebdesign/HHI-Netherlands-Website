@@ -1,6 +1,7 @@
 <script lang="ts">
 	import PageHero from '$lib/components/PageHero.svelte';
 	import { EVENT_YEAR, EXTERNAL } from '$lib/config';
+	import { magnetic } from '$lib/attachments.svelte';
 </script>
 
 <svelte:head>
@@ -21,7 +22,7 @@
 	{#snippet actions()}
 		<a
 			class="btn btn--solid"
-			data-magnetic
+			{@attach magnetic()}
 			href={EXTERNAL.registration}
 			target="_blank"
 			rel="noopener">Go to the registration form</a

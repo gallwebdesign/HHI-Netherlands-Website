@@ -1,6 +1,18 @@
 <script lang="ts">
 	import PageHero from '$lib/components/PageHero.svelte';
-	import { EXTERNAL } from '$lib/config';
+	import { CONTACT_EMAIL, EXTERNAL } from '$lib/config';
+	import { magnetic, reveal } from '$lib/attachments.svelte';
+
+	/* mailto: compose, ported as-is — a real form is Phase 8. */
+	function composeEmail(e: SubmitEvent) {
+		e.preventDefault();
+		const data = new FormData(e.currentTarget as HTMLFormElement);
+		const subject = encodeURIComponent(`[hhi-netherlands.com] ${data.get('subject') || 'Contact'}`);
+		const body = encodeURIComponent(
+			`Name: ${data.get('name') || '-'}\nEmail: ${data.get('email') || '-'}\n\n${data.get('message') || ''}`
+		);
+		window.location.href = `mailto:${CONTACT_EMAIL}?subject=${subject}&body=${body}`;
+	}
 </script>
 
 <svelte:head>
@@ -20,15 +32,15 @@
 	<section class="section">
 		<div class="contact-grid">
 			<div>
-				<p class="tag" data-reveal>Reach us</p>
+				<p class="tag" {@attach reveal()}>Reach us</p>
 				<div class="event__facts">
-					<div class="event__fact" data-reveal>
+					<div class="event__fact" {@attach reveal()}>
 						<dt>Organisation</dt>
 						<dd>
 							Hip Hop International Netherlands<small>Official Dutch license holder of HHI</small>
 						</dd>
 					</div>
-					<div class="event__fact" data-reveal>
+					<div class="event__fact" {@attach reveal()}>
 						<dt>Socials</dt>
 						<dd>
 							<small style="margin-top:0;"
@@ -55,7 +67,7 @@
 							>
 						</dd>
 					</div>
-					<div class="event__fact" data-reveal>
+					<div class="event__fact" {@attach reveal()}>
 						<dt>Official</dt>
 						<dd>
 							<small style="margin-top:0;"
@@ -71,7 +83,7 @@
 					</div>
 				</div>
 			</div>
-			<form class="form" id="contactForm" data-reveal>
+			<form class="form" onsubmit={composeEmail} {@attach reveal()}>
 				<label
 					><span>Name</span><input type="text" name="name" required autocomplete="name" /></label
 				>
@@ -85,7 +97,7 @@
 				>
 				<label><span>Subject</span><input type="text" name="subject" required /></label>
 				<label><span>Message</span><textarea name="message" required></textarea></label>
-				<button class="btn btn--solid" data-magnetic type="submit">Send message</button>
+				<button class="btn btn--solid" {@attach magnetic()} type="submit">Send message</button>
 				<p class="form__hint">Sending opens a ready-made email in your own mail app.</p>
 			</form>
 		</div>

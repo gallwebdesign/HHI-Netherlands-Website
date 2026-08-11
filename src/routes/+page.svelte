@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { EVENT_YEAR } from '$lib/config';
+	import { reveal } from '$lib/attachments.svelte';
 </script>
 
 <svelte:head>
@@ -12,13 +13,13 @@
 
 <main id="top">
 	<section class="section">
-		<p class="tag" data-reveal>Phase 2</p>
-		<h2 class="h2" data-reveal>
-			Layout <span class="accent">extracted.</span>
+		<p class="tag" {@attach reveal()}>Phase 4</p>
+		<h2 class="h2" {@attach reveal()}>
+			Shared JavaScript <span class="accent">ported.</span>
 		</h2>
-		<p data-reveal>
-			The home page content lands in Phase 3. Nav, mobile menu and footer above and below this
-			block now come from the shared layout.
+		<p {@attach reveal()}>
+			The home page content lands in Phase 6, along with the three.js stage floor, the preloader and
+			the pinned road section.
 		</p>
 	</section>
 </main>
