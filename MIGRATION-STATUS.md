@@ -52,19 +52,31 @@ depends on the hosting decision, which is still open.
 Also add the ~40-line Playwright smoke test here (every route 200, has a title, no
 console errors).
 
+## Answered — apply during Phase 5
+
+- **Event date and venue are confirmed** (11 Aug 2026):
+  **30 & 31 January 2027**, **MECC Maastricht**. Replaces "Date TBA" / "Venue TBA"
+  in `static/events.html:234` and `:244`. Note it is a **two-day** event, while
+  `EVENT_DATE` in `config.ts` is a single instant (`2027-01-30T12:00:00+01:00`) —
+  that is correct as the countdown target (day one) and needs no change, but the
+  events page should display the full range.
+  Two sub-lines under those facts go stale with this change and need rewriting:
+  - "Follow our socials for the announcement" — the announcement has happened.
+  - "Central in the Netherlands, easy to reach by public transport" — Maastricht
+    is not central. Suggest replacing with something venue-accurate; **confirm the
+    replacement wording before writing it.**
+- **Results archive stays as placeholder text for now** (11 Aug 2026). Port the page
+  structure and turn the rows into data, but leave the placeholder content in place;
+  the real past results are still being gathered. Do not invent champions.
+
 ## Open questions — need answers
 
-1. **The countdown contradicts the events page.** `events.html` says "Date TBA" and
-   "Venue TBA" while the countdown targets 30 January 2027, both visible at once.
-   Blocks porting `events` honestly. Either the date is known and the copy is stale,
-   or it isn't and the countdown shouldn't claim that precision.
-2. **The results archive is entirely placeholder** — all 15 rows read "fill from
-   archive". The migration makes them a data edit, but the champions need gathering.
-3. **Hosting + contact form decide each other**, and hosting also answers the redirect
+1. **Hosting + contact form decide each other**, and hosting also answers the redirect
    question above. Settle before the end of Phase 5.
-4. **Contact address unconfirmed** — `CONTACT_EMAIL` in [config.ts](src/lib/config.ts) is still a guess.
-5. **No images in the repo** — favicon and social preview need a source; the eleven
+2. **Contact address unconfirmed** — `CONTACT_EMAIL` in [config.ts](src/lib/config.ts) is still a guess.
+3. **No images in the repo** — favicon and social preview need a source; the eleven
    media photos can be pulled off the old domain.
+4. **Venue sub-line wording** — see the events entry above.
 
 ## Things to remember
 
