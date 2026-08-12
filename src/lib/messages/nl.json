@@ -192,5 +192,23 @@
 
 	"events.cta.title": "Wees <span class='accent'>erbij.</span>",
 	"events.cta.tickets": "Koop tickets",
-	"events.cta.regulations": "Lees het reglement"
+	"events.cta.regulations": "Lees het reglement",
+
+	"results.meta.title": "",
+	"results.meta.description": "",
+	"results.hero.tag": "Uitslagen",
+	"results.hero.titleTop": "De",
+	"results.hero.titleBottom": "erelijst.",
+	"results.hero.lede": "Elke crew die een Nederlandse titel pakte en meenam naar het WK.",
+
+	"results.tablistLabel": "",
+	"results.table.division": "Divisie",
+	"results.table.gold": "Goud",
+	"results.table.silver": "Zilver",
+	"results.table.bronze": "Brons",
+	"results.placeholder.gold": "— vul in vanuit archief",
+
+	"results.notice.label": "Archief",
+	"results.notice.body": "Volledige uitslagen van alle jaren staan in het officiële archief.",
+	"results.notice.cta": "Officiële uitslagen"
 }
