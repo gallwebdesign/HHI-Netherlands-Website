@@ -6,11 +6,28 @@
    from EVENT_DATE. Change it here, change it everywhere.
    ============================================================ */
 
-/** Championship date. Drives the countdown and every displayed year. */
+/** Championship date. Drives the countdown and every displayed year.
+ *  This is day one — the countdown target. The event runs two days;
+ *  see EVENT_END_DATE and EVENT_DATE_RANGE for what gets displayed. */
 export const EVENT_DATE = '2027-01-30T12:00:00+01:00';
+
+/** Final day of the championship. Confirmed 11 Aug 2026. */
+export const EVENT_END_DATE = '2027-01-31T12:00:00+01:00';
 
 /** Event year, derived — never hand-typed into a page. */
 export const EVENT_YEAR = new Date(EVENT_DATE).getFullYear();
+
+/** Venue. Confirmed 11 Aug 2026. */
+export const EVENT_VENUE = 'MECC Maastricht';
+
+/** Displayed date range, e.g. "30 & 31 January 2027". Derived so the
+ *  events page never hand-types a date that can drift out of sync. */
+export const EVENT_DATE_RANGE = (() => {
+	const start = new Date(EVENT_DATE);
+	const end = new Date(EVENT_END_DATE);
+	const month = end.toLocaleString('en-GB', { month: 'long', timeZone: 'UTC' });
+	return `${start.getUTCDate()} & ${end.getUTCDate()} ${month} ${end.getUTCFullYear()}`;
+})();
 
 /** First edition of the championship; the left half of the footer range. */
 export const FOUNDED_YEAR = 2015;
