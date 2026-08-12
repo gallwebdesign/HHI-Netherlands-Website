@@ -1,6 +1,7 @@
 <script lang="ts">
 	import PageHero from '$lib/components/PageHero.svelte';
 	import Countdown from '$lib/components/Countdown.svelte';
+	import { base } from '$app/paths';
 	import { FACTS, SCHEDULE } from '$lib/data/events';
 	import { EVENT_YEAR, EXTERNAL } from '$lib/config';
 	import { magnetic, reveal } from '$lib/attachments.svelte';
@@ -81,7 +82,7 @@
 				target="_blank"
 				rel="noopener">Get tickets</a
 			>
-			<a class="btn" {@attach magnetic()} href="/regulations">Read the regulations</a>
+			<a class="btn" {@attach magnetic()} href="{base}/regulations">Read the regulations</a>
 		</div>
 	</section>
 </main>

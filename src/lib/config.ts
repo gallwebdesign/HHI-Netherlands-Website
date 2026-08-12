@@ -1,3 +1,5 @@
+import { base } from '$app/paths';
+
 /* ============================================================
    HHI NETHERLANDS — single source of truth
    The event year used to be hand-typed into nine HTML files,
@@ -50,6 +52,13 @@ export const EXTERNAL = {
 /* The site ships English-only. The ~253 Dutch strings are preserved in the
    legacy HTML under static/ and move to src/lib/messages/nl.json in Phase 3;
    the NL/EN toggle returns when Dutch actually ships. */
+
+/* Kit rewrites root-relative hrefs written literally in markup, but not
+   ones bound from a variable — the link arrays below are bound, so the
+   base path has to be applied by hand wherever they are rendered. Only
+   matters while the site is served from a sub-path (GitHub Pages
+   preview); base is '' everywhere else, making this a no-op. */
+export const withBase = (href: string) => (href.startsWith('/') ? `${base}${href}` : href);
 
 /** Primary nav — order matters, it is the visible desktop nav. */
 export const NAV_LINKS = [

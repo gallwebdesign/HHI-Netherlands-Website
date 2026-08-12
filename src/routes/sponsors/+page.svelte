@@ -1,5 +1,6 @@
 <script lang="ts">
 	import PageHero from '$lib/components/PageHero.svelte';
+	import { base } from '$app/paths';
 	import { TIERS } from '$lib/data/sponsors';
 	import { magnetic, reveal } from '$lib/attachments.svelte';
 </script>
@@ -36,7 +37,7 @@
 		<div class="notice" {@attach reveal()}>
 			<b>Interested?</b>
 			<span>Packages are indicative — every partnership is built to fit.</span>
-			<a class="btn btn--sm btn--solid" {@attach magnetic()} href="/contact">Get in touch</a>
+			<a class="btn btn--sm btn--solid" {@attach magnetic()} href="{base}/contact">Get in touch</a>
 		</div>
 	</section>
 </main>

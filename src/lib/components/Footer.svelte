@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { EVENT_YEAR, FOOTER_LINKS, FOUNDED_YEAR } from '$lib/config';
+	import { EVENT_YEAR, FOOTER_LINKS, FOUNDED_YEAR, withBase } from '$lib/config';
 </script>
 
 <footer class="footer">
@@ -7,7 +7,7 @@
 	<nav aria-label="Footer">
 		{#each FOOTER_LINKS as link (link.href)}
 			<a
-				href={link.href}
+				href={withBase(link.href)}
 				target={'external' in link ? '_blank' : undefined}
 				rel={'external' in link ? 'noopener' : undefined}>{link.label}</a
 			>

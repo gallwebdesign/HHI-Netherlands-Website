@@ -1,5 +1,6 @@
 <script lang="ts">
 	import PageHero from '$lib/components/PageHero.svelte';
+	import { base } from '$app/paths';
 	import { ORG_CARDS } from '$lib/data/organisation';
 	import { FOUNDED_YEAR } from '$lib/config';
 	import { magnetic, reveal } from '$lib/attachments.svelte';
@@ -57,7 +58,7 @@
 		<div class="notice" {@attach reveal()}>
 			<b>Join us</b>
 			<span>Want to volunteer or work together? We’d love to hear from you.</span>
-			<a class="btn btn--sm" {@attach magnetic()} href="/contact">Contact</a>
+			<a class="btn btn--sm" {@attach magnetic()} href="{base}/contact">Contact</a>
 		</div>
 	</section>
 </main>

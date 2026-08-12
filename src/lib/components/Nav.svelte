@@ -1,14 +1,21 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { EXTERNAL, NAV_LINKS } from '$lib/config';
+	import { base } from '$app/paths';
+	import { EXTERNAL, NAV_LINKS, withBase } from '$lib/config';
 	import { magnetic } from '$lib/attachments.svelte';
 	import { prefersReducedMotion } from '$lib/motion.svelte';
 	import { menu } from '$lib/menu.svelte';
 
 	/* The old markup hand-placed is-active on one link per file. Deriving it
-	   from the URL means a new page can never forget to mark itself. */
-	const isActive = (href: string) =>
-		href === '/' ? page.url.pathname === '/' : page.url.pathname.startsWith(href);
+	   from the URL means a new page can never forget to mark itself.
+
+	   page.url.pathname carries the base path when the site is served from a
+	   sub-path (GitHub Pages), so it is stripped before comparing — otherwise
+	   nothing ever matches and no link is marked current. */
+	const isActive = (href: string) => {
+		const path = page.url.pathname.slice(base.length) || '/';
+		return href === '/' ? path === '/' : path.startsWith(href);
+	};
 
 	let scrolled = $state(false);
 	let hidden = $state(false);
@@ -35,12 +42,12 @@
 </script>
 
 <header class="nav" id="nav" class:is-scrolled={scrolled} class:is-hidden={hidden && !menu.open}>
-	<a class="nav__logo" href="/" aria-label="HHI Netherlands home">HHI<b>&middot;</b>NL</a>
+	<a class="nav__logo" href="{base}/" aria-label="HHI Netherlands home">HHI<b>&middot;</b>NL</a>
 	<ul class="nav__links">
 		{#each NAV_LINKS as link (link.href)}
 			<li>
 				<a
-					href={link.href}
+					href={withBase(link.href)}
 					class:is-active={isActive(link.href)}
 					aria-current={isActive(link.href) ? 'page' : undefined}>{link.label}</a
 				>

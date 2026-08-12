@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { EXTERNAL, MENU_LINKS } from '$lib/config';
+	import { EXTERNAL, MENU_LINKS, withBase } from '$lib/config';
 	import { menu } from '$lib/menu.svelte';
 	import { loadGsap, prefersReducedMotion } from '$lib/motion.svelte';
 
@@ -54,7 +54,7 @@
 <div class="menu" id="menu" class:is-open={menu.open} aria-hidden={!menu.open} bind:this={panel}>
 	<nav class="menu__links" aria-label="Mobile navigation">
 		{#each MENU_LINKS as link (link.href)}
-			<a class="menu__link" href={link.href} onclick={() => menu.close()}>{link.label}</a>
+			<a class="menu__link" href={withBase(link.href)} onclick={() => menu.close()}>{link.label}</a>
 		{/each}
 	</nav>
 	<div class="menu__ctas">

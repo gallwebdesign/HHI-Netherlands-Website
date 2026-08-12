@@ -1,0 +1,70 @@
+# Preview deploy of the SvelteKit migration to GitHub Pages.
+#
+# This is a staging preview of unfinished work, NOT the live site —
+# hhi-netherlands.com is still the legacy PHP site. The build is
+# deliberately marked noindex so the preview cannot compete with the
+# real site in search results or expose placeholder results as fact.
+#
+# Deploys the migration branch. Retarget to main at Phase 7, or delete
+# this workflow once real hosting is settled.
+name: Deploy preview to Pages
+
+on:
+  push:
+    branches: [sveltekit-migration]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Let an in-flight deploy finish rather than cancelling it half-way.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build
+        # Project repos serve from /<repo>, so Kit needs the sub-path.
+        env:
+          BASE_PATH: /${{ github.event.repository.name }}
+        run: npm run build
+
+      # Keep the preview out of search engines. Overwrites the copy from
+      # static/, which stays crawlable for the real host at Phase 7.
+      - name: Mark preview noindex
+        run: |
+          printf '# Staging preview — not the live site.\nUser-agent: *\nDisallow: /\n' > build/robots.txt
+
+      # Pages would otherwise run the output through Jekyll, which strips
+      # files and folders beginning with an underscore — including
+      # SvelteKit's _app directory, breaking every asset on the site.
+      - name: Bypass Jekyll
+        run: touch build/.nojekyll
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: build
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

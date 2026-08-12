@@ -42,16 +42,48 @@ Pieces that need care, none of which the sub-pages exercised:
   was built shared in Phase 5; reuse it, do not rebuild.
 - `data-count` numbers use the existing `count()` attachment.
 
-## Deferred out of Phase 5 — do at the start of Phase 7
+## GitHub Pages preview
 
-**The URL cutover.** Still blocked on hosting, unchanged since Phase 4. The live
-site is indexed at `.html` URLs and the migrated routes are clean (`/sponsors`),
-so this needs redirects or inbound links 404. All internal links already point at
-clean routes, so only the redirect layer is outstanding.
+A preview deploy is wired up in [.github/workflows/pages.yml](.github/workflows/pages.yml),
+building on push to `sveltekit-migration`. **This is staging, not the live site** —
+hhi-netherlands.com is still the legacy PHP site.
 
-Note `npx serve build` resolves `/sponsors` → `sponsors.html` on its own, which
-is why the smoke test passes today. That is `serve` being helpful; it is **not**
-evidence the real host will do the same.
+**It needs one manual step before it will run:** repo *Settings → Pages → Build and
+deployment → Source = **GitHub Actions***. Until that is set the workflow fails at
+the deploy job. Once set it publishes to
+`https://gallwebdesign.github.io/HHI-Netherlands-Website/`.
+
+How it works, and why:
+
+- **`BASE_PATH` → `kit.paths.base`.** Project repos serve from `/<repo>`, which would
+  404 every root-relative link. The env var is set only in the workflow, so local and
+  real-host builds are unaffected — nothing here has to be undone at Phase 7. A
+  malformed value throws at config load rather than producing a subtly broken build.
+- **Links bound from a variable need `withBase()`** (in `config.ts`). Kit rewrites
+  root-relative hrefs written literally in markup, but not `href={link.href}` — and the
+  nav, menu and footer all render from the `config.ts` arrays.
+- **`Nav.isActive` strips `base` before comparing.** `page.url.pathname` includes the
+  base path, so without stripping, no nav link is ever marked current under a sub-path.
+- **`.nojekyll`** — Pages runs output through Jekyll otherwise, which strips
+  underscore-prefixed paths, i.e. all of `_app`. Every asset would 404.
+- **robots.txt is overwritten to `Disallow: /` in the workflow only.** `static/robots.txt`
+  stays crawlable for the real host. The preview must not compete with the live site in
+  search or present placeholder results as fact.
+
+Verified in a browser served from a real sub-path: hydration clean, nav highlighting
+correct, client-side navigation and the logo all stay inside the sub-path.
+
+## Still deferred — do at the start of Phase 7
+
+**The URL cutover.** Still blocked on the hosting decision, unchanged since Phase 4.
+The live site is indexed at `.html` URLs and the migrated routes are clean
+(`/sponsors`), so this needs redirects or inbound links 404. All internal links
+already point at clean routes, so only the redirect layer is outstanding.
+
+Both `npx serve build` and GitHub Pages resolve `/sponsors` → `sponsors.html` on
+their own, which is why the smoke test and the preview both pass today. That is those
+two servers being helpful; it is **not** evidence the real host will do the same, and
+it does nothing about inbound `.html` links.
 
 ## Applied in Phase 5
 
@@ -128,4 +160,8 @@ npm run build        # prerenders all nine routes; this is what proves SSR guard
 npm test             # build + Playwright smoke test — expect 11 passed
 npx serve build      # verify the real output (NOT npm run preview)
 npx serve static     # the legacy site, for comparison
+
+# Reproduce the Pages build locally. Note: PowerShell, not Git Bash —
+# bash mangles a leading-slash env var into a Windows path.
+$env:BASE_PATH = "/HHI-Netherlands-Website"; npm run build
 ```
