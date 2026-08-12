@@ -98,5 +98,38 @@
 
 	"organisation.notice.label": "Meedoen?",
 	"organisation.notice.body": "Vrijwilliger worden of samenwerken? We horen graag van je.",
-	"organisation.notice.cta": ""
+	"organisation.notice.cta": "",
+
+	"registration.meta.title": "",
+	"registration.meta.description": "",
+	"registration.hero.tag": "Inschrijven · {eventYear}",
+	"registration.hero.titleTop": "Zet je",
+	"registration.hero.titleBottom": "crew vast.",
+	"registration.hero.lede": "Inschrijven gaat via ons officiële formulier. Vier stappen, één checklist, en je crew staat op de vloer.",
+	"registration.hero.cta": "Naar het inschrijfformulier",
+
+	"registration.stepsTag": "Zo werkt het",
+	"registration.step.division.title": "Kies je divisie",
+	"registration.step.division.body": "Check leeftijden en crew-grootte in het reglement.",
+	"registration.step.form.title": "Vul het formulier in",
+	"registration.step.form.body": "Crewnaam, dansers, contactpersoon — via het officiële formulier.",
+	"registration.step.music.title": "Lever je muziek aan",
+	"registration.step.music.body": "Clean edit, op tijd, in het gevraagde formaat.",
+	"registration.step.floor.title": "Sta op de vloer",
+	"registration.step.floor.body": "Check-in op de wedstrijddag en battle om het WK-ticket.",
+
+	"registration.checklistTag": "Voordat je inschrijft",
+	"registration.checklistTitle": "De <span class='accent'>checklist.</span>",
+	"registration.check.roster.label": "Team compleet.",
+	"registration.check.roster.body": "Alle dansers bevestigd, leeftijden kloppen met je divisie.",
+	"registration.check.rulebook.label": "Reglement gelezen.",
+	"registration.check.rulebook.body": "Routinelengte, muziek en props volgens het officiële reglement.",
+	"registration.check.music.label": "Muziek clean.",
+	"registration.check.music.body": "Geen expliciete lyrics; edit klaar voor de deadline.",
+	"registration.check.contact.label": "Contactpersoon.",
+	"registration.check.contact.body": "Eén bereikbare crew-manager voor alle communicatie.",
+
+	"registration.notice.label": "Inschrijven",
+	"registration.notice.body": "De inschrijving loopt via het officiële formulier op hhi-netherlands.com.",
+	"registration.notice.cta": "Schrijf je crew in"
 }
