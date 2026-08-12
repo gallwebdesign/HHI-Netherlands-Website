@@ -71,5 +71,32 @@
 
 	"sponsors.notice.label": "Interesse?",
 	"sponsors.notice.body": "Pakketten zijn indicatief — we bouwen elk partnership op maat.",
-	"sponsors.notice.cta": "Neem contact op"
+	"sponsors.notice.cta": "Neem contact op",
+
+	"organisation.meta.title": "",
+	"organisation.meta.description": "",
+	"organisation.hero.tag": "Organisatie",
+	"organisation.hero.titleTop": "De crew achter",
+	"organisation.hero.titleBottom": "de crews.",
+	"organisation.hero.lede": "Hip Hop International Netherlands heeft de officiële Nederlandse licentie van Hip Hop International en organiseert sinds {foundedYear} het nationale kampioenschap.",
+
+	"organisation.quote": "Eén missie: Nederlandse crews <em>op het wereldpodium.</em>",
+	"organisation.body.1": "<strong>Hip Hop International</strong>, opgericht in 2002 in Los Angeles, organiseert het World Hip Hop Dance Championship — het grootste streetdance-kampioenschap ter wereld, met crews uit ruim vijftig landen.",
+	"organisation.body.2": "Als officiële licentiehouder brengen wij dat wereldpodium naar Nederland: één eerlijk, professioneel kampioenschap waar elke crew dezelfde kans krijgt om zich te bewijzen.",
+
+	"organisation.sectionTag": "Wat wij doen",
+
+	"organisation.card.production.tag": "Productie",
+	"organisation.card.production.title": "Het event",
+	"organisation.card.production.body": "Podium, licht, geluid en een dagprogramma dat strak loopt — zodat crews alleen aan dansen hoeven te denken.",
+	"organisation.card.competition.tag": "Wedstrijd",
+	"organisation.card.competition.title": "Jurering & inschrijving",
+	"organisation.card.competition.body": "Internationale juryleden, het officiële HHI-scoresysteem en een eerlijke, transparante inschrijving.",
+	"organisation.card.community.tag": "Community",
+	"organisation.card.community.title": "De scene",
+	"organisation.card.community.body": "Van vrijwilligers tot floor-team: het kampioenschap draait op mensen uit de Nederlandse hiphopscene zelf.",
+
+	"organisation.notice.label": "Meedoen?",
+	"organisation.notice.body": "Vrijwilliger worden of samenwerken? We horen graag van je.",
+	"organisation.notice.cta": ""
 }
