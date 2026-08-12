@@ -184,14 +184,28 @@ export function count(end: number): Attachment<HTMLElement> {
 	};
 }
 
-/** Entrance stagger. Replaces [data-hero-fade]; index sets the order. */
-export function heroFade(index = 0): Attachment<HTMLElement> {
+/** Entrance stagger. Replaces [data-hero-fade]; index sets the order.
+ *  `ready` gates the start: the home page holds its hero until the
+ *  preloader curtain has lifted, so the two do not animate at once.
+ *  Sub-pages have no curtain and pass nothing, starting immediately. */
+export function heroFade(index = 0, ready = true): Attachment<HTMLElement> {
 	return (node) => {
 		if (prefersReducedMotion()) return;
 
 		let cancelled = false;
 		let tween: { kill: () => void } | undefined;
 		let stopWatchdog: (() => void) | undefined;
+
+		/* Not ready yet: hold the element hidden rather than letting it
+		   paint and then jump when the animation starts. The attachment
+		   re-runs when `ready` flips, and this teardown restores it. */
+		if (!ready) {
+			const previous = node.style.visibility;
+			node.style.visibility = 'hidden';
+			return () => {
+				node.style.visibility = previous;
+			};
+		}
 
 		loadGsap().then((gsap) => {
 			if (cancelled) return;
@@ -215,14 +229,73 @@ export function heroFade(index = 0): Attachment<HTMLElement> {
 	};
 }
 
-/** Hero title row rising into place. */
-export function heroRow(index = 0): Attachment<HTMLElement> {
+/** Horizontal pinned scroll for the "Road to Worlds" track.
+ *  Desktop only (≥1001px) — below that the track scrolls normally. */
+export function roadPin(): Attachment<HTMLElement> {
+	return (node) => {
+		if (prefersReducedMotion()) return;
+
+		let cancelled = false;
+		let revert: (() => void) | undefined;
+
+		loadScrollTrigger().then(({ gsap }) => {
+			if (cancelled) return;
+
+			/* matchMedia owns the breakpoint: it builds the tween when the
+			   query matches and runs the returned teardown when it stops,
+			   so resizing past 1000px cleans up the pin by itself. */
+			const mm = gsap.matchMedia();
+			mm.add('(min-width: 1001px)', () => {
+				const distance = () => node.scrollWidth - window.innerWidth;
+				const tween = gsap.to(node, {
+					x: () => -distance(),
+					ease: 'none',
+					scrollTrigger: {
+						// The section pins; the track inside it is what moves.
+						trigger: node.closest('.road') ?? node,
+						start: 'top top',
+						end: () => `+=${distance()}`,
+						pin: true,
+						scrub: 1,
+						invalidateOnRefresh: true
+					}
+				});
+				return () => tween.scrollTrigger?.kill();
+			});
+
+			/* revert() runs every matchMedia teardown and drops the pin
+			   spacer ScrollTrigger injects into the DOM. Killing the tween
+			   alone would leave that spacer behind on navigation. */
+			revert = () => mm.revert();
+		});
+
+		return () => {
+			cancelled = true;
+			revert?.();
+		};
+	};
+}
+
+/** Hero title row rising into place. `ready` gates the start the same
+ *  way heroFade does — see there. */
+export function heroRow(index = 0, ready = true): Attachment<HTMLElement> {
 	return (node) => {
 		if (prefersReducedMotion()) return;
 
 		let cancelled = false;
 		let tween: { kill: () => void } | undefined;
 		let stopWatchdog: (() => void) | undefined;
+
+		/* The rows sit inside an overflow-hidden .row, so holding them
+		   translated down keeps them out of sight without a visibility
+		   flip — which would fight the yPercent tween on release. */
+		if (!ready) {
+			const previous = node.style.transform;
+			node.style.transform = 'translateY(110%)';
+			return () => {
+				node.style.transform = previous;
+			};
+		}
 
 		loadGsap().then((gsap) => {
 			if (cancelled) return;

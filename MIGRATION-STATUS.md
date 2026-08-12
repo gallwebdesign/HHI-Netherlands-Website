@@ -20,28 +20,58 @@ cutover, which is still parked on the hosting decision (see below).
 | 3 · Pilot (regulations) | ✅ data file + `nl.json`, entities → UTF-8 |
 | 4 · Shared JavaScript | ✅ attachments, GSAP bundled, teardown, motion watchdog |
 | 5 · Remaining sub-pages | ✅ all six ported, smoke test green; **URL cutover deferred** |
-| 6 · index.html | ⬜ **next** |
-| 7 · Delete old site | ⬜ |
+| 6 · index.html | ✅ hero, stage floor, preloader, road pin, all sections |
+| 7 · Delete old site | ⬜ **next** |
 | 8 · Finish "fully functional" | ⬜ |
 
-## Phase 6 — what to do next
+## Phase 7 — what to do next
 
-Port `static/index.html` (598 lines, the bespoke home page). It is the last
-stub: `/` currently has no `<h1>` and is exempted from the smoke test's heading
-check via `NOT_YET_PORTED` in [tests/smoke.spec.ts](tests/smoke.spec.ts) —
-remove that exemption once the hero lands.
+All nine routes are ported. Remaining work is cleanup:
 
-Pieces that need care, none of which the sub-pages exercised:
+1. **The URL cutover** — see below. Do this first; it is the only item with an
+   outside dependency.
+2. **Delete the legacy files in `static/`** (nine `.html` files plus
+   `assets/`). They are the revert escape hatch and stop being needed once the
+   cutover is settled. `static/robots.txt` **stays** — it is the real host's
+   crawlable copy.
+3. **Install Prettier and ESLint**, deliberately held back so formatting churn
+   did not bury real changes.
+4. **Fold the surviving inline `style=` attributes into `style.css`** — the org
+   grid offset, checklist width, countdown margin, event facts width, media
+   teaser button row. `style.css` stops being frozen at this point.
+5. **`npm run preview` becomes trustworthy again** once `static/` no longer
+   shadows the prerendered output.
 
-- **three.js particle stage floor** (`#stage-floor`) — the only page loading
-  three.js. Must render a single static frame under `prefers-reduced-motion`,
-  and dispose its renderer on destroy.
-- **Preloader** (`#loader`) — has to not strand the page if an asset never loads.
-- **Horizontal pinned "Road to Worlds"** (`#roadTrack`) — pins only at ≥1001px
-  and must kill its ScrollTrigger on teardown.
-- **Countdown** — already done. [Countdown.svelte](src/lib/components/Countdown.svelte)
-  was built shared in Phase 5; reuse it, do not rebuild.
-- `data-count` numbers use the existing `count()` attachment.
+## Phase 6 — what landed
+
+The home page is ported, with three pieces the sub-pages never exercised:
+
+- **[StageFloor.svelte](src/lib/components/StageFloor.svelte)** — the three.js
+  particle floor. `three` is imported dynamically: it is ~500KB, only this route
+  uses it, and it touches `window`, which would break the prerender. Verified to
+  land in its own chunk that no other page preloads. Renders one static frame
+  under reduced motion, and disposes geometry, material, renderer, the rAF loop,
+  the IntersectionObserver and both window listeners on destroy.
+- **[Preloader.svelte](src/lib/components/Preloader.svelte)** — the curtain. It is
+  a fixed 1.4s animation, never tied to real asset loading, so it cannot hang on
+  a missing image. Three guards stop it stranding the page: it is absent from the
+  prerendered HTML (so no-JS visitors never see it), reduced motion and a failed
+  GSAP import both skip straight to done, and a 4s watchdog lifts it regardless.
+- **`roadPin()`** in [attachments.svelte.ts](src/lib/attachments.svelte.ts) — the
+  pinned horizontal scroll, ≥1001px only via `gsap.matchMedia`. Teardown calls
+  `mm.revert()`, not just `tween.scrollTrigger.kill()`, because ScrollTrigger
+  injects a `.pin-spacer` element into the DOM that killing the tween leaves
+  behind.
+
+`heroFade()` and `heroRow()` gained a `ready` argument so the hero waits for the
+curtain instead of animating underneath it. Sub-pages pass nothing and are
+unaffected. `Countdown` gained a `heroEntrance` variant — in the hero it must not
+carry a scroll `reveal()`, which would hold an above-the-fold element hidden
+until a scroll that never comes.
+
+**`@types/three` is pinned to 0.128 to match the runtime version.** It caught a
+real bug: `BufferAttribute.array` is typed read-only, and the render loop mutates
+it every frame.
 
 ## GitHub Pages preview — live
 
@@ -152,8 +182,14 @@ it does nothing about inbound `.html` links.
 - **`npm test` builds before it tests, on purpose.** `serve` reads `build/` off disk, so
   a rebuild running alongside it serves half-written HTML and fails a route at random.
 - **A few inline `style=` attributes survive the port** (org grid offset, checklist
-  width, countdown margin, event facts width). They are carried over verbatim because
-  `style.css` is frozen until Phase 7 — fold them into real rules then.
+  width, countdown margin, event facts width, media teaser button row). They are
+  carried over verbatim because `style.css` is frozen until Phase 7 — fold them into
+  real rules then.
+- **The smoke test got slower when the home page landed, and that is the harness.**
+  Route tests went from ~1s to ~10s under 8 parallel workers, because three of them
+  now spin up a WebGL context on the same machine; run alone, `/sponsors` is still
+  ~870ms. Nothing shipped got slower — three.js is in its own chunk that only the
+  home route loads.
 - `npm audit` reports 3 low-severity issues in SvelteKit's own `cookie` dependency.
   Irrelevant for a static site; the "fix" downgrades Kit to 0.0.30. Leave alone.
 
@@ -163,7 +199,7 @@ it does nothing about inbound `.html` links.
 npm run dev          # development
 npm run check        # svelte-check — expect 0 errors
 npm run build        # prerenders all nine routes; this is what proves SSR guards
-npm test             # build + Playwright smoke test — expect 11 passed
+npm test             # build + Playwright smoke test — expect 15 passed
 npx serve build      # verify the real output (NOT npm run preview)
 npx serve static     # the legacy site, for comparison
 
