@@ -1,14 +1,15 @@
 # Migration status
 
 Working notes for the static HTML → SvelteKit migration.
-Last updated **11 August 2026**, end of Phase 4.
+Last updated **12 August 2026**, end of Phase 5.
 
 Plan: <https://claude.ai/code/artifact/b42e8908-c534-4c72-8ef2-7a465a78ad28>
-Branch: `sveltekit-migration` — **6 commits, not yet pushed**. Working tree clean.
+Branch: `sveltekit-migration` — **14 commits, not yet pushed**. Working tree clean.
 
 ## Where we stopped
 
-Phases 0–4 are complete and committed. **Phase 5 is next.**
+Phases 0–5 are complete and committed. **Phase 6 is next** — except the URL
+cutover, which is still parked on the hosting decision (see below).
 
 | Phase | State |
 |---|---|
@@ -17,66 +18,70 @@ Phases 0–4 are complete and committed. **Phase 5 is next.**
 | 2 · Layout | ✅ nav/menu/footer once, PageHero, `config.ts`, NL/EN toggle removed |
 | 3 · Pilot (regulations) | ✅ data file + `nl.json`, entities → UTF-8 |
 | 4 · Shared JavaScript | ✅ attachments, GSAP bundled, teardown, motion watchdog |
-| 5 · Remaining sub-pages | ⬜ **next** |
-| 6 · index.html | ⬜ |
+| 5 · Remaining sub-pages | ✅ all six ported, smoke test green; **URL cutover deferred** |
+| 6 · index.html | ⬜ **next** |
 | 7 · Delete old site | ⬜ |
 | 8 · Finish "fully functional" | ⬜ |
 
-## Phase 5 — what to do next
+## Phase 6 — what to do next
 
-Port the remaining page bodies, **one commit each**, simplest first. The recipe is
-established in [regulations/+page.svelte](src/routes/regulations/+page.svelte) — copy that shape.
+Port `static/index.html` (598 lines, the bespoke home page). It is the last
+stub: `/` currently has no `<h1>` and is exempted from the smoke test's heading
+check via `NOT_YET_PORTED` in [tests/smoke.spec.ts](tests/smoke.spec.ts) —
+remove that exemption once the hero lands.
 
-Six stubs remain (hero + `<svelte:head>` only, empty `<main>`):
+Pieces that need care, none of which the sub-pages exercised:
 
-1. **sponsors** — simplest
-2. **organisation**
-3. **registration**
-4. **media** — eight photos + three videos become data; replace the
-   `onerror="this.remove()"` handlers with a proper guard
-5. **events** — check the countdown/date contradiction first (see below)
-6. **results** — three year-panels × five divisions become one data file; tabs
-   become state. All 15 rows are placeholder text.
+- **three.js particle stage floor** (`#stage-floor`) — the only page loading
+  three.js. Must render a single static frame under `prefers-reduced-motion`,
+  and dispose its renderer on destroy.
+- **Preloader** (`#loader`) — has to not strand the page if an asset never loads.
+- **Horizontal pinned "Road to Worlds"** (`#roadTrack`) — pins only at ≥1001px
+  and must kill its ScrollTrigger on teardown.
+- **Countdown** — already done. [Countdown.svelte](src/lib/components/Countdown.svelte)
+  was built shared in Phase 5; reuse it, do not rebuild.
+- `data-count` numbers use the existing `count()` attachment.
 
-Source markup for each is in `static/<page>.html`, still in the repo until Phase 7.
+## Deferred out of Phase 5 — do at the start of Phase 7
 
-Per page: structured records → `src/lib/data/<page>.ts`, Dutch → `src/lib/messages/nl.json`
-under flat dotted keys, entities → real UTF-8 characters, strings with no Dutch get an
-empty-string key. Attach behaviour with `reveal()`, `magnetic()`, `tilt()`, `count()`
-from [attachments.svelte.ts](src/lib/attachments.svelte.ts) — never the old `data-*` attributes.
+**The URL cutover.** Still blocked on hosting, unchanged since Phase 4. The live
+site is indexed at `.html` URLs and the migrated routes are clean (`/sponsors`),
+so this needs redirects or inbound links 404. All internal links already point at
+clean routes, so only the redirect layer is outstanding.
 
-**URL cutover happens once, at the end of Phase 5** — not per page. The live site is
-indexed at `.html` URLs, so clean URLs need redirects or inbound links will 404. This
-depends on the hosting decision, which is still open.
+Note `npx serve build` resolves `/sponsors` → `sponsors.html` on its own, which
+is why the smoke test passes today. That is `serve` being helpful; it is **not**
+evidence the real host will do the same.
 
-Also add the ~40-line Playwright smoke test here (every route 200, has a title, no
-console errors).
+## Applied in Phase 5
 
-## Answered — apply during Phase 5
-
-- **Event date and venue are confirmed** (11 Aug 2026):
-  **30 & 31 January 2027**, **MECC Maastricht**. Replaces "Date TBA" / "Venue TBA"
-  in `static/events.html:234` and `:244`. Note it is a **two-day** event, while
-  `EVENT_DATE` in `config.ts` is a single instant (`2027-01-30T12:00:00+01:00`) —
-  that is correct as the countdown target (day one) and needs no change, but the
-  events page should display the full range.
-  Two sub-lines under those facts go stale with this change and need rewriting:
-  - "Follow our socials for the announcement" — the announcement has happened.
-  - "Central in the Netherlands, easy to reach by public transport" — Maastricht
-    is not central. Suggest replacing with something venue-accurate; **confirm the
-    replacement wording before writing it.**
-- **Results archive stays as placeholder text for now** (11 Aug 2026). Port the page
-  structure and turn the rows into data, but leave the placeholder content in place;
-  the real past results are still being gathered. Do not invent champions.
+- **Event date and venue** (confirmed 11 Aug 2026): **30 & 31 January 2027** at
+  **MECC Maastricht**, now live on the events page. The range derives from
+  `EVENT_DATE` + the new `EVENT_END_DATE` in `config.ts`, so it cannot drift from
+  the countdown; `EVENT_VENUE` and `EVENT_DATE_RANGE` were added alongside.
+- **Two-day framing** (confirmed with Iain, 12 Aug 2026). The page was written
+  around a single day, so more than the two facts changed: the hero lede now reads
+  "Two days decide", the schedule heading "How the weekend runs", and the footnote
+  says the split across both days follows with the announcement. **The timeline is
+  still one indicative 10:00–19:30 day** — deliberately, since which divisions run
+  on which day is not yet known. Split it when the official programme lands.
+- **Venue sub-line** (confirmed with Iain, 12 Aug 2026): "Directly opposite
+  Maastricht Randwyck station", replacing the inaccurate "Central in the
+  Netherlands". The stale "Follow our socials for the announcement" is gone.
+- **Results stay placeholder** (confirmed 11 Aug 2026). Structure is ported and the
+  15 rows are generated by `placeholderRows()` in
+  [results.ts](src/lib/data/results.ts) — filling in the real archive is now a data
+  edit. Do not invent champions.
 
 ## Open questions — need answers
 
 1. **Hosting + contact form decide each other**, and hosting also answers the redirect
-   question above. Settle before the end of Phase 5.
+   question above. This is now the one thing blocking Phase 7 — settle it before then.
 2. **Contact address unconfirmed** — `CONTACT_EMAIL` in [config.ts](src/lib/config.ts) is still a guess.
 3. **No images in the repo** — favicon and social preview need a source; the eleven
    media photos can be pulled off the old domain.
-4. **Venue sub-line wording** — see the events entry above.
+4. **Division split across the two event days** — not needed to ship, but the events
+   schedule stays a single indicative day until the official programme lands.
 
 ## Things to remember
 
@@ -98,6 +103,19 @@ console errors).
   while the migrated site correctly reads 2015–2027. See [screenshots/README.md](screenshots/README.md).
 - **Prettier and ESLint are deliberately not installed** until Phase 7, so formatting
   churn doesn't bury real changes.
+- **The smoke test asserts `toBeAttached`, not `toBeVisible`.** `reveal()` parks content
+  at `autoAlpha:0` until its ScrollTrigger fires, which also removes it from the
+  accessibility tree — so `getByRole` finds nothing and visibility assertions would be
+  testing scroll position. Scroll first (`settleReveals`) when a test needs the real
+  a11y tree, as the tablist test does.
+- **Never point the test harness at `npm run preview`**, and never pass `--single` to
+  `serve`: it is present-means-on, so even `--single=false` rewrites every route to
+  `index.html` and every page answers with the home page.
+- **`npm test` builds before it tests, on purpose.** `serve` reads `build/` off disk, so
+  a rebuild running alongside it serves half-written HTML and fails a route at random.
+- **A few inline `style=` attributes survive the port** (org grid offset, checklist
+  width, countdown margin, event facts width). They are carried over verbatim because
+  `style.css` is frozen until Phase 7 — fold them into real rules then.
 - `npm audit` reports 3 low-severity issues in SvelteKit's own `cookie` dependency.
   Irrelevant for a static site; the "fix" downgrades Kit to 0.0.30. Leave alone.
 
@@ -107,6 +125,7 @@ console errors).
 npm run dev          # development
 npm run check        # svelte-check — expect 0 errors
 npm run build        # prerenders all nine routes; this is what proves SSR guards
+npm test             # build + Playwright smoke test — expect 11 passed
 npx serve build      # verify the real output (NOT npm run preview)
 npx serve static     # the legacy site, for comparison
 ```
