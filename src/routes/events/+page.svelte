@@ -8,7 +8,7 @@
 </script>
 
 <svelte:head>
-  <title>Eventss | HHI Netherlands</title>
+  <title>Events | HHI Netherlands</title>
   <meta
     name="description"
     content="The {EVENT_YEAR} Netherlands Hip Hop Dance Championship — date, venue and schedule."
