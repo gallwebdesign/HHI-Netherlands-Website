@@ -39,5 +39,37 @@
 
 	"regulations.notice.label": "Let op",
 	"regulations.notice.body": "Dit is een samenvatting. Het volledige, bindende reglement staat op de officiële pagina.",
-	"regulations.notice.cta": "Officieel reglement"
+	"regulations.notice.cta": "Officieel reglement",
+
+	"sponsors.meta.title": "",
+	"sponsors.meta.description": "",
+	"sponsors.hero.tag": "Sponsors",
+	"sponsors.hero.titleTop": "Zet je merk",
+	"sponsors.hero.titleBottom": "op de vloer.",
+	"sponsors.hero.lede": "Een volle zaal, een jong en energiek publiek, en een podium dat eindigt op het WK. Dat is de ruimte waar jouw merk binnenstapt.",
+
+	"sponsors.sectionTag": "Voorbeeldpakketten",
+
+	"sponsors.tier.support.tag": "",
+	"sponsors.tier.support.title": "",
+	"sponsors.tier.support.item.1": "Logo op website en schermen",
+	"sponsors.tier.support.item.2": "Vermelding op socials",
+	"sponsors.tier.support.item.3": "Tickets voor je team",
+
+	"sponsors.tier.stage.tag": "Hoofdpodium",
+	"sponsors.tier.stage.title": "",
+	"sponsors.tier.stage.item.1": "Branding op en rond het podium",
+	"sponsors.tier.stage.item.2": "Activatie op de eventvloer",
+	"sponsors.tier.stage.item.3": "Content met crews en winnaars",
+	"sponsors.tier.stage.item.4": "Alles uit Support",
+
+	"sponsors.tier.title.tag": "",
+	"sponsors.tier.title.title": "",
+	"sponsors.tier.title.item.1": "Naamsverbinding aan het kampioenschap",
+	"sponsors.tier.title.item.2": "Campagne rond de Road to Worlds",
+	"sponsors.tier.title.item.3": "Maatwerk in overleg",
+
+	"sponsors.notice.label": "Interesse?",
+	"sponsors.notice.body": "Pakketten zijn indicatief — we bouwen elk partnership op maat.",
+	"sponsors.notice.cta": "Neem contact op"
 }
