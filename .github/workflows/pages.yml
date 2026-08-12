@@ -5,9 +5,21 @@
 # deliberately marked noindex so the preview cannot compete with the
 # real site in search results or expose placeholder results as fact.
 #
-# Deploys the migration branch. Retarget to main at Phase 7, or delete
-# this workflow once real hosting is settled.
+# THIS FILE MUST EXIST ON THE DEFAULT BRANCH (main). GitHub only
+# registers a workflow it can see there; on a non-default branch alone
+# it is never picked up and no run is ever created — no error, just
+# silence. main is still the legacy static site, so this file is the
+# one thing on it that belongs to the migration.
+#
+# It BUILDS the migration branch regardless, via the explicit ref
+# below. Retarget that ref at Phase 7, or delete this workflow once
+# real hosting is settled.
 name: Deploy preview to Pages
+
+# Branch the preview is built from. Not necessarily the branch this
+# file lives on — see above.
+env:
+  DEPLOY_REF: sveltekit-migration
 
 on:
   push:
@@ -28,7 +40,12 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      # Explicit ref: when this file is run from main (where GitHub
+      # registers it), the default checkout would fetch main — the
+      # legacy site, which has no package.json and cannot build.
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.DEPLOY_REF }}
 
       - uses: actions/setup-node@v4
         with:
