@@ -4,7 +4,8 @@ Working notes for the static HTML → SvelteKit migration.
 Last updated **12 August 2026**, end of Phase 5.
 
 Plan: <https://claude.ai/code/artifact/b42e8908-c534-4c72-8ef2-7a465a78ad28>
-Branch: `sveltekit-migration` — **14 commits, not yet pushed**. Working tree clean.
+Branch: **`main`** — the migration was merged there in PR #2 and is deployed.
+`sveltekit-migration` is merged and can be deleted. Working tree clean.
 
 ## Where we stopped
 
@@ -42,16 +43,21 @@ Pieces that need care, none of which the sub-pages exercised:
   was built shared in Phase 5; reuse it, do not rebuild.
 - `data-count` numbers use the existing `count()` attachment.
 
-## GitHub Pages preview
+## GitHub Pages preview — live
 
-A preview deploy is wired up in [.github/workflows/pages.yml](.github/workflows/pages.yml),
-building on push to `sveltekit-migration`. **This is staging, not the live site** —
-hhi-netherlands.com is still the legacy PHP site.
+Deployed and verified at
+<https://gallwebdesign.github.io/HHI-Netherlands-Website/>, built by
+[.github/workflows/pages.yml](.github/workflows/pages.yml) on every push to `main`.
+**This is staging, not the public site** — hhi-netherlands.com is still the legacy
+PHP site, and `/` here is still the Phase 1 stub until Phase 6 lands.
 
-**It needs one manual step before it will run:** repo *Settings → Pages → Build and
-deployment → Source = **GitHub Actions***. Until that is set the workflow fails at
-the deploy job. Once set it publishes to
-`https://gallwebdesign.github.io/HHI-Netherlands-Website/`.
+Verified against the deployed site in a real browser: clean hydration, correct nav
+highlighting, working client-side navigation, and a live countdown.
+
+**A workflow only registers if it exists on the default branch.** That is why the
+first attempt produced no run at all — no error, no failed job, just silence, because
+the file existed only on `sveltekit-migration`. If runs ever stop appearing, check
+that before anything else.
 
 How it works, and why:
 
