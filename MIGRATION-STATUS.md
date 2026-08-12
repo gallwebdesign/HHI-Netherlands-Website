@@ -1,15 +1,17 @@
 # Migration status
 
 Working notes for the static HTML → SvelteKit migration.
-Last updated **12 August 2026**, end of Phase 5.
+Last updated **12 August 2026**, end of Phase 6.
 
 Plan: <https://claude.ai/code/artifact/b42e8908-c534-4c72-8ef2-7a465a78ad28>
-Branch: **`main`** — the migration was merged there in PR #2 and is deployed.
-`sveltekit-migration` is merged and can be deleted. Working tree clean.
+Branch: **`main`** — the migration was merged there in PR #2. Working tree clean,
+everything pushed, `sveltekit-migration` merged and safe to delete.
 
 ## Where we stopped
 
-Phases 0–5 are complete and committed. **Phase 6 is next** — except the URL
+**Phases 0–6 are complete, pushed, and deployed.** All nine routes are ported;
+run #7 published commit `e15e5ba` and the live home page was checked to be the
+real one, not the old stub. **Phase 7 (cleanup) is next**, led by the URL
 cutover, which is still parked on the hosting decision (see below).
 
 | Phase | State |
@@ -28,17 +30,39 @@ cutover, which is still parked on the hosting decision (see below).
 
 All nine routes are ported. Remaining work is cleanup:
 
-1. **The URL cutover** — see below. Do this first; it is the only item with an
-   outside dependency.
+1. **The URL cutover — do this first**, and note it is the one item that cannot
+   simply be worked through: it is still blocked on the hosting decision,
+   unchanged since Phase 4. The live site is indexed at `.html` URLs while the
+   migrated routes are clean (`/sponsors`), so it needs redirects or inbound
+   links 404. Every internal link already points at a clean route, so only the
+   redirect layer is outstanding.
+
+   Both `npx serve build` and GitHub Pages resolve `/sponsors` → `sponsors.html`
+   by themselves, which is why the smoke test and the preview pass today. That is
+   those two servers being helpful; it is **not** evidence the real host will do
+   the same, and it does nothing about already-indexed inbound `.html` links.
+
+   **Items 2–5 below are self-contained and can proceed while hosting is undecided.**
 2. **Delete the legacy files in `static/`** (nine `.html` files plus
    `assets/`). They are the revert escape hatch and stop being needed once the
    cutover is settled. `static/robots.txt` **stays** — it is the real host's
    crawlable copy.
 3. **Install Prettier and ESLint**, deliberately held back so formatting churn
    did not bury real changes.
-4. **Fold the surviving inline `style=` attributes into `style.css`** — the org
-   grid offset, checklist width, countdown margin, event facts width, media
-   teaser button row. `style.css` stops being frozen at this point.
+4. **Fold the surviving inline `style=` attributes into `style.css`.** Twelve
+   static ones across six files, all carried over verbatim from the legacy
+   markup; `style.css` stops being frozen at this point. Find them with:
+
+   ```bash
+   grep -rn 'style="' src/ --include=*.svelte
+   ```
+
+   Four are `color:var(--oranje)` on contact links and two are `margin-top:0`;
+   the rest are one-off layout offsets in `+page.svelte` (media teaser row),
+   `events` (facts width, schedule offset), `media` (head padding),
+   `organisation` (grid offset) and `registration` (checklist width).
+   **Leave `Preloader.svelte` alone** — its `style=` is a computed
+   `transform: scaleX()` driving the progress bar, not a static rule.
 5. **`npm run preview` becomes trustworthy again** once `static/` no longer
    shadows the prerendered output.
 
@@ -79,10 +103,11 @@ Deployed and verified at
 <https://gallwebdesign.github.io/HHI-Netherlands-Website/>, built by
 [.github/workflows/pages.yml](.github/workflows/pages.yml) on every push to `main`.
 **This is staging, not the public site** — hhi-netherlands.com is still the legacy
-PHP site, and `/` here is still the Phase 1 stub until Phase 6 lands.
+PHP site, and the results archive here is still placeholder text.
 
 Verified against the deployed site in a real browser: clean hydration, correct nav
-highlighting, working client-side navigation, and a live countdown.
+highlighting, working client-side navigation, and a live countdown. The home page
+was re-checked after Phase 6 shipped — the real hero, not the old stub.
 
 **A workflow only registers if it exists on the default branch.** That is why the
 first attempt produced no run at all — no error, no failed job, just silence, because
@@ -108,18 +133,6 @@ How it works, and why:
 
 Verified in a browser served from a real sub-path: hydration clean, nav highlighting
 correct, client-side navigation and the logo all stay inside the sub-path.
-
-## Still deferred — do at the start of Phase 7
-
-**The URL cutover.** Still blocked on the hosting decision, unchanged since Phase 4.
-The live site is indexed at `.html` URLs and the migrated routes are clean
-(`/sponsors`), so this needs redirects or inbound links 404. All internal links
-already point at clean routes, so only the redirect layer is outstanding.
-
-Both `npx serve build` and GitHub Pages resolve `/sponsors` → `sponsors.html` on
-their own, which is why the smoke test and the preview both pass today. That is those
-two servers being helpful; it is **not** evidence the real host will do the same, and
-it does nothing about inbound `.html` links.
 
 ## Applied in Phase 5
 
@@ -161,8 +174,13 @@ it does nothing about inbound `.html` links.
 - **Do not touch `src/lib/style.css`.** 689 lines of working token-driven CSS, imported
   once as a global. The `.lang__btn` rules in it are dead but harmless — they come back
   when Dutch ships.
-- **The site ships English-only.** All 413 `data-nl` strings are preserved in `static/`
-  and move to `nl.json` as each page is ported. The NL/EN toggle returns with Dutch.
+- **The site ships English-only, and the Dutch extraction is complete.** Checked
+  before Phase 7 deletes `static/`: the 413 `data-nl` attributes there are only **190
+  unique strings** — 22 are nav/menu/footer chrome repeated across all nine files, 168
+  are page-specific. [nl.json](src/lib/messages/nl.json) holds 244 keys, 46 of them
+  deliberately empty where no Dutch ever existed. **Nothing is lost when the legacy
+  files go.** The NL/EN toggle returns when Dutch actually ships; it has to be a store
+  rather than the legacy innerHTML swap, or it goes stale on client-side navigation.
 - **Everything year-shaped derives from `EVENT_DATE`** in `config.ts`. Never type a year
   into a page. Event year is 2027; the 2026s in `static/` are stale.
 - **Screenshots in `screenshots/` are the legacy site**, captured with reveals triggered.
@@ -181,10 +199,8 @@ it does nothing about inbound `.html` links.
   `index.html` and every page answers with the home page.
 - **`npm test` builds before it tests, on purpose.** `serve` reads `build/` off disk, so
   a rebuild running alongside it serves half-written HTML and fails a route at random.
-- **A few inline `style=` attributes survive the port** (org grid offset, checklist
-  width, countdown margin, event facts width, media teaser button row). They are
-  carried over verbatim because `style.css` is frozen until Phase 7 — fold them into
-  real rules then.
+- **Twelve static inline `style=` attributes survive the port**, carried over verbatim
+  because `style.css` is frozen until Phase 7. Listed under Phase 7 item 4 above.
 - **The smoke test got slower when the home page landed, and that is the harness.**
   Route tests went from ~1s to ~10s under 8 parallel workers, because three of them
   now spin up a WebGL context on the same machine; run alone, `/sponsors` is still
