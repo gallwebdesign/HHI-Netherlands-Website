@@ -131,5 +131,18 @@
 
 	"registration.notice.label": "Inschrijven",
 	"registration.notice.body": "De inschrijving loopt via het officiële formulier op hhi-netherlands.com.",
-	"registration.notice.cta": "Schrijf je crew in"
+	"registration.notice.cta": "Schrijf je crew in",
+
+	"media.meta.title": "",
+	"media.meta.description": "",
+	"media.hero.tag": "Media",
+	"media.hero.titleTop": "Hard, in",
+	"media.hero.titleBottom": "beeld.",
+	"media.hero.lede": "Hoogtepunten uit eerdere edities van het Netherlands Hip Hop Dance Championship.",
+
+	"media.photos.tag": "Foto's",
+	"media.photos.cta": "Volledig fotoarchief",
+	"media.photos.alt": "",
+	"media.videos.tag": "Video's",
+	"media.videos.cta": "Ons YouTube-kanaal"
 }
