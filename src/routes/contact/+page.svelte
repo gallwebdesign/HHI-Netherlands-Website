@@ -43,26 +43,17 @@
 					<div class="event__fact" {@attach reveal()}>
 						<dt>Socials</dt>
 						<dd>
-							<small style="margin-top:0;"
-								><a
-									href={EXTERNAL.instagram}
-									target="_blank"
-									rel="noopener"
-									style="color:var(--oranje)">Instagram</a
+							<small class="tight"
+								><a href={EXTERNAL.instagram} target="_blank" rel="noopener" class="link--accent"
+									>Instagram</a
 								>
 								&middot;
-								<a
-									href={EXTERNAL.facebook}
-									target="_blank"
-									rel="noopener"
-									style="color:var(--oranje)">Facebook</a
+								<a href={EXTERNAL.facebook} target="_blank" rel="noopener" class="link--accent"
+									>Facebook</a
 								>
 								&middot;
-								<a
-									href={EXTERNAL.youtube}
-									target="_blank"
-									rel="noopener"
-									style="color:var(--oranje)">YouTube</a
+								<a href={EXTERNAL.youtube} target="_blank" rel="noopener" class="link--accent"
+									>YouTube</a
 								></small
 							>
 						</dd>
@@ -70,13 +61,10 @@
 					<div class="event__fact" {@attach reveal()}>
 						<dt>Official</dt>
 						<dd>
-							<small style="margin-top:0;"
+							<small class="tight"
 								>Prefer the official form?
-								<a
-									href={EXTERNAL.contactForm}
-									target="_blank"
-									rel="noopener"
-									style="color:var(--oranje)">hhi-netherlands.com/contact</a
+								<a href={EXTERNAL.contactForm} target="_blank" rel="noopener" class="link--accent"
+									>hhi-netherlands.com/contact</a
 								></small
 							>
 						</dd>

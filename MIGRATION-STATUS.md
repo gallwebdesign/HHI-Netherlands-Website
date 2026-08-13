@@ -1,7 +1,7 @@
 # Migration status
 
 Working notes for the static HTML → SvelteKit migration.
-Last updated **12 August 2026**, end of Phase 6.
+Last updated **13 August 2026**, Phase 7 items 2–5 complete.
 
 Plan: <https://claude.ai/code/artifact/b42e8908-c534-4c72-8ef2-7a465a78ad28>
 Branch: **`main`** — the migration was merged there in PR #2. Working tree clean,
@@ -9,10 +9,10 @@ everything pushed, `sveltekit-migration` merged and safe to delete.
 
 ## Where we stopped
 
-**Phases 0–6 are complete, pushed, and deployed.** All nine routes are ported;
-run #7 published commit `e15e5ba` and the live home page was checked to be the
-real one, not the old stub. **Phase 7 (cleanup) is next**, led by the URL
-cutover, which is still parked on the hosting decision (see below).
+**Phases 0–6 are complete, pushed, and deployed**, and **Phase 7 items 2–5 are
+done**. All nine routes are ported. What remains in Phase 7 is the URL cutover
+(item 1), which is no longer blocked — **hosting is settled: Cloud86** (see
+below). It has not been executed yet.
 
 | Phase | State |
 |---|---|
@@ -21,50 +21,97 @@ cutover, which is still parked on the hosting decision (see below).
 | 2 · Layout | ✅ nav/menu/footer once, PageHero, `config.ts`, NL/EN toggle removed |
 | 3 · Pilot (regulations) | ✅ data file + `nl.json`, entities → UTF-8 |
 | 4 · Shared JavaScript | ✅ attachments, GSAP bundled, teardown, motion watchdog |
-| 5 · Remaining sub-pages | ✅ all six ported, smoke test green; **URL cutover deferred** |
+| 5 · Remaining sub-pages | ✅ all six ported, smoke test green |
 | 6 · index.html | ✅ hero, stage floor, preloader, road pin, all sections |
-| 7 · Delete old site | ⬜ **next** |
+| 7 · Delete old site | 🟨 items 2–5 done; **item 1, the cutover, is next** |
 | 8 · Finish "fully functional" | ⬜ |
 
-## Phase 7 — what to do next
+## Hosting — decided: Cloud86 (13 Aug 2026)
 
-All nine routes are ported. Remaining work is cleanup:
+**Dutch shared hosting, and it clears every requirement.** The deciding
+constraint was that Iain wants site and mail with one provider, on one invoice —
+which ruled out Cloudflare Pages outright, since Pages has no mailboxes and
+Cloudflare's email routing only forwards.
 
-1. **The URL cutover — do this first**, and note it is the one item that cannot
-   simply be worked through: it is still blocked on the hosting decision,
-   unchanged since Phase 4. The live site is indexed at `.html` URLs while the
-   migrated routes are clean (`/sponsors`), so it needs redirects or inbound
-   links 404. Every internal link already points at a clean route, so only the
-   redirect layer is outstanding.
+Verified from Cloud86's own feature and support pages:
 
-   Both `npx serve build` and GitHub Pages resolve `/sponsors` → `sponsors.html`
-   by themselves, which is why the smoke test and the preview pass today. That is
-   those two servers being helpful; it is **not** evidence the real host will do
-   the same, and it does nothing about already-indexed inbound `.html` links.
+| Need | Cloud86 |
+|---|---|
+| IMAP mailboxes | 50 addresses, Roundcube webmail |
+| Redirect layer | LiteSpeed, reads Apache `.htaccess` |
+| Deploy access | SSH, plus "Git integratie" |
+| Outbound mail auth | Documented SPF/DKIM/DMARC setup |
+| PHP | 7.4 and 8.x |
+| TLS | Free certificate |
+| Data residency | NL datacenter, AVG-proof |
 
-   **Items 2–5 below are self-contained and can proceed while hosting is undecided.**
-2. **Delete the legacy files in `static/`** (nine `.html` files plus
-   `assets/`). They are the revert escape hatch and stop being needed once the
-   cutover is settled. `static/robots.txt` **stays** — it is the real host's
-   crawlable copy.
-3. **Install Prettier and ESLint**, deliberately held back so formatting churn
-   did not bury real changes.
-4. **Fold the surviving inline `style=` attributes into `style.css`.** Twelve
-   static ones across six files, all carried over verbatim from the legacy
-   markup; `style.css` stops being frozen at this point. Find them with:
+Two things to confirm before purchase, neither a blocker: **what "Git
+integratie" actually does** (push-to-deploy vs. a clone button — SSH means the
+GitHub Action approach works regardless), and **whether a cheaper tier carries
+the same mail + SSH + `.htaccess`**, since the plan screenshotted is pitched at
+WordPress and none of that is needed here.
 
-   ```bash
-   grep -rn 'style="' src/ --include=*.svelte
-   ```
+Consequences for the code, all still to do as part of the cutover:
 
-   Four are `color:var(--oranje)` on contact links and two are `margin-top:0`;
-   the rest are one-off layout offsets in `+page.svelte` (media teaser row),
-   `events` (facts width, schedule offset), `media` (head padding),
-   `organisation` (grid offset) and `registration` (checklist width).
-   **Leave `Preloader.svelte` alone** — its `style=` is a computed
-   `transform: scaleX()` driving the progress bar, not a static rule.
-5. **`npm run preview` becomes trustworthy again** once `static/` no longer
-   shadows the prerendered output.
+- `BASE_PATH` stops being set — Cloud86 serves from the domain root, so `base`
+  returns to `''`. [vite.config.ts](vite.config.ts) needs no change; the env var
+  simply goes unset. `withBase()` and `Nav.isActive` stay correct as no-ops.
+- [.github/workflows/pages.yml](.github/workflows/pages.yml) gets deleted, as its
+  own header comment already instructs.
+- `.nojekyll` becomes unnecessary (harmless if left).
+- `static/robots.txt` ships as-is; the workflow's noindex overwrite disappears
+  with the workflow.
+
+## Phase 7 — item 1, the URL cutover (next)
+
+The live site is indexed at `.html` URLs while the migrated routes are clean
+(`/sponsors`), so it needs redirects or inbound links 404. Every internal link
+already points at a clean route, so only the redirect layer is outstanding.
+
+**Iain's note (13 Aug 2026): the old site will disappear, so its own links stop
+mattering.** That is true of *our* links but not of *other people's* — search
+results, socials and press links keep arriving at `sponsors.html` after the old
+site is gone. Hence redirects are still worth doing once:
+
+```apache
+RewriteEngine On
+RewriteRule ^sponsors\.html$ /sponsors [R=301,L]
+# ...one line per legacy page
+```
+
+Both `npx serve build` and GitHub Pages resolve `/sponsors` → `sponsors.html` by
+themselves, which is why the smoke test and preview pass. That is those servers
+being helpful; it is **not** evidence about Cloud86, and it does nothing about
+already-indexed inbound `.html` links.
+
+## Phase 7 — items 2–5, done 13 August 2026
+
+2. ✅ **Legacy files deleted from `static/`** — nine `.html` files and `assets/`.
+   `static/robots.txt` is all that remains there, as intended.
+3. ✅ **Prettier and ESLint installed.** `npm run format` and `npm run lint`.
+   Config matches the house style (tabs, single quotes, 100 cols, CRLF).
+   `src/lib/style.css` and `*.md` are in `.prettierignore` — reformatting 689
+   lines of working CSS, or reflowing hand-wrapped prose, would bury real diffs.
+   Prettier normalised `events/+page.svelte` from the old hand-formatted
+   two-space/double-quote style; verified with `git diff -w` to be whitespace and
+   attribute rewrapping only.
+
+   **Four recommended Svelte rules are switched off deliberately**, each reviewed
+   against the real code and the reasoning recorded in
+   [eslint.config.js](eslint.config.js): `no-navigation-without-resolve` (the base
+   path is already solved by `withBase()`), `no-at-html-tags` (hero copy is
+   hardcoded in page source; no user input on a static site),
+   `prefer-svelte-reactivity` (the broken-image `Set`s are reassigned on purpose),
+   and `no-dom-manipulating` (three.js must append its own canvas).
+4. ✅ **Twelve inline `style=` attributes folded into `style.css`**, under a new
+   `PHASE 7: FORMER INLINE STYLES` banner. `Preloader.svelte` keeps its `style=` —
+   it is a computed `transform: scaleX()`, not a static rule, and is now the only
+   `style=` left in `src/`.
+5. ✅ **`npm run preview` is trustworthy again** — verified serving the real
+   prerendered `/sponsors`, not the legacy HTML.
+
+Verified after the change: `npm run lint` clean, `npm run check` 0 errors/0
+warnings, `npm test` 15 passed.
 
 ## Phase 6 — what landed
 
@@ -154,41 +201,77 @@ correct, client-side navigation and the logo all stay inside the sub-path.
   [results.ts](src/lib/data/results.ts) — filling in the real archive is now a data
   edit. Do not invent champions.
 
+## External links — confirmed 13 August 2026
+
+**Registration is two JotForms, one per day** (Iain, 13 Aug 2026):
+
+- Saturday — <https://form.jotform.com/262132162311946>
+- Sunday — <https://form.jotform.com/262132296237961>
+
+**Not yet wired in.** `EXTERNAL.registration` in [config.ts](src/lib/config.ts) is
+still the single legacy `registration.php` link, used in **six places**: the home
+hero and its road CTA, `/events`, `/registration` twice, and `MobileMenu`.
+
+**Agreed shape (Iain, 13 Aug 2026): a hub on `/registration`.** The nav, hero and
+mobile-menu CTAs keep one "Register" button pointing at `/registration`; that page
+presents both day links side by side with context. Chosen over doubling all six
+CTAs because **which divisions dance on which day is still unknown** — asking a
+crew to pick a day is asking something they cannot yet answer, so the two links
+need a page with room to explain that.
+
+**Ticketing is already correct.** `EXTERNAL.tickets` is
+`https://shop.celebratix.io/?c=2mdtq`, matching what Iain confirmed. The
+`shop.compoticketing.eu` reference in [CLAUDE.md](CLAUDE.md) is stale.
+
+**Registration needs no PHP** — all three destinations are third-party, so the new
+host serves static files and mail only, and `registration.php` dies with the old
+site.
+
+**Three `EXTERNAL` links still point at the dying host** and break when it goes:
+`contactForm` and `regulations` (used on [contact](src/routes/contact/+page.svelte#L76)
+and [regulations](src/routes/regulations/+page.svelte#L47)) and `privacy` in the
+footer. Regulations probably wants to become a hosted PDF; the contact form is
+Phase 8, and Cloud86's PHP means it can be a real form.
+
 ## Open questions — need answers
 
-1. **Hosting + contact form decide each other**, and hosting also answers the redirect
-   question above. This is now the one thing blocking Phase 7 — settle it before then.
-2. **Contact address unconfirmed** — `CONTACT_EMAIL` in [config.ts](src/lib/config.ts) is still a guess.
+1. ~~**Hosting**~~ — **settled 13 Aug 2026: Cloud86.** See the hosting section above.
+   Two purchase-time details still to confirm there (Git integration, cheaper tier).
+2. **Contact address** — `CONTACT_EMAIL` in [config.ts](src/lib/config.ts) is still
+   a guess, but **stops being one at Cloud86**: the mailbox gets created by hand, so
+   `info@hhi-netherlands.com` becomes true by construction. Confirm on setup.
 3. **No images in the repo** — favicon and social preview need a source; the eleven
-   media photos can be pulled off the old domain.
-4. **Division split across the two event days** — not needed to ship, but the events
-   schedule stays a single indicative day until the official programme lands.
+   media photos can be pulled off the old domain **before it disappears**.
+4. **Division split across the two event days** — not needed to ship, but it now also
+   gates how much the registration hub can say, not just the events schedule.
 
 ## Things to remember
 
-- **`npm run preview` is misleading right now.** It serves `static/` in preference to
-  the prerendered pages, so you see the *old* HTML. Verify with `npx serve build` instead.
-  This stops being an issue at Phase 7 when the legacy files are deleted.
-- **Legacy files stay in `static/` until Phase 7** — they are the revert escape hatch.
-  They do not shadow the routes: Kit's prerendered output overwrites same-path static files.
-- **Do not touch `src/lib/style.css`.** 689 lines of working token-driven CSS, imported
-  once as a global. The `.lang__btn` rules in it are dead but harmless — they come back
-  when Dutch ships.
-- **The site ships English-only, and the Dutch extraction is complete.** Checked
-  before Phase 7 deletes `static/`: the 413 `data-nl` attributes there are only **190
-  unique strings** — 22 are nav/menu/footer chrome repeated across all nine files, 168
-  are page-specific. [nl.json](src/lib/messages/nl.json) holds 244 keys, 46 of them
-  deliberately empty where no Dutch ever existed. **Nothing is lost when the legacy
-  files go.** The NL/EN toggle returns when Dutch actually ships; it has to be a store
-  rather than the legacy innerHTML swap, or it goes stale on client-side navigation.
+- **`npm run preview` is trustworthy again** as of Phase 7 — `static/` no longer
+  shadows the prerendered pages. `npx serve build` remains a fine second opinion.
+- **The legacy files are gone** (Phase 7, 13 Aug 2026). The revert escape hatch is now
+  git history: they were deleted in a single commit, so `git show` recovers any of them.
+- **`src/lib/style.css` is no longer frozen** — it was unfrozen at Phase 7 item 4 and
+  gained a `PHASE 7: FORMER INLINE STYLES` section at the end. It is still 689+ lines of
+  working token-driven CSS imported once as a global, so keep changes surgical; it is in
+  `.prettierignore` so a stray format run cannot churn the whole file. The `.lang__btn`
+  rules are dead but harmless — they come back when Dutch ships.
+- **The site ships English-only, and the Dutch extraction is complete.** Verified before
+  `static/` was deleted: the 413 `data-nl` attributes there were only **190 unique
+  strings** — 22 nav/menu/footer chrome repeated across all nine files, 168 page-specific.
+  [nl.json](src/lib/messages/nl.json) holds 244 keys, 46 deliberately empty where no Dutch
+  ever existed. **Nothing was lost.** The NL/EN toggle returns when Dutch actually ships;
+  it has to be a store rather than the legacy innerHTML swap, or it goes stale on
+  client-side navigation.
 - **Everything year-shaped derives from `EVENT_DATE`** in `config.ts`. Never type a year
-  into a page. Event year is 2027; the 2026s in `static/` are stale.
+  into a page. Event year is 2027.
 - **Screenshots in `screenshots/` are the legacy site**, captured with reveals triggered.
   When diffing, expect two intentional differences: the NL/EN toggle is present in the
   baselines but gone from the migrated site, and baselines read 2015–2026 on sub-pages
   while the migrated site correctly reads 2015–2027. See [screenshots/README.md](screenshots/README.md).
-- **Prettier and ESLint are deliberately not installed** until Phase 7, so formatting
-  churn doesn't bury real changes.
+- **Prettier and ESLint are installed** as of Phase 7 — `npm run format`, `npm run lint`.
+  Four Svelte rules are off on purpose, each with its reasoning in
+  [eslint.config.js](eslint.config.js); read that before switching any back on.
 - **The smoke test asserts `toBeAttached`, not `toBeVisible`.** `reveal()` parks content
   at `autoAlpha:0` until its ScrollTrigger fires, which also removes it from the
   accessibility tree — so `getByRole` finds nothing and visibility assertions would be
@@ -199,8 +282,9 @@ correct, client-side navigation and the logo all stay inside the sub-path.
   `index.html` and every page answers with the home page.
 - **`npm test` builds before it tests, on purpose.** `serve` reads `build/` off disk, so
   a rebuild running alongside it serves half-written HTML and fails a route at random.
-- **Twelve static inline `style=` attributes survive the port**, carried over verbatim
-  because `style.css` is frozen until Phase 7. Listed under Phase 7 item 4 above.
+- **One inline `style=` remains in `src/`** — `Preloader.svelte`'s computed
+  `transform: scaleX()`. The other twelve moved into `style.css` at Phase 7. If a new
+  static `style=` appears, it belongs in the stylesheet instead.
 - **The smoke test got slower when the home page landed, and that is the harness.**
   Route tests went from ~1s to ~10s under 8 parallel workers, because three of them
   now spin up a WebGL context on the same machine; run alone, `/sponsors` is still
@@ -213,11 +297,13 @@ correct, client-side navigation and the logo all stay inside the sub-path.
 
 ```bash
 npm run dev          # development
-npm run check        # svelte-check — expect 0 errors
+npm run check        # svelte-check — expect 0 errors, 0 warnings
+npm run lint         # prettier --check + eslint — expect both clean
+npm run format       # prettier --write
 npm run build        # prerenders all nine routes; this is what proves SSR guards
 npm test             # build + Playwright smoke test — expect 15 passed
-npx serve build      # verify the real output (NOT npm run preview)
-npx serve static     # the legacy site, for comparison
+npm run preview      # trustworthy again since Phase 7
+npx serve build      # second opinion on the real output
 
 # Reproduce the Pages build locally. Note: PowerShell, not Git Bash —
 # bash mangles a leading-slash env var into a Windows path.

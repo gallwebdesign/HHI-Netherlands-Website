@@ -76,7 +76,9 @@ Behaviour is attached declaratively via data attributes, so new markup opts in w
 
 ### External dependencies
 
-Registration (`hhi-netherlands.com/registration.php`), ticketing (`shop.compoticketing.eu`), and media images (`hhi-netherlands.com/img/...`) all point at the legacy production host. Media images carry `onerror="this.remove()"` so broken ones disappear rather than showing a placeholder. There are no local image assets in this repo.
+Media images (`hhi-netherlands.com/img/...`) point at the legacy production host and carry `onerror="this.remove()"` so broken ones disappear rather than showing a placeholder. There are no local image assets in this repo.
+
+Off-site destinations live in `EXTERNAL` in [src/lib/config.ts](src/lib/config.ts), not in the markup. Ticketing is `shop.celebratix.io` (**not** the older `shop.compoticketing.eu`). Registration is moving to two JotForms, one per event day — see `MIGRATION-STATUS.md`, which is the authoritative note on what is confirmed and what still points at the dying host.
 
 ## Conventions
 

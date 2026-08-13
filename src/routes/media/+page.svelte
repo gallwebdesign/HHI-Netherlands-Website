@@ -67,7 +67,7 @@
 	<section class="section">
 		<!-- Inline overrides carried over from the legacy markup; style.css is
 		     frozen until Phase 7, so the rules have nowhere else to live yet. -->
-		<div class="media__head" style="padding:0; margin-bottom:34px;">
+		<div class="media__head media__head--flush">
 			<p class="tag" {@attach reveal()}>Videos</p>
 			<a
 				class="btn btn--ghost btn--sm"

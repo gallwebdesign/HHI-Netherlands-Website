@@ -5,7 +5,15 @@
 	import StageFloor from '$lib/components/StageFloor.svelte';
 	import { DIVISIONS, ROAD_PANELS, STATS, TEASER_PHOTOS, TICKER_ITEMS } from '$lib/data/home';
 	import { EVENT_YEAR, EXTERNAL } from '$lib/config';
-	import { count, heroFade, heroRow, magnetic, reveal, roadPin, tilt } from '$lib/attachments.svelte';
+	import {
+		count,
+		heroFade,
+		heroRow,
+		magnetic,
+		reveal,
+		roadPin,
+		tilt
+	} from '$lib/attachments.svelte';
 
 	/* The hero entrance waits for the curtain to lift, so the two are not
 	   animating over each other. Preloader guarantees this fires — see the
@@ -50,8 +58,8 @@
 			</h1>
 			<div class="hero__meta">
 				<p class="hero__lede" {@attach heroFade(1, heroReady)}>
-					The official national qualifier of <strong>Hip Hop International</strong>. Crews battle for
-					the Dutch title — and the winners carry the flag to the
+					The official national qualifier of <strong>Hip Hop International</strong>. Crews battle
+					for the Dutch title — and the winners carry the flag to the
 					<strong>World Hip Hop Dance Championship</strong>.
 				</p>
 				<Countdown heroEntrance ready={heroReady} />
@@ -90,13 +98,13 @@
 			</blockquote>
 			<div class="about__body">
 				<p {@attach reveal()}>
-					<strong>Hip Hop International Netherlands</strong> runs the official Dutch edition of the
-					world’s biggest street-dance championship. One stage, every style — from popping and
-					breaking to choreo — judged by the international HHI rulebook.
+					<strong>Hip Hop International Netherlands</strong> runs the official Dutch edition of the world’s
+					biggest street-dance championship. One stage, every style — from popping and breaking to choreo
+					— judged by the international HHI rulebook.
 				</p>
 				<p {@attach reveal()}>
-					Since 2015 we’ve sent the country’s best crews to face the world. This is where Dutch crews
-					are made, tested, and crowned.
+					Since 2015 we’ve sent the country’s best crews to face the world. This is where Dutch
+					crews are made, tested, and crowned.
 				</p>
 				<div class="about__stats">
 					{#each STATS as stat (stat.label)}
@@ -159,9 +167,7 @@
 				<p class="tag" {@attach reveal()}>Media</p>
 				<h2 class="h2" {@attach reveal()}>Last year <span class="hollow">was loud.</span></h2>
 			</div>
-			<!-- Inline layout carried over from the legacy markup; style.css is
-			     frozen until Phase 7, so the rule has nowhere else to live yet. -->
-			<div style="display: flex; gap: 12px; flex-wrap: wrap" {@attach reveal()}>
+			<div class="btn-row" {@attach reveal()}>
 				<a class="btn btn--ghost btn--sm" {@attach magnetic()} href="{base}/media"
 					>All photos &amp; videos</a
 				>
@@ -187,8 +193,8 @@
 	<section class="cta" id="register">
 		<h2 class="h2" {@attach reveal()}>Ready? <span class="accent">Prove it.</span></h2>
 		<p {@attach reveal()}>
-			Registration for the Netherlands Hip Hop Dance Championship {EVENT_YEAR} is open. Lock in your
-			crew before the bracket fills.
+			Registration for the Netherlands Hip Hop Dance Championship {EVENT_YEAR} is open. Lock in your crew
+			before the bracket fills.
 		</p>
 		<div class="cta__btns" {@attach reveal()}>
 			<a

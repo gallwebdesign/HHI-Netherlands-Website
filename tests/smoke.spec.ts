@@ -18,7 +18,6 @@ const ROUTES = [
 	'/results'
 ];
 
-
 for (const route of ROUTES) {
 	test(`${route} serves, has a title, and logs no console errors`, async ({ page }) => {
 		const problems: string[] = [];

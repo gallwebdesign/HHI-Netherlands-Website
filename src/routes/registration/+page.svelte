@@ -53,7 +53,7 @@
 		<h2 class="h2" {@attach reveal()}>The <span class="accent">checklist.</span></h2>
 		<!-- Inline sizing carried over from the legacy markup; style.css is
 		     frozen until Phase 7, so the rule has nowhere else to live yet. -->
-		<ul class="check" style="margin-top:36px; max-width:760px;">
+		<ul class="check check--narrow">
 			{#each CHECKLIST as item (item.label)}
 				<li {@attach reveal()}><b>{item.label}</b> <span>{item.body}</span></li>
 			{/each}

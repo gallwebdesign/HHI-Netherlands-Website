@@ -1,0 +1,19 @@
+# Build output and generated files
+build/
+.svelte-kit/
+node_modules/
+test-results/
+package-lock.json
+
+# Legacy site snapshots — captured artefacts, not source.
+screenshots/
+
+# Prose, hand-wrapped for readable diffs. Prettier reflows Markdown
+# paragraphs and tables, which churns lines nobody edited.
+*.md
+
+
+# 689 lines of working token-driven CSS ported verbatim from the legacy
+# site. Reformatting it wholesale would bury any real future change in
+# whitespace noise.
+src/lib/style.css

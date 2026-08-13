@@ -31,8 +31,8 @@
 			<div class="about__body">
 				<p {@attach reveal()}>
 					<strong>Hip Hop International</strong>, founded in Los Angeles in 2002, produces the World
-					Hip Hop Dance Championship — the biggest street-dance competition on the planet, with crews
-					from over fifty countries.
+					Hip Hop Dance Championship — the biggest street-dance competition on the planet, with
+					crews from over fifty countries.
 				</p>
 				<p {@attach reveal()}>
 					As the official license holder we bring that world stage to the Netherlands: one fair,
@@ -46,7 +46,7 @@
 		<p class="tag" {@attach reveal()}>What we do</p>
 		<!-- Inline offset carried over from the legacy markup; style.css is
 		     frozen until Phase 7, so the rule has nowhere else to live yet. -->
-		<div class="org-grid" style="margin-top:10px;">
+		<div class="org-grid org-grid--offset">
 			{#each ORG_CARDS as card (card.title)}
 				<div class="org-card" {@attach reveal()}>
 					<p class="division__age">{card.tag}</p>
