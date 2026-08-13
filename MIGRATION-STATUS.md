@@ -4,15 +4,51 @@ Working notes for the static HTML → SvelteKit migration.
 Last updated **13 August 2026**, Phase 7 items 2–5 complete.
 
 Plan: <https://claude.ai/code/artifact/b42e8908-c534-4c72-8ef2-7a465a78ad28>
-Branch: **`main`** — the migration was merged there in PR #2. Working tree clean,
-everything pushed, `sveltekit-migration` merged and safe to delete.
+Branch: **`main`** — the migration was merged there in PR #2. Working tree clean;
+`sveltekit-migration` merged and safe to delete.
+
+> ⚠️ **`main` is 3 commits ahead of `origin/main` — nothing is pushed.**
+> `796b858` (previous session), `60703a7` and `5b7e9f0` (13 Aug). Pushing was not
+> requested, so it was not done. **Push before anything else tomorrow**, or the
+> Pages preview stays on the pre-Phase-7 build and this note goes stale on disk.
+
+## ▶ Start here on 14 August 2026
+
+Everything below is written up in full; this is the short version.
+
+**Do these in order. None of them needs the Cloud86 plan to exist yet.**
+
+1. **`git push`** — see the warning above.
+2. **Rescue the eight media photos from the old domain.** *This is the only task
+   with an external deadline* — they live on `hhi-netherlands.com/img/...`, there
+   are no images in this repo, and they vanish when the old site is switched off.
+   Do it first for that reason alone. It also feeds item 3 of the open questions
+   (favicon and social preview still have no source).
+3. **Build the registration hub** — the two JotForms into `/registration`, and
+   repoint the six CTAs. Fully specified under *External links* below.
+4. **Write `static/.htaccess`** — the nine legacy `.html` → clean-route 301s.
+   Can be written and committed now; can only be *verified* once Cloud86 is live.
+
+**Explicitly NOT tomorrow, and why** — agreed with Iain 13 Aug:
+
+- **Do not delete [.github/workflows/pages.yml](.github/workflows/pages.yml).** It
+  is the only deployed staging environment that exists. Deleting it before Cloud86
+  is live leaves no preview anywhere during the gap. It goes on cutover day.
+- **Do not strip the base-path handling.** `BASE_PATH`, `withBase()` and
+  `Nav.isActive`'s base-stripping are what make the Pages preview work, and they
+  are already no-ops when `BASE_PATH` is unset. The cutover is "stop setting the
+  env var and delete the workflow", *not* a code change. These two items are one
+  task, and it belongs to cutover day.
+- **Contact form and `CONTACT_EMAIL`** — both need the real mailbox to exist.
+  Phase 8.
 
 ## Where we stopped
 
-**Phases 0–6 are complete, pushed, and deployed**, and **Phase 7 items 2–5 are
-done**. All nine routes are ported. What remains in Phase 7 is the URL cutover
-(item 1), which is no longer blocked — **hosting is settled: Cloud86** (see
-below). It has not been executed yet.
+**Phases 0–6 are complete and deployed**, and **Phase 7 items 2–5 are done**
+locally but **not yet pushed** (see the warning at the top — the deployed Pages
+build is still pre-Phase-7). All nine routes are ported. What remains in Phase 7
+is the URL cutover (item 1), which is no longer blocked — **hosting is settled:
+Cloud86** (see below). It has not been executed yet.
 
 | Phase | State |
 |---|---|
@@ -83,6 +119,22 @@ Both `npx serve build` and GitHub Pages resolve `/sponsors` → `sponsors.html` 
 themselves, which is why the smoke test and preview pass. That is those servers
 being helpful; it is **not** evidence about Cloud86, and it does nothing about
 already-indexed inbound `.html` links.
+
+### What needs the plan, and what does not
+
+Asked by Iain 13 Aug 2026: *can all of this be done before buying?* Mostly, but
+not entirely — the split is what drives the running order at the top of this file.
+
+| Task | Before the plan? |
+|---|---|
+| Registration hub (two JotForms) | ✅ fully — external URLs, no host involved |
+| Rescue the eight media photos | ✅ fully — **and it has a deadline** |
+| Write `static/.htaccess` | ⚠️ write yes, **verify no** — syntax is standard Apache, but whether LiteSpeed applies it as expected on Cloud86's config is untestable until the account exists |
+| `regulations` → local PDF | ⚠️ partly — the dependency can be removed, but only once the PDF exists |
+| Delete the Pages workflow | ❌ hold — it is the only staging environment; deleting it early leaves no preview at all |
+| Stop setting `BASE_PATH` | ❌ hold — same task as the workflow. The two are in tension: the workflow *sets* `BASE_PATH` because Pages serves from a sub-path, so removing base handling early breaks the preview |
+| `CONTACT_EMAIL` becomes real | ❌ needs the mailbox to exist |
+| Real contact form (PHP) | ❌ needs somewhere to run — Phase 8 |
 
 ## Phase 7 — items 2–5, done 13 August 2026
 
@@ -201,6 +253,37 @@ correct, client-side navigation and the logo all stay inside the sub-path.
   [results.ts](src/lib/data/results.ts) — filling in the real archive is now a data
   edit. Do not invent champions.
 
+## Media photos — rescue before the old host goes (deadline task)
+
+**There are no image assets in this repo.** Every photo is hot-linked from
+`hhi-netherlands.com/img/...`, which disappears when the legacy site is switched
+off. Nothing here is recoverable afterwards, so this is the one task with an
+external deadline.
+
+**Eight unique files**, defined by `PHOTO_IDS` in
+[media.ts](src/lib/data/media.ts) — earlier notes said "eleven", which conflated
+the eight photos with the three YouTube embeds. The videos are on YouTube and are
+not at risk.
+
+```
+slideshow-v0.jpg    slideshow-v1.jpg    slideshow-v2.jpg    slideshow-v120.jpg
+slideshow-v130.jpg  slideshow-v160.jpg  slideshow-v190.jpg  slideshow-v200.jpg
+```
+
+The home page's media teaser in [home.ts](src/lib/data/home.ts) reuses four of
+these (`v1`, `v120`, `v160`, `v190`) — same files, no extra downloads.
+
+Plan: pull all eight into `static/img/`, repoint `media.ts` and `home.ts` at
+local paths, and drop the absolute host from both. Worth checking the source
+resolution while doing it: they are the only real photography the site has, and
+the favicon / social-preview gap (open question 3) may be solvable from the same
+material.
+
+Note the smoke test currently **tolerates** these 404ing — `smoke.spec.ts` filters
+`slideshow-v\d+\.jpg` out of the console-error assertion precisely because the
+legacy host is unreliable. Once the images are local that filter should come out,
+so a genuinely missing image fails the test again.
+
 ## External links — confirmed 13 August 2026
 
 **Registration is two JotForms, one per day** (Iain, 13 Aug 2026):
@@ -240,8 +323,9 @@ Phase 8, and Cloud86's PHP means it can be a real form.
 2. **Contact address** — `CONTACT_EMAIL` in [config.ts](src/lib/config.ts) is still
    a guess, but **stops being one at Cloud86**: the mailbox gets created by hand, so
    `info@hhi-netherlands.com` becomes true by construction. Confirm on setup.
-3. **No images in the repo** — favicon and social preview need a source; the eleven
-   media photos can be pulled off the old domain **before it disappears**.
+3. **No images in the repo** — favicon and social preview need a source. The eight
+   media photos must be pulled off the old domain **before it disappears**, and may
+   solve the favicon problem too; see the media-photos section above.
 4. **Division split across the two event days** — not needed to ship, but it now also
    gates how much the registration hub can say, not just the events schedule.
 
