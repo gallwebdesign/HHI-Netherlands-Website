@@ -37,6 +37,14 @@ export const FOUNDED_YEAR = 2015;
 /** TODO: confirm the real inbox before relying on this. */
 export const CONTACT_EMAIL = 'info@hhi-netherlands.com';
 
+/** Canonical origin, no trailing slash. Open Graph requires absolute URLs —
+ *  a root-relative og:image is ignored by every scraper — so this is the one
+ *  place the production domain is written down. It is the live domain today
+ *  and stays correct after the Cloud86 cutover, since the domain moves with
+ *  the site. Only the GitHub Pages preview serves from elsewhere, and that
+ *  is staging, which should not be sharing preview cards anyway. */
+export const SITE_URL = 'https://hhi-netherlands.com';
+
 /** Registration is two JotForms. They split by **competition, not by day** —
  *  confirmed 14 Aug 2026 from the live forms, whose own titles read "HHI Open
  *  Division Registration Form 2027" and "Netherlands HHDC Registration Form

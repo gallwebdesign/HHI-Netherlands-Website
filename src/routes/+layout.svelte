@@ -1,14 +1,28 @@
 <script lang="ts">
 	import '$lib/style.css';
+	/* The logo's front plate alone, cropped to a square canvas from
+	   static/img/Hip Hop International Logo.svg. The full lockup is two
+	   overlapping plates plus the NETHERLANDS wordmark and turns to mush
+	   below ~32px; the single plate stays legible in a tab. This replaced
+	   the stock Svelte logo the scaffold shipped with. */
 	import favicon from '$lib/assets/favicon.svg';
 	import Nav from '$lib/components/Nav.svelte';
 	import MobileMenu from '$lib/components/MobileMenu.svelte';
 	import Footer from '$lib/components/Footer.svelte';
 	import Cursor from '$lib/components/Cursor.svelte';
 	import { page } from '$app/state';
+	import { EVENT_DATE_RANGE, EVENT_VENUE, SITE_URL } from '$lib/config';
 	import { loadScrollTrigger, prefersReducedMotion } from '$lib/motion.svelte';
 
 	let { children } = $props();
+
+	/* Built from page.route.id, not page.url.pathname. The pathname carries
+	   the base path under the GitHub Pages sub-path build, which would emit a
+	   canonical of hhi-netherlands.com/HHI-Netherlands-Website/sponsors — a URL
+	   that does not exist on the real domain. route.id is always the bare
+	   route ('/sponsors'), base path or not. Trailing slash stripped so the
+	   home route canonicalises to the bare origin rather than origin + '/'. */
+	const canonicalPath = $derived((page.route.id ?? '/').replace(/\/$/, ''));
 
 	/* Reduced motion gets its own class, as in the original. Note there is no
 	   longer a .gsap-ready equivalent: reveals are attachments that set their
@@ -41,6 +55,23 @@
 
 <svelte:head>
 	<link rel="icon" href={favicon} />
+	<!-- Open Graph. Deliberately no og:title or og:description here: every
+	     page sets its own <title> and description, and scrapers fall back to
+	     those. Duplicating them in the layout would override each page's with
+	     one generic pair. og:image must be absolute — a root-relative path is
+	     ignored by every scraper. -->
+	<meta property="og:type" content="website" />
+	<meta property="og:site_name" content="HHI Netherlands" />
+	<meta property="og:url" content="{SITE_URL}{canonicalPath}" />
+	<link rel="canonical" href="{SITE_URL}{canonicalPath}" />
+	<meta property="og:image" content="{SITE_URL}/og-image.png" />
+	<meta property="og:image:width" content="1200" />
+	<meta property="og:image:height" content="630" />
+	<meta
+		property="og:image:alt"
+		content="Hip Hop International Netherlands — {EVENT_DATE_RANGE} at {EVENT_VENUE}"
+	/>
+	<meta name="twitter:card" content="summary_large_image" />
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
 	<link
