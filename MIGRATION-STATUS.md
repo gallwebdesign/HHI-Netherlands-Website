@@ -1,7 +1,8 @@
 # Migration status
 
 Working notes for the static HTML → SvelteKit migration.
-Last updated **14 August 2026**, media photos rescued.
+Last updated **14 August 2026** — media photos rescued, registration hub built,
+favicon and social preview shipped.
 
 Plan: <https://claude.ai/code/artifact/b42e8908-c534-4c72-8ef2-7a465a78ad28>
 Branch: **`main`** — the migration was merged there in PR #2. Working tree clean;
@@ -18,11 +19,15 @@ Everything below is written up in full; this is the short version.
    all eight are in `static/img/` and the old host is no longer referenced. See
    the media section below. Note it did **not** solve the favicon gap: they are
    2000 × 600 banners, so open question 3 is still open.
-3. **Build the registration hub** — the two JotForms into `/registration`, and
-   repoint the six CTAs. Fully specified under *External links* below.
-   **← next up.**
+3. ~~**Build the registration hub**~~ ✅ **done 14 Aug** — see *Registration hub*
+   below. Note the two forms split by **competition, not by day**; the earlier
+   "one form per day" note was wrong.
 4. **Write `static/.htaccess`** — the nine legacy `.html` → clean-route 301s.
    Can be written and committed now; can only be *verified* once Cloud86 is live.
+   **← next up, and the last item that does not need the Cloud86 account.**
+
+Also done 14 Aug, unplanned: **favicon and social preview** (open question 3),
+once Iain supplied the logo. See *Brand assets* below.
 
 **Explicitly NOT tomorrow, and why** — agreed with Iain 13 Aug:
 
@@ -40,10 +45,13 @@ Everything below is written up in full; this is the short version.
 ## Where we stopped
 
 **Phases 0–6 are complete and deployed**, and **Phase 7 items 2–5 are done**
-locally but **not yet pushed** (see the warning at the top — the deployed Pages
-build is still pre-Phase-7). All nine routes are ported. What remains in Phase 7
-is the URL cutover (item 1), which is no longer blocked — **hosting is settled:
-Cloud86** (see below). It has not been executed yet.
+and pushed. All nine routes are ported. What remains in Phase 7 is the URL
+cutover (item 1), which is no longer blocked — **hosting is settled: Cloud86**
+(see below). It has not been executed yet.
+
+Since then, on 14 Aug: the media photos are rescued, the registration hub is
+built, and the favicon and social preview have shipped. The only pre-purchase
+task left is `static/.htaccess`.
 
 | Phase | State |
 |---|---|
@@ -55,7 +63,7 @@ Cloud86** (see below). It has not been executed yet.
 | 5 · Remaining sub-pages | ✅ all six ported, smoke test green |
 | 6 · index.html | ✅ hero, stage floor, preloader, road pin, all sections |
 | 7 · Delete old site | 🟨 items 2–5 done; **item 1, the cutover, is next** |
-| 8 · Finish "fully functional" | ⬜ |
+| 8 · Finish "fully functional" | 🟨 registration hub, favicon + social preview done; contact form and `CONTACT_EMAIL` still need the mailbox |
 
 ## Hosting — decided: Cloud86 (13 Aug 2026)
 
@@ -289,23 +297,73 @@ At 2000 × 600 they are 3.33:1 letterbox banners: unusable for a square favicon,
 and a social preview at 1.91:1 would need a deliberate crop of someone's choosing.
 A real logo asset is still needed.
 
+## Brand assets — ✅ 14 August 2026
+
+**`static/img/Hip Hop International Logo.svg`** — the official logo, supplied by
+Iain. A true vector: 23 paths, no embedded raster, no `<text>`. Its orange is
+`#ff4d00`, which is exactly `--oranje` — the site was designed around this asset.
+The SVG has usefully named groups (`HipHop_Front`, `Netherlands`,
+`Red_Border_White_Fill_Tags`, …), which is what made the favicon crop possible.
+
+**Favicon** — `src/lib/assets/favicon.svg`, the logo's **front plate alone** on a
+square canvas. The full lockup is two overlapping rotated plates plus the
+NETHERLANDS wordmark; below ~32px it is an orange smudge. Verified by rendering
+at 180/64/32/16px on dark and light grounds. **This replaced the stock Svelte
+logo** — the scaffold's default had been shipping as the site's favicon all along.
+
+**Social preview** — `static/og-image.png`, 1200 × 630, the full logo over
+`--ink` with the date and venue **read out of `config.ts`**, not typed in.
+
+Both were produced by throwaway Node scripts (Playwright renders the PNG, so no
+image dependency was added). The scripts are not in the repo: regenerating is a
+once-a-year job and the inputs are all recorded here.
+
+**One trap worth remembering.** `og:url` and `rel="canonical"` are built from
+`page.route.id`, **not** `page.url.pathname`. The pathname carries the base path
+under the Pages build, which emitted
+`hhi-netherlands.com/HHI-Netherlands-Website/sponsors` — a URL that does not exist
+on the real domain. `route.id` is always the bare route. Verified both build modes
+now emit identical canonicals.
+
+`SITE_URL` is new in `config.ts`: Open Graph ignores root-relative image paths, so
+the production domain has to be written down exactly once.
+
 ## External links — confirmed 13 August 2026
 
-**Registration is two JotForms, one per day** (Iain, 13 Aug 2026):
+## Registration hub — ✅ built 14 August 2026
 
-- Saturday — <https://form.jotform.com/262132162311946>
-- Sunday — <https://form.jotform.com/262132296237961>
+**Correction to the 13 Aug note.** These are *not* a Saturday form and a Sunday
+form. Both were fetched on 14 Aug and their own titles are:
 
-**Not yet wired in.** `EXTERNAL.registration` in [config.ts](src/lib/config.ts) is
-still the single legacy `registration.php` link, used in **six places**: the home
-hero and its road CTA, `/events`, `/registration` twice, and `MobileMenu`.
+- **Netherlands HHDC** — <https://form.jotform.com/262132296237961>
+  ("Netherlands HHDC Registration Form 2027")
+- **HHI Open Division** — <https://form.jotform.com/262132162311946>
+  ("HHI Open Division Registration Form 2027")
 
-**Agreed shape (Iain, 13 Aug 2026): a hub on `/registration`.** The nav, hero and
-mobile-menu CTAs keep one "Register" button pointing at `/registration`; that page
-presents both day links side by side with context. Chosen over doubling all six
-CTAs because **which divisions dance on which day is still unknown** — asking a
-crew to pick a day is asking something they cannot yet answer, so the two links
-need a page with room to explain that.
+**They split by competition, not by event day.** Both return 200. The day framing
+was wrong and appears nowhere on the site; a smoke test asserts the cards never
+say Saturday or Sunday, so it cannot creep back.
+
+This also *dissolves* the problem the hub was designed around — a crew picks by
+what they are entering, which they know, not by a day nobody has announced.
+
+**Shape as built:** all six CTAs (home hero, home closing CTA, `/events`,
+`/registration` ×2, `MobileMenu`) point at `/registration`. Only the hub links
+out to a form. `EXTERNAL.registration` is gone, replaced by `REGISTRATION_FORMS`
+and `REGISTRATION_HUB` in [config.ts](src/lib/config.ts).
+
+The unannounced day split is still addressed on the page — a notice says the
+programme decides which divisions dance when, rather than implying a crew should
+already know. Delete that notice when the schedule lands.
+
+Two details worth keeping in mind:
+
+- **The `MobileMenu` CTA is internal now, so it needed `menu.close()`.** Client-side
+  navigation would otherwise leave the panel open on top of the destination.
+- **A pre-existing `.check` layout bug was fixed here**, found only by looking at
+  the page in a browser: the `li` is a two-column grid with *three* children (the
+  `::before` marker, `<b>`, `<span>`), so the span was pushed into an implicit
+  ~26px third column and the body text wrapped one word per line.
 
 **Ticketing is already correct.** `EXTERNAL.tickets` is
 `https://shop.celebratix.io/?c=2mdtq`, matching what Iain confirmed. The
@@ -328,19 +386,27 @@ Phase 8, and Cloud86's PHP means it can be a real form.
 2. **Contact address** — `CONTACT_EMAIL` in [config.ts](src/lib/config.ts) is still
    a guess, but **stops being one at Cloud86**: the mailbox gets created by hand, so
    `info@hhi-netherlands.com` becomes true by construction. Confirm on setup.
-3. **Favicon and social preview still need a source.** The eight media photos are
-   now safely in the repo (14 Aug) but **do not solve this** — at 2000 × 600 they
-   are letterbox banners, wrong for a square favicon and needing a judgement-call
-   crop for a 1.91:1 social card. What is actually needed is a **logo asset**:
-   ideally an SVG or a square PNG ≥512px. Ask Iain whether one exists.
+3. ~~**Favicon and social preview**~~ — ✅ **settled 14 Aug 2026.** Iain supplied
+   the official logo as a true vector. See *Brand assets* below.
 4. **Division split across the two event days** — not needed to ship, but it now also
    gates how much the registration hub can say, not just the events schedule.
 
 ## Things to remember
 
-- **`static/img/` is irreplaceable.** The eight photos there are the only copy in
-  existence — the host they came from is being switched off. Never "clean" that
-  directory, and never treat it as build output.
+- **`static/img/` is irreplaceable.** The eight photos and the logo SVG there are
+  the only copies in existence — the host the photos came from is being switched
+  off. Never "clean" that directory, and never treat it as build output.
+- **The smoke test exempts third-party origins only, and by origin — not by
+  resource type.** `fonts.gstatic.com` intermittently 404s a `.woff2` (seen ~1 run
+  in 3, and it fails a *different* page each time, which is what makes it look
+  like a real regression). Anything served from our own origin still fails the
+  test. Do not widen that filter to silence a local asset: verified by deleting an
+  image from `build/` and confirming the test fails and names the URL.
+- **Chrome's console message for a failed request does not include the URL** — it
+  is literally `Failed to load resource: … 404 ()`. The smoke test therefore
+  tracks requests through the `response` event, which does carry it, and drops the
+  matching console line so one failure is not counted twice. Without this a 404 is
+  untraceable and cannot be attributed to an origin.
 - **Image paths must go through `withBase()`.** Both `media.ts` and `home.ts` bind
   `src` from a variable, and Kit only rewrites root-relative paths written literally
   in markup. A raw `/img/…` there silently 404s on the Pages sub-path while looking
@@ -399,7 +465,7 @@ npm run check        # svelte-check — expect 0 errors, 0 warnings
 npm run lint         # prettier --check + eslint — expect both clean
 npm run format       # prettier --write
 npm run build        # prerenders all nine routes; this is what proves SSR guards
-npm test             # build + Playwright smoke test — expect 15 passed
+npm test             # build + Playwright smoke test — expect 17 passed
 npm run preview      # trustworthy again since Phase 7
 npx serve build      # second opinion on the real output
 
