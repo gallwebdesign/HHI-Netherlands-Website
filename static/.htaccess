@@ -1,0 +1,67 @@
+# ============================================================
+# HHI Netherlands — legacy URL redirects
+#
+# The old site was PHP and is indexed at .php URLs. The migrated
+# site serves clean routes (/sponsors), so without these rules
+# every inbound link from search results, socials and press
+# 404s once the legacy host is switched off.
+#
+# WRITTEN 14 Aug 2026, NOT YET VERIFIED ON THE REAL HOST.
+# Cloud86 runs LiteSpeed, which reads Apache .htaccess, but
+# whether it applies these as expected on their configuration is
+# untestable until the account exists. Verify on cutover day:
+#   curl -sI https://hhi-netherlands.com/sponsors.php
+#   -> expect 301 with Location: /sponsors
+#
+# The legacy URLs below were taken from the live site's own nav
+# on 14 Aug 2026, not guessed. Note it is .php that matters:
+# the .html variants answer 200 but serve a 43-byte stub, and
+# so does any nonexistent name, so .html was never a real URL.
+# ============================================================
+
+RewriteEngine On
+
+# --- Main pages -------------------------------------------------
+# One line per legacy page. R=301 (permanent) so search engines
+# transfer ranking rather than treating these as temporary.
+RewriteRule ^index\.php$           /               [R=301,L]
+RewriteRule ^events\.php$          /events         [R=301,L]
+RewriteRule ^registration\.php$    /registration   [R=301,L]
+RewriteRule ^organisation\.php$    /organisation   [R=301,L]
+RewriteRule ^sponsors\.php$        /sponsors       [R=301,L]
+RewriteRule ^contact\.php$         /contact        [R=301,L]
+RewriteRule ^regulations\.php$     /regulations    [R=301,L]
+RewriteRule ^results\.php$         /results        [R=301,L]
+
+# The legacy site split media across two pages; the migrated site
+# has one /media route covering both photos and videos.
+RewriteRule ^photos\.php$          /media          [R=301,L]
+RewriteRule ^videos\.php$          /media          [R=301,L]
+
+# Ticketing was its own page that only embedded the ticket shop.
+# It pointed at the OLD shop.compoticketing.eu; the current shop
+# is shop.celebratix.io, which is off-site, so this cannot go to
+# a local route. Sent to /events, which carries the tickets CTA.
+RewriteRule ^tickets\.php$         /events         [R=301,L]
+
+# --- Photo archive ----------------------------------------------
+# 71 gallery pages (hhi2010.php … hhinl2026m.php) holding ~8,163
+# photos. The migrated site has no equivalent route, so these
+# collapse to /media rather than 404. If the archive is ever
+# republished, give it real routes and replace this rule.
+RewriteRule ^hhi(nl)?[0-9]{4}[a-z]?\.php$  /media  [R=301,L]
+
+# --- Privacy policy ---------------------------------------------
+# Still an external link in the footer (EXTERNAL.privacy) and has
+# no migrated route yet. Left deliberately unredirected: sending
+# it to the home page would be worse than a 404, since a privacy
+# policy is a legal document people go looking for specifically.
+# Give it a route, then add the rule.
+
+# --- Trailing .html ---------------------------------------------
+# The .html URLs never served real content, but they were linked
+# often enough over the years to be worth catching. Handled with
+# one rule rather than nine, since the mapping is identical.
+RewriteRule ^(events|registration|organisation|sponsors|contact|regulations|results)\.html$  /$1  [R=301,L]
+RewriteRule ^(index|home)\.html$   /               [R=301,L]
+RewriteRule ^(photos|videos|media)\.html$  /media  [R=301,L]
