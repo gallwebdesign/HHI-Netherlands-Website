@@ -76,7 +76,7 @@ Behaviour is attached declaratively via data attributes, so new markup opts in w
 
 ### External dependencies
 
-Media images (`hhi-netherlands.com/img/...`) point at the legacy production host and carry `onerror="this.remove()"` so broken ones disappear rather than showing a placeholder. There are no local image assets in this repo.
+Media images live in `static/img/` — eight 2000×600 JPEGs, rescued off the legacy host on 14 Aug 2026 before it was switched off. **There is no other copy of these files**; they are the only real photography the site has. They are referenced through `withBase()` in [media.ts](src/lib/data/media.ts) and [home.ts](src/lib/data/home.ts), because the pages bind `src` from a variable and Kit only rewrites root-relative paths written literally in markup. Each page keeps a load guard that hides a failed image's whole `<figure>` rather than leaving a gap.
 
 Off-site destinations live in `EXTERNAL` in [src/lib/config.ts](src/lib/config.ts), not in the markup. Ticketing is `shop.celebratix.io` (**not** the older `shop.compoticketing.eu`). Registration is moving to two JotForms, one per event day — see `MIGRATION-STATUS.md`, which is the authoritative note on what is confirmed and what still points at the dying host.
 

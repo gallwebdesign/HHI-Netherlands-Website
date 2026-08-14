@@ -10,7 +10,7 @@
    ticker and the road panels stay correct when the date moves.
    ============================================================ */
 
-import { EVENT_YEAR } from '$lib/config';
+import { EVENT_YEAR, withBase } from '$lib/config';
 
 export interface Division {
 	/** Age band, e.g. "Ages 7–12". */
@@ -114,7 +114,7 @@ export const TICKER_ITEMS: string[] = [
 ];
 
 export interface TeaserPhoto {
-	/** Absolute URL on the legacy host. */
+	/** Root-relative path under static/, already base-prefixed. */
 	src: string;
 	/** Alt text — these are described shots, unlike the media grid. */
 	alt: string;
@@ -122,26 +122,28 @@ export interface TeaserPhoto {
 	caption: string;
 }
 
-/* Same legacy host as the media page, so the same load guard applies:
-   a failed image hides its whole figure rather than leaving a gap. */
+/* Four of the same eight files the media page uses — local since
+   14 Aug 2026, and withBase() for the same reason as there. The load
+   guard on the page stays: a failed image hides its whole figure
+   rather than leaving a gap in the row. */
 export const TEASER_PHOTOS: TeaserPhoto[] = [
 	{
-		src: 'https://hhi-netherlands.com/img/slideshow-v1.jpg',
+		src: withBase('/img/slideshow-v1.jpg'),
 		alt: 'Crew performing at the Netherlands Hip Hop Dance Championship',
 		caption: 'Nationals · Finals'
 	},
 	{
-		src: 'https://hhi-netherlands.com/img/slideshow-v120.jpg',
+		src: withBase('/img/slideshow-v120.jpg'),
 		alt: 'Dancers mid-routine on the championship stage',
 		caption: 'MegaCrew'
 	},
 	{
-		src: 'https://hhi-netherlands.com/img/slideshow-v160.jpg',
+		src: withBase('/img/slideshow-v160.jpg'),
 		alt: 'Audience and crews at the championship',
 		caption: 'The crowd'
 	},
 	{
-		src: 'https://hhi-netherlands.com/img/slideshow-v190.jpg',
+		src: withBase('/img/slideshow-v190.jpg'),
 		alt: 'Award ceremony at the Netherlands championship',
 		caption: 'Podium'
 	}

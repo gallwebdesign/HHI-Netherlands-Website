@@ -41,10 +41,11 @@ for (const route of ROUTES) {
 		   thrown inside an attachment is not missed by a fast assertion. */
 		await page.waitForLoadState('networkidle');
 
-		/* The eight gallery photos come off the legacy host and may 404.
-		   That is a known, guarded condition — not a regression. */
-		const real = problems.filter((p) => !/slideshow-v\d+\.jpg|ERR_|net::/i.test(p));
-		expect(real, `${route} should log no console errors`).toEqual([]);
+		/* No exemptions. The gallery photos used to be hot-linked off the
+		   legacy host and were filtered out here because that host was
+		   unreliable; they moved into static/img/ on 14 Aug 2026, so a
+		   missing image is now a real failure and should fail the test. */
+		expect(problems, `${route} should log no console errors`).toEqual([]);
 	});
 }
 

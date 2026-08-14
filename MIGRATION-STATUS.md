@@ -1,16 +1,11 @@
 # Migration status
 
 Working notes for the static HTML → SvelteKit migration.
-Last updated **13 August 2026**, Phase 7 items 2–5 complete.
+Last updated **14 August 2026**, media photos rescued.
 
 Plan: <https://claude.ai/code/artifact/b42e8908-c534-4c72-8ef2-7a465a78ad28>
 Branch: **`main`** — the migration was merged there in PR #2. Working tree clean;
 `sveltekit-migration` merged and safe to delete.
-
-> ⚠️ **`main` is 3 commits ahead of `origin/main` — nothing is pushed.**
-> `796b858` (previous session), `60703a7` and `5b7e9f0` (13 Aug). Pushing was not
-> requested, so it was not done. **Push before anything else tomorrow**, or the
-> Pages preview stays on the pre-Phase-7 build and this note goes stale on disk.
 
 ## ▶ Start here on 14 August 2026
 
@@ -18,14 +13,14 @@ Everything below is written up in full; this is the short version.
 
 **Do these in order. None of them needs the Cloud86 plan to exist yet.**
 
-1. **`git push`** — see the warning above.
-2. **Rescue the eight media photos from the old domain.** *This is the only task
-   with an external deadline* — they live on `hhi-netherlands.com/img/...`, there
-   are no images in this repo, and they vanish when the old site is switched off.
-   Do it first for that reason alone. It also feeds item 3 of the open questions
-   (favicon and social preview still have no source).
+1. ~~**`git push`**~~ — ✅ done; `main` and `origin/main` are level.
+2. ~~**Rescue the eight media photos from the old domain.**~~ ✅ **done 14 Aug** —
+   all eight are in `static/img/` and the old host is no longer referenced. See
+   the media section below. Note it did **not** solve the favicon gap: they are
+   2000 × 600 banners, so open question 3 is still open.
 3. **Build the registration hub** — the two JotForms into `/registration`, and
    repoint the six CTAs. Fully specified under *External links* below.
+   **← next up.**
 4. **Write `static/.htaccess`** — the nine legacy `.html` → clean-route 301s.
    Can be written and committed now; can only be *verified* once Cloud86 is live.
 
@@ -128,7 +123,7 @@ not entirely — the split is what drives the running order at the top of this f
 | Task | Before the plan? |
 |---|---|
 | Registration hub (two JotForms) | ✅ fully — external URLs, no host involved |
-| Rescue the eight media photos | ✅ fully — **and it has a deadline** |
+| ~~Rescue the eight media photos~~ | ✅ **done 14 Aug 2026** |
 | Write `static/.htaccess` | ⚠️ write yes, **verify no** — syntax is standard Apache, but whether LiteSpeed applies it as expected on Cloud86's config is untestable until the account exists |
 | `regulations` → local PDF | ⚠️ partly — the dependency can be removed, but only once the PDF exists |
 | Delete the Pages workflow | ❌ hold — it is the only staging environment; deleting it early leaves no preview at all |
@@ -253,36 +248,46 @@ correct, client-side navigation and the logo all stay inside the sub-path.
   [results.ts](src/lib/data/results.ts) — filling in the real archive is now a data
   edit. Do not invent champions.
 
-## Media photos — rescue before the old host goes (deadline task)
+## Media photos — ✅ rescued 14 August 2026
 
-**There are no image assets in this repo.** Every photo is hot-linked from
-`hhi-netherlands.com/img/...`, which disappears when the legacy site is switched
-off. Nothing here is recoverable afterwards, so this is the one task with an
-external deadline.
+**Done, and the deadline is cleared.** All eight files were pulled off
+`hhi-netherlands.com/img/...` while it was still up and now live in
+`static/img/`. **This repo is the only copy** — there is no backup anywhere else,
+so treat `static/img/` as irreplaceable source material, not build output.
 
-**Eight unique files**, defined by `PHOTO_IDS` in
-[media.ts](src/lib/data/media.ts) — earlier notes said "eleven", which conflated
-the eight photos with the three YouTube embeds. The videos are on YouTube and are
-not at risk.
+**Eight files**, all **2000 × 600**, 5.64 MB total — earlier notes said "eleven",
+which conflated the eight photos with the three YouTube embeds. The videos are on
+YouTube and were never at risk.
 
 ```
 slideshow-v0.jpg    slideshow-v1.jpg    slideshow-v2.jpg    slideshow-v120.jpg
 slideshow-v130.jpg  slideshow-v160.jpg  slideshow-v190.jpg  slideshow-v200.jpg
 ```
 
-The home page's media teaser in [home.ts](src/lib/data/home.ts) reuses four of
-these (`v1`, `v120`, `v160`, `v190`) — same files, no extra downloads.
+What changed:
 
-Plan: pull all eight into `static/img/`, repoint `media.ts` and `home.ts` at
-local paths, and drop the absolute host from both. Worth checking the source
-resolution while doing it: they are the only real photography the site has, and
-the favicon / social-preview gap (open question 3) may be solvable from the same
-material.
+- [media.ts](src/lib/data/media.ts) and [home.ts](src/lib/data/home.ts) now build
+  their paths with **`withBase('/img/…')`**, not an absolute host. `withBase()` is
+  required here for the same reason the nav needs it — both pages bind `src` from
+  a variable, and Kit only rewrites root-relative paths written *literally* in
+  markup. Verified: a `BASE_PATH` build emits
+  `src="/HHI-Netherlands-Website/img/slideshow-v0.jpg"`.
+- The home teaser reuses four of the eight (`v1`, `v120`, `v160`, `v190`) — same
+  files, no duplicates on disk.
+- **The smoke test's exemption is gone.** `smoke.spec.ts` used to filter
+  `slideshow-v\d+\.jpg|ERR_|net::` out of the console-error assertion because the
+  legacy host was unreliable. The whole filter was removed, so a missing image now
+  fails the test. The 15 passing tests mean something they did not before.
+- The load guard on both pages stays — it costs nothing and still catches a typo.
 
-Note the smoke test currently **tolerates** these 404ing — `smoke.spec.ts` filters
-`slideshow-v\d+\.jpg` out of the console-error assertion precisely because the
-legacy host is unreliable. Once the images are local that filter should come out,
-so a genuinely missing image fails the test again.
+Verified after the change: `npm run check` 0/0, `npm run lint` clean, `npm test`
+15 passed, and `build/img/` contains all eight with **no** `hhi-netherlands.com/img`
+reference left anywhere in `build/`.
+
+**The favicon / social-preview gap is *not* solved by these** (open question 3).
+At 2000 × 600 they are 3.33:1 letterbox banners: unusable for a square favicon,
+and a social preview at 1.91:1 would need a deliberate crop of someone's choosing.
+A real logo asset is still needed.
 
 ## External links — confirmed 13 August 2026
 
@@ -323,14 +328,23 @@ Phase 8, and Cloud86's PHP means it can be a real form.
 2. **Contact address** — `CONTACT_EMAIL` in [config.ts](src/lib/config.ts) is still
    a guess, but **stops being one at Cloud86**: the mailbox gets created by hand, so
    `info@hhi-netherlands.com` becomes true by construction. Confirm on setup.
-3. **No images in the repo** — favicon and social preview need a source. The eight
-   media photos must be pulled off the old domain **before it disappears**, and may
-   solve the favicon problem too; see the media-photos section above.
+3. **Favicon and social preview still need a source.** The eight media photos are
+   now safely in the repo (14 Aug) but **do not solve this** — at 2000 × 600 they
+   are letterbox banners, wrong for a square favicon and needing a judgement-call
+   crop for a 1.91:1 social card. What is actually needed is a **logo asset**:
+   ideally an SVG or a square PNG ≥512px. Ask Iain whether one exists.
 4. **Division split across the two event days** — not needed to ship, but it now also
    gates how much the registration hub can say, not just the events schedule.
 
 ## Things to remember
 
+- **`static/img/` is irreplaceable.** The eight photos there are the only copy in
+  existence — the host they came from is being switched off. Never "clean" that
+  directory, and never treat it as build output.
+- **Image paths must go through `withBase()`.** Both `media.ts` and `home.ts` bind
+  `src` from a variable, and Kit only rewrites root-relative paths written literally
+  in markup. A raw `/img/…` there silently 404s on the Pages sub-path while looking
+  perfectly fine locally.
 - **`npm run preview` is trustworthy again** as of Phase 7 — `static/` no longer
   shadows the prerendered pages. `npx serve build` remains a fine second opinion.
 - **The legacy files are gone** (Phase 7, 13 Aug 2026). The revert escape hatch is now

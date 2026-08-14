@@ -2,16 +2,21 @@
    Media — eight gallery photos and three YouTube embeds that
    were hand-written as markup in media.html.
 
-   The photos are still served from the legacy production host;
-   there are no local image assets in this repo yet. Because the
-   host may drop one, every photo is rendered behind a load guard
-   (see the page) rather than the old onerror="this.remove()",
-   which stripped the <img> but left an empty <figure> hole in
-   the grid.
+   The photos were rescued off the legacy production host on
+   14 Aug 2026 and now live in static/img/. They are the only
+   real photography the site has and there is no other copy —
+   the host they came from is being switched off.
+
+   The load guard on the page (a failed image hides its whole
+   <figure>, rather than the old onerror="this.remove()" which
+   left an empty hole in the grid) is kept even though the files
+   are local now: it costs nothing and still covers a typo.
    ============================================================ */
 
+import { withBase } from '$lib/config';
+
 export interface Photo {
-	/** Absolute URL on the legacy host. */
+	/** Root-relative path under static/, already base-prefixed. */
 	src: string;
 	/** Alt text. Generic for now — these are unlabelled archive shots. */
 	alt: string;
@@ -19,8 +24,11 @@ export interface Photo {
 
 const PHOTO_IDS = ['v0', 'v1', 'v2', 'v120', 'v130', 'v160', 'v190', 'v200'];
 
+/* withBase() because the page binds src from this variable — Kit only
+   rewrites root-relative paths written literally in markup. Without it
+   every photo 404s on the GitHub Pages sub-path. */
 export const PHOTOS: Photo[] = PHOTO_IDS.map((id) => ({
-	src: `https://hhi-netherlands.com/img/slideshow-${id}.jpg`,
+	src: withBase(`/img/slideshow-${id}.jpg`),
 	alt: 'Netherlands Hip Hop Dance Championship — event photo'
 }));
 
