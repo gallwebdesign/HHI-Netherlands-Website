@@ -18,6 +18,10 @@
   --font-mono:'Space Mono', 'Courier New', monospace;
   --gutter: clamp(20px, 4vw, 64px);
   --ease-out: cubic-bezier(.16,1,.3,1);
+  /* Height of the fixed nav: 18px padding top and bottom around a ~36px
+     logo. The nav is position:fixed and contributes nothing to flow, so
+     anything starting at the top of the viewport must reserve this. */
+  --nav-h: 72px;
 }
 
 *{ margin:0; padding:0; box-sizing:border-box; }
@@ -149,10 +153,16 @@ html.has-cursor .cursor-ring{ display:block; }
 .btn--sm{ padding:10px 18px; font-size:11px; }
 
 /* ============================ HERO ============================ */
+/* The top padding reserves --nav-h: the nav is position:fixed and so
+   contributes nothing to flow. Without it the hero's first line prints
+   straight through the logo and burger on any viewport too short to hold
+   the content — reported on a Samsung S24+, where browser chrome leaves
+   ~640px and the eyebrow landed 43px inside the logo. The extra clamp is
+   breathing room so the eyebrow never sits tight under the nav. */
 .hero{
   position:relative; min-height:100svh;
   display:flex; flex-direction:column; justify-content:flex-end;
-  padding:0 var(--gutter) clamp(24px,4vh,48px);
+  padding:calc(var(--nav-h) + clamp(52px,4vh,56px)) var(--gutter) clamp(24px,4vh,48px);
   overflow:hidden;
 }
 #stage-floor{ position:absolute; inset:0; z-index:0; }
@@ -526,7 +536,11 @@ body.menu-open{ overflow:hidden; }
 
 /* page hero (sub pages) */
 .page-hero{
-  padding:calc(90px + 8vh) var(--gutter) clamp(44px,7vh,80px);
+  /* Same nav clearance as .hero, via the shared token rather than the
+     90px this used to hard-code. These pages were never broken — they
+     have no min-height, so they simply grow — but the two heroes should
+     not disagree about how tall the nav is. */
+  padding:calc(var(--nav-h) + clamp(28px,8vh,80px)) var(--gutter) clamp(44px,7vh,80px);
   border-bottom:1px solid var(--line);
   position:relative; overflow:hidden;
 }
