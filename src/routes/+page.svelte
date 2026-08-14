@@ -122,7 +122,7 @@
 				</h2>
 			</div>
 			<p {@attach reveal()}>
-				Five divisions, one rulebook. Build a routine, bring your crew, and battle for a national
+				Six divisions, one rulebook. Build a routine, bring your crew, and battle for a national
 				title under official HHI judging.
 			</p>
 		</div>

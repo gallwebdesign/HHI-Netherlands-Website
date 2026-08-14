@@ -2,7 +2,7 @@
 	import PageHero from '$lib/components/PageHero.svelte';
 	import { CHECKLIST, STEPS } from '$lib/data/registration';
 	import { EVENT_YEAR, EVENT_DATE_RANGE, EVENT_VENUE, REGISTRATION_FORMS } from '$lib/config';
-	import { magnetic, reveal } from '$lib/attachments.svelte';
+	import { magnetic, reveal, smoothAnchor } from '$lib/attachments.svelte';
 
 	/* Step numbers derive from array position — 01, 02, … */
 	const num = (i: number) => String(i + 1).padStart(2, '0');
@@ -26,7 +26,9 @@
 	{#snippet actions()}
 		<!-- In-page: the forms are below, and sending someone straight off-site
 		     would skip the choice they have to make. -->
-		<a class="btn btn--solid" {@attach magnetic()} href="#choose-your-form">Choose your form</a>
+		<a class="btn btn--solid" {@attach magnetic()} {@attach smoothAnchor()} href="#choose-your-form"
+			>Choose your form</a
+		>
 	{/snippet}
 </PageHero>
 
@@ -94,8 +96,11 @@
 		<div class="notice" {@attach reveal()}>
 			<b>Ready?</b>
 			<span>Checklist done — pick your competition and fill in its form.</span>
-			<a class="btn btn--sm btn--solid" {@attach magnetic()} href="#choose-your-form"
-				>Choose your form</a
+			<a
+				class="btn btn--sm btn--solid"
+				{@attach magnetic()}
+				{@attach smoothAnchor()}
+				href="#choose-your-form">Choose your form</a
 			>
 		</div>
 	</section>

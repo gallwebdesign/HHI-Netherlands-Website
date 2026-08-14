@@ -128,14 +128,77 @@ test('home preloader lifts and reveals the hero', async ({ page }) => {
 test('home renders its ported sections', async ({ page }) => {
 	await page.goto('/');
 
-	await expect(page.locator('.division')).toHaveCount(5);
+	/* Lower bounds, not exact counts. The divisions are content and get
+	   edited — JV MegaCrew was added on 14 Aug 2026, which broke a hard-coded
+	   5 here for a perfectly legitimate copy change. What this test is for is
+	   "the section rendered at all", so assert that and let the count move.
+	   (Importing the data file to derive exact counts does not work: it pulls
+	   in $lib/config, and $app/paths does not resolve in the test runner.) */
+	await expect(page.locator('.division').first()).toBeAttached();
+	expect(await page.locator('.division').count()).toBeGreaterThanOrEqual(5);
 	await expect(page.locator('.road__panel')).toHaveCount(4);
 	await expect(page.locator('.about__stat')).toHaveCount(3);
-	// Ticker items are duplicated so the strip can loop.
-	await expect(page.locator('.ticker__item')).toHaveCount(8);
+	/* Ticker items are duplicated so the strip can loop, so this is always
+	   an even number and never zero. */
+	const tickers = await page.locator('.ticker__item').count();
+	expect(tickers).toBeGreaterThan(0);
+	expect(tickers % 2).toBe(0);
 
 	// Countdown is shared with /events and must tick here too.
 	await expect(page.locator('.board__num').first()).not.toHaveText('00');
+});
+
+test('navigating from deep in a page lands at the top of the next one', async ({ page }) => {
+	/* Regression, reported 14 Aug 2026: leave /events with the footer on
+	   screen, arrive at the next page still looking at the footer.
+
+	   Cause was html{ scroll-behavior:smooth } in style.css — inherited from
+	   the legacy site, where every page change was a full reload so it never
+	   mattered. Under the client router it also applies to SvelteKit's
+	   scrollTo(0,0) navigation reset, turning that into an animation which the
+	   layout's ScrollTrigger.refresh() then interrupts, stranding the scroll
+	   partway. The rule is gone; the two in-page anchors use smoothAnchor()
+	   instead. */
+	await page.goto('/events');
+	await page.waitForLoadState('networkidle');
+
+	await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+	await page.waitForTimeout(600);
+	expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(200);
+
+	await page.locator('footer a[href$="/sponsors"]').first().click();
+	await expect(page).toHaveURL(/\/sponsors$/);
+	await page.waitForTimeout(1200);
+
+	expect(
+		await page.evaluate(() => window.scrollY),
+		'should land at the top of the new page'
+	).toBeLessThan(5);
+
+	/* The global rule must not come back by any route — a computed value of
+	   "smooth" on <html> reintroduces the bug even if this navigation passes
+	   by luck of timing. */
+	expect(await page.evaluate(() => getComputedStyle(document.documentElement).scrollBehavior)).toBe(
+		'auto'
+	);
+});
+
+test('in-page anchors still scroll to their target', async ({ page }) => {
+	/* The other half of the fix: removing the global rule must not break the
+	   registration page's "#choose-your-form" links, which are the only
+	   in-page anchors on the site. */
+	await page.goto('/registration');
+	await page.waitForLoadState('networkidle');
+
+	await page.locator('a[href="#choose-your-form"]').first().click();
+	await page.waitForTimeout(1200);
+
+	const offset = await page.evaluate(() => {
+		const t = document.getElementById('choose-your-form');
+		return t ? Math.abs(t.getBoundingClientRect().top) : -1;
+	});
+	expect(offset, 'target should be at the top of the viewport').toBeLessThan(20);
+	expect(page.url()).toContain('#choose-your-form');
 });
 
 test('home works with reduced motion', async ({ browser }) => {

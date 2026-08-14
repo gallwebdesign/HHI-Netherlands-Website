@@ -8,6 +8,10 @@ package-lock.json
 # Legacy site snapshots — captured artefacts, not source.
 screenshots/
 
+# Playwright MCP scratch output (console logs, page snapshots) written by
+# browser-driven debugging sessions. Captured artefacts, not source.
+.playwright-mcp/
+
 # Prose, hand-wrapped for readable diffs. Prettier reflows Markdown
 # paragraphs and tables, which churns lines nobody edited.
 *.md

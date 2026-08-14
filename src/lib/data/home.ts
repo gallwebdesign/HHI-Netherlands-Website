@@ -1,6 +1,6 @@
 /* ============================================================
    Home page — the repeating records that were hand-written as
-   markup in index.html: five divisions, four "Road to Worlds"
+   markup in index.html: six divisions, four "Road to Worlds"
    panels, three stats, the ticker strip and the media teaser.
 
    Text is plain UTF-8 (· – — ’ “ ” not &middot; &ndash; &mdash;
@@ -107,7 +107,7 @@ export interface Stat {
 
 export const STATS: Stat[] = [
 	{ value: 50, label: 'Nations at Worlds' },
-	{ value: 5, label: 'Crew divisions' },
+	{ value: 6, label: 'Crew divisions' },
 	{ value: 1, label: 'Dutch title' }
 ];
 

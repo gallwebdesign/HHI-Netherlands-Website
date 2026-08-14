@@ -58,6 +58,41 @@ export function reveal(): Attachment<HTMLElement> {
 	};
 }
 
+/** Smooth in-page anchor jump, for links whose href is a bare "#id".
+ *
+ *  This exists because `html{ scroll-behavior:smooth }` cannot be used on a
+ *  client-routed site: it also applies to SvelteKit's scrollTo(0,0) navigation
+ *  reset, turning it into an animation that ScrollTrigger.refresh() interrupts,
+ *  which leaves you at the old scroll position on the new page. Scoping the
+ *  behaviour to the click keeps the animation where it was actually wanted. */
+export function smoothAnchor(): Attachment<HTMLAnchorElement> {
+	return (node) => {
+		const onClick = (e: MouseEvent) => {
+			/* Let the browser handle modified clicks (new tab, download, etc.). */
+			if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey)
+				return;
+
+			const id = node.getAttribute('href')?.slice(1);
+			if (!id) return;
+			const target = document.getElementById(id);
+			if (!target) return;
+
+			e.preventDefault();
+			target.scrollIntoView({
+				behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+				block: 'start'
+			});
+			/* scrollIntoView does not update the URL the way a real hash jump
+			   does, so set it explicitly — without adding a history entry that
+			   would make Back a no-op that only strips the hash. */
+			history.replaceState(history.state, '', `#${id}`);
+		};
+
+		node.addEventListener('click', onClick);
+		return () => node.removeEventListener('click', onClick);
+	};
+}
+
 /** Cursor-attracted button. Replaces [data-magnetic]. */
 export function magnetic(strength = 0.35): Attachment<HTMLElement> {
 	return (node) => {

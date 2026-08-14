@@ -25,7 +25,17 @@
 }
 
 *{ margin:0; padding:0; box-sizing:border-box; }
-html{ scroll-behavior:smooth; }
+/* NO global html{ scroll-behavior:smooth }. It was inherited from the legacy
+   site, where it was harmless because every page change was a full reload.
+   Under SvelteKit it broke cross-page navigation: Kit resets scroll with a
+   synchronous scrollTo(0,0), which smooth turns into an animation from
+   wherever you were, and the layout's ScrollTrigger.refresh() then fires
+   mid-animation and interrupts it — leave /events at the footer, arrive at
+   /sponsors still at the footer. Verified by reproducing it both ways.
+   The registration page's two "#choose-your-form" links are the only in-page
+   anchors on the site; they animate via smoothAnchor() in
+   attachments.svelte.ts, which is scoped to the click instead of the document
+   and honours prefers-reduced-motion. */
 html.has-cursor, html.has-cursor a, html.has-cursor button{ cursor:none; }
 body{
   background:var(--ink);

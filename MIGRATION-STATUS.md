@@ -511,6 +511,18 @@ Phase 8, and Cloud86's PHP means it can be a real form.
   accessibility tree — so `getByRole` finds nothing and visibility assertions would be
   testing scroll position. Scroll first (`settleReveals`) when a test needs the real
   a11y tree, as the tablist test does.
+- **Never put `scroll-behavior:smooth` on `html`.** It was inherited from the legacy site
+  and removed 14 Aug 2026. Globally it also applies to SvelteKit's `scrollTo(0,0)`
+  navigation reset, turning it into an animation that the layout's `ScrollTrigger.refresh()`
+  interrupts — leaving you at the *old* scroll position on the new page (leave `/events`
+  at the footer, arrive at `/sponsors` still at the footer; measured landing at 478–545px
+  instead of 0). In-page anchors use `smoothAnchor()` in `attachments.svelte.ts` instead,
+  which scopes the animation to the click and honours reduced motion. Two tests guard it,
+  and both were verified to fail with the rule reinstated.
+- **Verify a fix against a build made from the fixed source.** `npx playwright test` alone
+  reuses whatever is in `build/`, so a test can pass against a stale build while the bug is
+  live in `src/` — that happened while fixing the scroll bug and briefly looked like a
+  passing test. `npm test` rebuilds first, which is why it is the command that counts.
 - **Never point the test harness at `npm run preview`**, and never pass `--single` to
   `serve`: it is present-means-on, so even `--single=false` rewrites every route to
   `index.html` and every page answers with the home page.
