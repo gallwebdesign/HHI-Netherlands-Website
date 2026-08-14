@@ -22,12 +22,22 @@ Everything below is written up in full; this is the short version.
 3. ~~**Build the registration hub**~~ ✅ **done 14 Aug** — see *Registration hub*
    below. Note the two forms split by **competition, not by day**; the earlier
    "one form per day" note was wrong.
-4. **Write `static/.htaccess`** — the nine legacy `.html` → clean-route 301s.
-   Can be written and committed now; can only be *verified* once Cloud86 is live.
-   **← next up, and the last item that does not need the Cloud86 account.**
+4. ~~**Write `static/.htaccess`**~~ ✅ **done 14 Aug** — legacy `.php` →
+   clean-route 301s. Written and rule-tested, but **only verifiable once Cloud86
+   is live**; verify on cutover day.
 
 Also done 14 Aug, unplanned: **favicon and social preview** (open question 3),
 once Iain supplied the logo. See *Brand assets* below.
+
+**Every pre-purchase task is now done.** What remains needs either the Cloud86
+account or a decision from Iain:
+
+- ⚠️ **The photo archive — ~8,163 images, ≈7.8 GB, on the same deadline as the
+  media photos were.** Needs a decision *before* the old host goes dark. See the
+  section below; this is the most time-critical open item.
+- Cutover day: delete the Pages workflow, stop setting `BASE_PATH`, verify the
+  redirects on the real host.
+- Phase 8: `CONTACT_EMAIL` and a real contact form, both needing the mailbox.
 
 **Explicitly NOT tomorrow, and why** — agreed with Iain 13 Aug:
 
@@ -62,7 +72,7 @@ task left is `static/.htaccess`.
 | 4 · Shared JavaScript | ✅ attachments, GSAP bundled, teardown, motion watchdog |
 | 5 · Remaining sub-pages | ✅ all six ported, smoke test green |
 | 6 · index.html | ✅ hero, stage floor, preloader, road pin, all sections |
-| 7 · Delete old site | 🟨 items 2–5 done; **item 1, the cutover, is next** |
+| 7 · Delete old site | 🟨 items 2–5 done; `.htaccess` written — **only the cutover itself is left, and it needs the account** |
 | 8 · Finish "fully functional" | 🟨 registration hub, favicon + social preview done; contact form and `CONTACT_EMAIL` still need the mailbox |
 
 ## Hosting — decided: Cloud86 (13 Aug 2026)
@@ -101,27 +111,41 @@ Consequences for the code, all still to do as part of the cutover:
 - `static/robots.txt` ships as-is; the workflow's noindex overwrite disappears
   with the workflow.
 
-## Phase 7 — item 1, the URL cutover (next)
+## Phase 7 — item 1, the URL cutover — `.htaccess` ✅ written 14 Aug 2026
 
-The live site is indexed at `.html` URLs while the migrated routes are clean
-(`/sponsors`), so it needs redirects or inbound links 404. Every internal link
-already points at a clean route, so only the redirect layer is outstanding.
+**Correction to the earlier note: the legacy URLs are `.php`, not `.html`.**
+The `.html` variants answer 200 but serve a **43-byte stub** — and so does any
+nonexistent name, e.g. `zzz-not-a-page.html`. So `.html` was never a real URL,
+and rules written only against it would have missed every genuine inbound link.
+The `.php` set was read off the live site's own nav, not guessed.
 
-**Iain's note (13 Aug 2026): the old site will disappear, so its own links stop
-mattering.** That is true of *our* links but not of *other people's* — search
-results, socials and press links keep arriving at `sponsors.html` after the old
-site is gone. Hence redirects are still worth doing once:
+**Two more corrections that came out of reading the real nav:**
 
-```apache
-RewriteEngine On
-RewriteRule ^sponsors\.html$ /sponsors [R=301,L]
-# ...one line per legacy page
-```
+- There is **no `media.php`**. The legacy site split media into **`photos.php`**
+  and **`videos.php`**, both real; the migrated `/media` covers both.
+- **`tickets.php`** exists and embeds the **old `shop.compoticketing.eu`**. It
+  redirects to `/events`, which carries the current (Celebratix) tickets CTA —
+  it cannot go to a local route because ticketing is off-site.
 
-Both `npx serve build` and GitHub Pages resolve `/sponsors` → `sponsors.html` by
-themselves, which is why the smoke test and preview pass. That is those servers
-being helpful; it is **not** evidence about Cloud86, and it does nothing about
-already-indexed inbound `.html` links.
+[static/.htaccess](static/.htaccess) now holds 15 rules, all `[R=301,L]`.
+`.html` is still handled — cheap, and those URLs were linked over the years even
+though they served a stub.
+
+**`privacy-policy.php` is deliberately NOT redirected.** It is real, still linked
+from the footer as `EXTERNAL.privacy`, and has no migrated route. Sending a legal
+document people go looking for specifically to the home page is worse than a 404.
+Give it a route, then add the rule.
+
+**Verified** by replaying Apache's first-match-wins semantics over the parsed
+rules: 24 cases pass including the negatives (clean routes, `/img` assets,
+`/og-image.png`, `/_app/…` all correctly untouched), the gallery regex matches all
+71 archive pages with none missed, and `adapter-static` does copy the dotfile into
+`build/`. **Not** verified on LiteSpeed — that needs the Cloud86 account.
+
+Both `npx serve build` and GitHub Pages resolve `/sponsors` by themselves, which
+is why the smoke test and preview pass. That is those servers being helpful; it is
+**not** evidence about Cloud86, and it does nothing about already-indexed inbound
+links.
 
 ### What needs the plan, and what does not
 
@@ -132,7 +156,8 @@ not entirely — the split is what drives the running order at the top of this f
 |---|---|
 | Registration hub (two JotForms) | ✅ fully — external URLs, no host involved |
 | ~~Rescue the eight media photos~~ | ✅ **done 14 Aug 2026** |
-| Write `static/.htaccess` | ⚠️ write yes, **verify no** — syntax is standard Apache, but whether LiteSpeed applies it as expected on Cloud86's config is untestable until the account exists |
+| ~~Write `static/.htaccess`~~ | ✅ **written 14 Aug**, rule-tested; **verify on cutover day** — whether LiteSpeed applies it as expected is untestable until the account exists |
+| ⚠️ Rescue the ~8,163-photo archive | ⚠️ **decision needed from Iain, on the old host's deadline** — ≈7.8 GB, too large for the repo |
 | `regulations` → local PDF | ⚠️ partly — the dependency can be removed, but only once the PDF exists |
 | Delete the Pages workflow | ❌ hold — it is the only staging environment; deleting it early leaves no preview at all |
 | Stop setting `BASE_PATH` | ❌ hold — same task as the workflow. The two are in tension: the workflow *sets* `BASE_PATH` because Pages serves from a sub-path, so removing base handling early breaks the preview |
@@ -297,6 +322,38 @@ At 2000 × 600 they are 3.33:1 letterbox banners: unusable for a square favicon,
 and a social preview at 1.91:1 would need a deliberate crop of someone's choosing.
 A real logo asset is still needed.
 
+## ⚠️ The photo archive — ~8,163 photos, undecided, and on the same deadline
+
+**Found 14 Aug 2026 while writing `.htaccess`, by reading the legacy site's own
+nav instead of assuming the nine main pages were everything.**
+
+`photos.php` links to **71 gallery pages** — `hhi2010.php` through
+`hhinl2026m.php`, covering **2010–2026**. Between them they hold roughly
+**8,163 unique images**. Each exists twice: a thumbnail under `…/thumbs/` and a
+full-size original under `…/big/`, referenced from a `data-image` attribute.
+
+```
+hhinl2019a.php   →  images/2019/zaterdag/1/thumbs/tile1.jpg   (thumb)
+                 →  images/2019/zaterdag/1/big/tile1.jpg      (~1 MB original)
+```
+
+Sampled full-size images average **~1 MB**, so the originals alone are
+**≈7.8 GB**, plus thumbnails.
+
+**This dies with the host, exactly like the eight media photos did — but it is
+about a thousand times larger, and no decision has been made about it.** The
+eight rescued photos are a rounding error next to this; they were the slideshow,
+not the archive.
+
+**It is deliberately not actioned.** 7.8 GB must not go into a git repo, and
+where it *should* go (external drive, object storage, a photo host, or nowhere)
+is Iain's call, not a default. **Ask before the host is switched off** — after
+that the question is moot.
+
+Note the `.htaccess` currently collapses all 71 gallery URLs to `/media` so
+inbound links do not 404. If the archive is ever republished, give it real
+routes and replace that one rule.
+
 ## Brand assets — ✅ 14 August 2026
 
 **`static/img/Hip Hop International Logo.svg`** — the official logo, supplied by
@@ -388,8 +445,14 @@ Phase 8, and Cloud86's PHP means it can be a real form.
    `info@hhi-netherlands.com` becomes true by construction. Confirm on setup.
 3. ~~**Favicon and social preview**~~ — ✅ **settled 14 Aug 2026.** Iain supplied
    the official logo as a true vector. See *Brand assets* below.
-4. **Division split across the two event days** — not needed to ship, but it now also
-   gates how much the registration hub can say, not just the events schedule.
+4. **Division split across the two event days** — not needed to ship. It no longer
+   gates the registration hub (the forms split by competition, not by day), but it
+   still gates the events schedule and the hub's "which day" notice.
+5. ⚠️ **The photo archive — the most time-critical open question.** ~8,163 images,
+   ≈7.8 GB, across 71 legacy gallery pages, dying with the old host. Too large for
+   the repo, so it needs a destination decision (external drive? object storage? a
+   photo host? accept the loss?). See the archive section above. **Ask before the
+   host is switched off.**
 
 ## Things to remember
 
