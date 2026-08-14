@@ -32,9 +32,9 @@ once Iain supplied the logo. See *Brand assets* below.
 **Every pre-purchase task is now done.** What remains needs either the Cloud86
 account or a decision from Iain:
 
-- ⚠️ **The photo archive — ~8,163 images, ≈7.8 GB, on the same deadline as the
-  media photos were.** Needs a decision *before* the old host goes dark. See the
-  section below; this is the most time-critical open item.
+- **The photo archive — ~8,163 images, ≈7.8 GB.** ✅ Decided: **Iain pulls it
+  himself over FTP.** No switch-off date is set, so it is not immediate, but it
+  carries the only irreversible deadline on the project. See the section below.
 - Cutover day: delete the Pages workflow, stop setting `BASE_PATH`, verify the
   redirects on the real host.
 - Phase 8: `CONTACT_EMAIL` and a real contact form, both needing the mailbox.
@@ -157,7 +157,7 @@ not entirely — the split is what drives the running order at the top of this f
 | Registration hub (two JotForms) | ✅ fully — external URLs, no host involved |
 | ~~Rescue the eight media photos~~ | ✅ **done 14 Aug 2026** |
 | ~~Write `static/.htaccess`~~ | ✅ **written 14 Aug**, rule-tested; **verify on cutover day** — whether LiteSpeed applies it as expected is untestable until the account exists |
-| ⚠️ Rescue the ~8,163-photo archive | ⚠️ **decision needed from Iain, on the old host's deadline** — ≈7.8 GB, too large for the repo |
+| Rescue the ~8,163-photo archive | ✅ **settled 14 Aug — Iain pulls it over FTP**, outside this repo; ≈7.8 GB is far too large for git |
 | `regulations` → local PDF | ⚠️ partly — the dependency can be removed, but only once the PDF exists |
 | Delete the Pages workflow | ❌ hold — it is the only staging environment; deleting it early leaves no preview at all |
 | Stop setting `BASE_PATH` | ❌ hold — same task as the workflow. The two are in tension: the workflow *sets* `BASE_PATH` because Pages serves from a sub-path, so removing base handling early breaks the preview |
@@ -341,18 +341,27 @@ Sampled full-size images average **~1 MB**, so the originals alone are
 **≈7.8 GB**, plus thumbnails.
 
 **This dies with the host, exactly like the eight media photos did — but it is
-about a thousand times larger, and no decision has been made about it.** The
-eight rescued photos are a rounding error next to this; they were the slideshow,
-not the archive.
+about a thousand times larger.** The eight rescued photos are a rounding error
+next to this; they were the slideshow, not the archive.
 
-**It is deliberately not actioned.** 7.8 GB must not go into a git repo, and
-where it *should* go (external drive, object storage, a photo host, or nowhere)
-is Iain's call, not a default. **Ask before the host is switched off** — after
-that the question is moot.
+### ✅ Decided (Iain, 14 Aug 2026): Iain pulls it himself over FTP
 
-Note the `.htaccess` currently collapses all 71 gallery URLs to `/media` so
-inbound links do not 404. If the archive is ever republished, give it real
-routes and replace that one rule.
+**Not a task for this repo, and not something to scrape.** FTP takes the
+originals straight off the filesystem, which is both faster than fetching 71
+pages and *more complete* — it picks up anything the gallery markup never
+linked. 7.8 GB must not go into git in any case.
+
+**No switch-off date is set** (Iain, 14 Aug 2026), so this is urgent-but-not-
+immediate. It is still the item with the only irreversible deadline, so it
+should not drift indefinitely.
+
+**Useful facts if the FTP pull needs checking against the web view:** the paths
+follow `images/<year>/<day>/<n>/big/tileN.jpg` with a `thumbs/` sibling; `big/`
+holds the ~1 MB originals. 71 pages, ~8,163 unique images, 2010–2026.
+
+Note the `.htaccess` collapses all 71 gallery URLs to `/media` so inbound links
+do not 404. If the archive is ever republished, give it real routes and replace
+that one rule.
 
 ## Brand assets — ✅ 14 August 2026
 
@@ -448,11 +457,9 @@ Phase 8, and Cloud86's PHP means it can be a real form.
 4. **Division split across the two event days** — not needed to ship. It no longer
    gates the registration hub (the forms split by competition, not by day), but it
    still gates the events schedule and the hub's "which day" notice.
-5. ⚠️ **The photo archive — the most time-critical open question.** ~8,163 images,
-   ≈7.8 GB, across 71 legacy gallery pages, dying with the old host. Too large for
-   the repo, so it needs a destination decision (external drive? object storage? a
-   photo host? accept the loss?). See the archive section above. **Ask before the
-   host is switched off.**
+5. ~~**The photo archive**~~ — ✅ **settled 14 Aug 2026: Iain pulls it over FTP.**
+   Not a repo task. No switch-off date is set, but it is the only irreversible
+   deadline on the project, so do not let it drift. See the archive section above.
 
 ## Things to remember
 
