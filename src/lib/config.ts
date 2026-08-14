@@ -16,6 +16,9 @@ export const EVENT_DATE = '2027-01-30T12:08:00+01:00';
 /** Final day of the championship. Confirmed 11 Aug 2026. */
 export const EVENT_END_DATE = '2027-01-31T23:59:00+01:00';
 
+/** Current year, derived — never hand-typed into a page. */
+export const CURRENT_YEAR = new Date().getFullYear();
+
 /** Event year, derived — never hand-typed into a page. */
 export const EVENT_YEAR = new Date(EVENT_DATE).getFullYear();
 
@@ -56,12 +59,12 @@ export const SITE_URL = 'https://hhi-netherlands.com';
 export const REGISTRATION_FORMS = [
 	{
 		name: 'Netherlands HHDC',
-		blurb: 'The national championship — Junior, Varsity, Adult, MiniCrew and MegaCrew.',
+		blurb: 'The National Championship — Junior, Varsity, Adult, JV MegaCrew, MiniCrew and MegaCrew.',
 		href: 'https://form.jotform.com/262132296237961'
 	},
 	{
 		name: 'HHI Open Division',
-		blurb: 'The open division categories, run alongside the national championship.',
+		blurb: 'The Open Division Categories — Junior, Varsity, Adult, Parents and Special Crews.',
 		href: 'https://form.jotform.com/262132162311946'
 	}
 ] as const;

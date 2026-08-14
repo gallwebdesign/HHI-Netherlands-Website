@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { EVENT_YEAR, FOOTER_LINKS, FOUNDED_YEAR, withBase } from '$lib/config';
+	import { CURRENT_YEAR, FOOTER_LINKS, FOUNDED_YEAR, withBase } from '$lib/config';
 </script>
 
 <footer class="footer">
-	<p>&copy; {FOUNDED_YEAR}&ndash;{EVENT_YEAR} Hip Hop International Netherlands</p>
+	<p>&copy; {FOUNDED_YEAR}&ndash;{CURRENT_YEAR} Hip Hop International Netherlands</p>
 	<nav aria-label="Footer">
 		{#each FOOTER_LINKS as link (link.href)}
 			<a
