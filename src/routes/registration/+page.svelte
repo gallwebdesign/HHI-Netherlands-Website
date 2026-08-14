@@ -1,7 +1,7 @@
 <script lang="ts">
 	import PageHero from '$lib/components/PageHero.svelte';
 	import { CHECKLIST, STEPS } from '$lib/data/registration';
-	import { EVENT_YEAR, EXTERNAL } from '$lib/config';
+	import { EVENT_YEAR, EVENT_DATE_RANGE, EVENT_VENUE, REGISTRATION_FORMS } from '$lib/config';
 	import { magnetic, reveal } from '$lib/attachments.svelte';
 
 	/* Step numbers derive from array position — 01, 02, … */
@@ -21,20 +21,53 @@
 	titleTop="Lock in"
 	titleBottom="your crew."
 	treatment="accent"
-	lede="Registration runs through our official form. Four steps, one checklist, and your crew is on the floor."
+	lede="Two competitions, two forms. Pick the one your crew is entering, fill it in, and you&rsquo;re on the floor."
 >
 	{#snippet actions()}
-		<a
-			class="btn btn--solid"
-			{@attach magnetic()}
-			href={EXTERNAL.registration}
-			target="_blank"
-			rel="noopener">Go to the registration form</a
-		>
+		<!-- In-page: the forms are below, and sending someone straight off-site
+		     would skip the choice they have to make. -->
+		<a class="btn btn--solid" {@attach magnetic()} href="#choose-your-form">Choose your form</a>
 	{/snippet}
 </PageHero>
 
 <main>
+	<section class="section" id="choose-your-form">
+		<p class="tag" {@attach reveal()}>Choose your form</p>
+		<h2 class="h2" {@attach reveal()}>
+			Two competitions. <span class="accent">Two forms.</span>
+		</h2>
+		<p class="reg-day__lede" {@attach reveal()}>
+			Both run at {EVENT_VENUE} across {EVENT_DATE_RANGE}. Register on the form for the competition
+			your crew is entering.
+		</p>
+		<div class="reg-days">
+			{#each REGISTRATION_FORMS as form (form.href)}
+				<div class="reg-day" {@attach reveal()}>
+					<p class="reg-day__name">{form.name}</p>
+					<p class="reg-day__blurb">{form.blurb}</p>
+					<a
+						class="btn btn--solid"
+						{@attach magnetic()}
+						href={form.href}
+						target="_blank"
+						rel="noopener">Register — {form.name}</a
+					>
+				</div>
+			{/each}
+		</div>
+		<!-- Open question 4: which divisions dance on which day is still
+		     unannounced. That is a schedule question, not a registration one —
+		     the forms split by competition — but crews will ask it here, so
+		     say plainly that it is coming rather than leave it unaddressed. -->
+		<div class="notice" {@attach reveal()}>
+			<b>Which day do we dance?</b>
+			<span
+				>The championship runs across both days, and which divisions dance on which day is announced
+				with the full programme. Register now — we&rsquo;ll confirm the schedule before the event.</span
+			>
+		</div>
+	</section>
+
 	<section class="section">
 		<p class="tag" {@attach reveal()}>How it works</p>
 		<div class="steps">
@@ -59,14 +92,10 @@
 			{/each}
 		</ul>
 		<div class="notice" {@attach reveal()}>
-			<b>Register</b>
-			<span>Registration runs through the official form on hhi-netherlands.com.</span>
-			<a
-				class="btn btn--sm btn--solid"
-				{@attach magnetic()}
-				href={EXTERNAL.registration}
-				target="_blank"
-				rel="noopener">Register your crew</a
+			<b>Ready?</b>
+			<span>Checklist done — pick your competition and fill in its form.</span>
+			<a class="btn btn--sm btn--solid" {@attach magnetic()} href="#choose-your-form"
+				>Choose your form</a
 			>
 		</div>
 	</section>

@@ -37,9 +37,32 @@ export const FOUNDED_YEAR = 2015;
 /** TODO: confirm the real inbox before relying on this. */
 export const CONTACT_EMAIL = 'info@hhi-netherlands.com';
 
-/** Off-site destinations, all still pointing at the legacy production host. */
+/** Registration is two JotForms. They split by **competition, not by day** —
+ *  confirmed 14 Aug 2026 from the live forms, whose own titles read "HHI Open
+ *  Division Registration Form 2027" and "Netherlands HHDC Registration Form
+ *  2027". An earlier note called these the Saturday and Sunday forms; that was
+ *  wrong, and the day split remains unannounced.
+ *
+ *  Every CTA across the site points at the /registration hub rather than at a
+ *  form, so the choice is made on a page with room to explain it. */
+export const REGISTRATION_FORMS = [
+	{
+		name: 'Netherlands HHDC',
+		blurb: 'The national championship — Junior, Varsity, Adult, MiniCrew and MegaCrew.',
+		href: 'https://form.jotform.com/262132296237961'
+	},
+	{
+		name: 'HHI Open Division',
+		blurb: 'The open division categories, run alongside the national championship.',
+		href: 'https://form.jotform.com/262132162311946'
+	}
+] as const;
+
+/** Where every "Register" CTA points — the hub, not a form. See above. */
+export const REGISTRATION_HUB = '/registration';
+
+/** Off-site destinations. Three still point at the legacy production host. */
 export const EXTERNAL = {
-	registration: 'https://hhi-netherlands.com/registration.php',
 	tickets: 'https://shop.celebratix.io/?c=2mdtq',
 	contactForm: 'https://hhi-netherlands.com/contact.php',
 	regulations: 'https://hhi-netherlands.com/regulations.php',

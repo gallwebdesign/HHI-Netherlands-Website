@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { EXTERNAL, MENU_LINKS, withBase } from '$lib/config';
+	import { EXTERNAL, MENU_LINKS, REGISTRATION_HUB, withBase } from '$lib/config';
 	import { menu } from '$lib/menu.svelte';
 	import { loadGsap, prefersReducedMotion } from '$lib/motion.svelte';
 
@@ -58,7 +58,9 @@
 		{/each}
 	</nav>
 	<div class="menu__ctas">
-		<a class="btn btn--solid" href={EXTERNAL.registration} target="_blank" rel="noopener"
+		<!-- Internal now: the hub, not a form. Needs menu.close() like the
+		     nav links above — client-side navigation leaves the panel open. -->
+		<a class="btn btn--solid" href={withBase(REGISTRATION_HUB)} onclick={() => menu.close()}
 			>Register your crew</a
 		>
 		<a class="btn btn--ghost" href={EXTERNAL.tickets} target="_blank" rel="noopener">Tickets</a>

@@ -21,8 +21,8 @@ export const STEPS: Step[] = [
 		body: 'Check ages and crew size against the regulations.'
 	},
 	{
-		title: 'Fill in the form',
-		body: 'Crew name, dancers, contact person — via the official form.'
+		title: 'Fill in the right form',
+		body: 'Crew name, dancers, contact person — on the form for your competition.'
 	},
 	{
 		title: 'Submit your music',

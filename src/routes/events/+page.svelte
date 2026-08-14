@@ -23,12 +23,7 @@
 	lede="Two days decide who represents the Netherlands at the World Hip Hop Dance Championship. Here&rsquo;s everything you need to plan for it."
 >
 	{#snippet actions()}
-		<a
-			class="btn btn--solid"
-			{@attach magnetic()}
-			href={EXTERNAL.registration}
-			target="_blank"
-			rel="noopener">Register your crew</a
+		<a class="btn btn--solid" {@attach magnetic()} href="{base}/registration">Register your crew</a
 		><a
 			class="btn btn--ghost"
 			{@attach magnetic()}

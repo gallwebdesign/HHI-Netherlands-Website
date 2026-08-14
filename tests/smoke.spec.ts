@@ -21,10 +21,21 @@ const ROUTES = [
 for (const route of ROUTES) {
 	test(`${route} serves, has a title, and logs no console errors`, async ({ page }) => {
 		const problems: string[] = [];
+
+		/* Chrome logs "Failed to load resource: … 404 ()" without naming the
+		   URL, so that message alone is both untraceable and impossible to
+		   attribute to an origin. Requests are tracked via the response event
+		   instead, which does carry the URL; the matching console noise is
+		   dropped here so one failed request is not counted twice. */
 		page.on('console', (msg) => {
-			if (msg.type() === 'error') problems.push(`console: ${msg.text()}`);
+			if (msg.type() === 'error' && !/Failed to load resource/.test(msg.text())) {
+				problems.push(`console: ${msg.text()}`);
+			}
 		});
 		page.on('pageerror', (err) => problems.push(`pageerror: ${err.message}`));
+		page.on('response', (r) => {
+			if (r.status() >= 400) problems.push(`http ${r.status()}: ${r.url()}`);
+		});
 
 		const response = await page.goto(route);
 		expect(response?.status(), `${route} should serve 200`).toBe(200);
@@ -41,11 +52,23 @@ for (const route of ROUTES) {
 		   thrown inside an attachment is not missed by a fast assertion. */
 		await page.waitForLoadState('networkidle');
 
-		/* No exemptions. The gallery photos used to be hot-linked off the
-		   legacy host and were filtered out here because that host was
-		   unreliable; they moved into static/img/ on 14 Aug 2026, so a
-		   missing image is now a real failure and should fail the test. */
-		expect(problems, `${route} should log no console errors`).toEqual([]);
+		/* The gallery photos used to be exempt here because they were
+		   hot-linked off an unreliable host; they moved into static/img/ on
+		   14 Aug 2026, so a missing image is a real failure again and that
+		   exemption is gone.
+
+		   What remains exempt is third-party origins only — fonts.gstatic.com
+		   intermittently 404s a .woff2 (seen ~1 run in 3), and a CDN having a
+		   bad minute is not a regression in this site. Anything served from
+		   our own origin still fails, which is the point: the filter is by
+		   origin, not by resource type, so a local asset can never slip
+		   through it. */
+		const external = /^https?:\/\/(?!localhost|127\.0\.0\.1)/;
+		const real = problems.filter((p) => {
+			const url = p.match(/^http \d+: (\S+)/)?.[1];
+			return !(url && external.test(url));
+		});
+		expect(real, `${route} should log no console errors`).toEqual([]);
 	});
 }
 
@@ -182,4 +205,51 @@ test('events page shows the confirmed date and venue', async ({ page }) => {
 
 	// The countdown prerenders zeroes and must start ticking once hydrated.
 	await expect(page.locator('.board__num').first()).not.toHaveText('00');
+});
+
+test('registration hub offers both competition forms', async ({ page }) => {
+	await page.goto('/registration');
+
+	/* The two JotForms are the point of the page. Asserted on the real hrefs
+	   because a hub that renders but links nowhere useful is the failure mode
+	   worth catching — these are the only registration routes that exist.
+	   They split by competition, not by event day: the forms' own titles are
+	   "Netherlands HHDC" and "HHI Open Division". */
+	const forms = page.locator('.reg-day a[href*="form.jotform.com"]');
+	await expect(forms).toHaveCount(2);
+	await expect(forms.nth(0)).toHaveAttribute('href', /262132296237961/);
+	await expect(forms.nth(1)).toHaveAttribute('href', /262132162311946/);
+
+	await expect(page.getByText('Netherlands HHDC', { exact: true })).toBeAttached();
+	await expect(page.getByText('HHI Open Division', { exact: true })).toBeAttached();
+
+	/* Guards against the earlier mistake of presenting these as a Saturday
+	   and a Sunday form — the day split is still unannounced. */
+	await expect(page.locator('.reg-days')).not.toContainText(/saturday|sunday/i);
+});
+
+test('every "register" CTA points at the hub, not a form', async ({ page }) => {
+	/* The six CTAs deliberately funnel through /registration rather than
+	   doubling up per day, because the division split is unannounced. If one
+	   ever links straight to a JotForm, a crew is asked to pick a day from a
+	   button with no context to pick on. */
+	/* Counts are chrome + page CTAs. Every page carries three chrome links to
+	   the hub (nav, mobile menu, footer); the home page adds its hero and
+	   closing CTAs, /events adds its hero CTA. Exact counts rather than a
+	   minimum, so a CTA silently retargeted at a JotForm fails here. */
+	for (const [route, expected] of [
+		['/', 6],
+		['/events', 5]
+	] as const) {
+		await page.goto(route);
+
+		/* Located by href, not by role: several of these sit behind reveal()
+		   at visibility:hidden, which takes them out of the accessibility
+		   tree, and the mobile-menu one is inside a closed panel. Counting
+		   anchors in the DOM sidesteps both. */
+		await expect(page.locator('a[href$="/registration"]')).toHaveCount(expected);
+
+		// No CTA outside the hub may link straight to a day form.
+		await expect(page.locator('a[href*="form.jotform.com"]')).toHaveCount(0);
+	}
 });

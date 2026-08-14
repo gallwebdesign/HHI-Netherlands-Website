@@ -64,12 +64,8 @@
 				</p>
 				<Countdown heroEntrance ready={heroReady} />
 				<div class="hero__ctas" {@attach heroFade(3, heroReady)}>
-					<a
-						class="btn btn--solid"
-						{@attach magnetic()}
-						href={EXTERNAL.registration}
-						target="_blank"
-						rel="noopener">Register your crew</a
+					<a class="btn btn--solid" {@attach magnetic()} href="{base}/registration"
+						>Register your crew</a
 					>
 					<a class="btn btn--ghost" {@attach magnetic()} href="{base}/events"
 						>The {EVENT_YEAR} event</a
@@ -197,12 +193,8 @@
 			before the bracket fills.
 		</p>
 		<div class="cta__btns" {@attach reveal()}>
-			<a
-				class="btn btn--solid"
-				{@attach magnetic()}
-				href={EXTERNAL.registration}
-				target="_blank"
-				rel="noopener">Register your crew</a
+			<a class="btn btn--solid" {@attach magnetic()} href="{base}/registration"
+				>Register your crew</a
 			>
 			<a class="btn" {@attach magnetic()} href={EXTERNAL.tickets} target="_blank" rel="noopener"
 				>Get tickets</a
