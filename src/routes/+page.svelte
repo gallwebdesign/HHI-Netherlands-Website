@@ -99,7 +99,7 @@
 					— judged by the international HHI rulebook.
 				</p>
 				<p {@attach reveal()}>
-					Since 2015 we’ve sent the country’s best crews to face the world. This is where Dutch
+					Since 2016 we've sent the country's best crews to face the world. This is where Dutch
 					crews are made, tested, and crowned.
 				</p>
 				<div class="about__stats">
