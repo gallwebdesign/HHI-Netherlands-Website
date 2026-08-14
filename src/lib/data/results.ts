@@ -1,5 +1,5 @@
 /* ============================================================
-   Results — the three year panels × five divisions that were
+   Results — the three year panels × six divisions that were
    fifteen hand-written table rows in results.html.
 
    PLACEHOLDER CONTENT, deliberately. Confirmed 11 Aug 2026: the
@@ -38,7 +38,7 @@ export interface YearResults {
 	rows: DivisionResult[];
 }
 
-const DIVISIONS = ['Junior', 'Varsity', 'Adult', 'MiniCrew', 'MegaCrew'];
+const DIVISIONS = ['Junior', 'Varsity', 'Adult', 'JV MegaCrew', 'MiniCrew', 'MegaCrew'];
 
 /** Every division for a year, all podium places still unconfirmed. */
 const placeholderRows = (): DivisionResult[] =>
