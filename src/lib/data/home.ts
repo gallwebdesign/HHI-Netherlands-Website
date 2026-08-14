@@ -43,10 +43,16 @@ export const DIVISIONS: Division[] = [
 		desc: 'The open class. Full power, full precision, no excuses.'
 	},
 	{
+		age: 'Ages 17 & younger',
+		name: 'JV MegaCrew',
+		crew: '10–40 dancers',
+		desc: 'Junior and Varsity on one floor. Two generations, one formation, twice the noise.'
+	},
+	{
 		age: 'All ages',
 		name: 'MiniCrew',
-		crew: '3 dancers',
-		desc: 'Three dancers, zero hiding places. Pure chemistry and detail.'
+		crew: '3-4 dancers',
+		desc: 'Three or Four dancers, zero hiding places. Pure chemistry and detail.'
 	},
 	{
 		age: 'All ages',
