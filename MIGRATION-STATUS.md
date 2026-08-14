@@ -1,14 +1,40 @@
 # Migration status
 
 Working notes for the static HTML → SvelteKit migration.
-Last updated **14 August 2026** — media photos rescued, registration hub built,
-favicon and social preview shipped.
+Last updated **14 August 2026, end of day** — media photos rescued, registration
+hub built, favicon and social preview shipped, plus two layout/navigation bugs
+fixed and Iain's content pass applied.
 
 Plan: <https://claude.ai/code/artifact/b42e8908-c534-4c72-8ef2-7a465a78ad28>
-Branch: **`main`** — the migration was merged there in PR #2. Working tree clean;
+Branch: **`main`** — the migration was merged there in PR #2. **Working tree
+clean and everything is pushed**; `main` and `origin/main` are level.
 `sveltekit-migration` merged and safe to delete.
 
-## ▶ Start here on 14 August 2026
+Verified at end of day on the final commit: `npm run check` 0 errors / 0
+warnings, `npm test` **19 passed**.
+
+## ▶ Start here on 15 August 2026
+
+**Nothing is half-finished.** Every pre-purchase task is done and pushed, so
+there is no cleanup carried over from 14 Aug. What is left needs either the
+Cloud86 account or a decision:
+
+1. **Buy the Cloud86 plan.** Two details to confirm at purchase: what "Git
+   integratie" actually does, and whether a cheaper tier keeps mail + SSH +
+   `.htaccess`. This unblocks everything below.
+2. **The photo archive — ~8,163 images, ≈7.8 GB.** Iain's own FTP pull. No
+   switch-off date is set, but it is the only irreversible deadline left.
+3. **Cutover day** (needs the account): delete the Pages workflow, stop setting
+   `BASE_PATH`, verify the `.htaccess` redirects on the real host.
+4. **Phase 8** (needs the mailbox): `CONTACT_EMAIL` becomes real, and the
+   contact form becomes a working PHP form.
+
+One small chore, unrelated to hosting: **`src/lib/config.ts` fails
+`npm run lint`** on line endings alone — Prettier wants to rewrite all 126
+lines CRLF→LF. It was left alone on 14 Aug so it would not bury that day's
+diffs. Run `npx prettier --write src/lib/config.ts` as its own commit.
+
+## What was done on 14 August 2026
 
 Everything below is written up in full; this is the short version.
 
@@ -29,6 +55,31 @@ Everything below is written up in full; this is the short version.
 Also done 14 Aug, unplanned: **favicon and social preview** (open question 3),
 once Iain supplied the logo. See *Brand assets* below.
 
+**Two bugs found by Iain testing on a real device and by clicking around**, both
+fixed and both now covered by tests:
+
+- **The hero collided with the nav on short viewports** (`6ef33cb`). Reported
+  from a Samsung S24+, where browser chrome leaves ~640px and the eyebrow
+  landed 43px *inside* the logo. The nav is `position:fixed` and contributes
+  nothing to flow, so `.hero` now reserves `--nav-h` (72px) plus breathing room
+  in its top padding. The desktop screenshot never showed this because there is
+  plenty of vertical room at 1440px.
+- **Navigation did not return you to the top of the page.** Leave `/events` with
+  the footer on screen, arrive at `/sponsors` still looking at the footer. Cause
+  and fix are written up under *Things to remember*; the short version is that
+  `html{ scroll-behavior:smooth }` cannot be used on a client-routed site.
+
+  ⚠️ **This fix lives in `6796ebc`, whose message reads "Updated Division Total
+  on Homepage".** The message badly understates the commit: it carries
+  `smoothAnchor()` in `attachments.svelte.ts`, the `style.css` change, the
+  registration page's two anchors and 69 lines of new tests, alongside the
+  one-line division-total edit. There is no separate scroll-fix commit to find.
+
+**Iain's content pass** (`def7aaa`, `086a868`, `95bc742`, `6796ebc`, `7be1562`):
+founded year, current year, NHHDC categories, the homepage division total, and
+the results categories. Note the divisions are now **six** — JV MegaCrew was
+added — which is why the smoke test no longer hard-codes a count of 5.
+
 **Every pre-purchase task is now done.** What remains needs either the Cloud86
 account or a decision from Iain:
 
@@ -39,7 +90,8 @@ account or a decision from Iain:
   redirects on the real host.
 - Phase 8: `CONTACT_EMAIL` and a real contact form, both needing the mailbox.
 
-**Explicitly NOT tomorrow, and why** — agreed with Iain 13 Aug:
+**Explicitly NOT before the account exists, and why** — agreed with Iain 13 Aug,
+and still true:
 
 - **Do not delete [.github/workflows/pages.yml](.github/workflows/pages.yml).** It
   is the only deployed staging environment that exists. Deleting it before Cloud86
@@ -60,8 +112,9 @@ cutover (item 1), which is no longer blocked — **hosting is settled: Cloud86**
 (see below). It has not been executed yet.
 
 Since then, on 14 Aug: the media photos are rescued, the registration hub is
-built, and the favicon and social preview have shipped. The only pre-purchase
-task left is `static/.htaccess`.
+built, the favicon and social preview have shipped, `static/.htaccess` is
+written, and two bugs are fixed. **Every pre-purchase task is complete** — what
+remains needs the Cloud86 account or the mailbox.
 
 | Phase | State |
 |---|---|
