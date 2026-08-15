@@ -3,10 +3,12 @@
 Working notes for the static HTML → SvelteKit migration.
 Last updated **15 August 2026** — the event day split was confirmed and carried
 through the site (events schedule now splits by day; registration notice states
-the mapping), and the **privacy policy was migrated to `/privacy`**, which was
-the last legacy page still serving real content. Before that, on 14 Aug: media
-photos rescued, registration hub built, favicon and social preview shipped, two
-layout/navigation bugs fixed.
+the mapping), the **privacy policy was migrated to `/privacy`**, which was the
+last legacy page still serving real content, and **the reduced-motion freeze on
+the hero was found and fixed** (reported as a static stage floor on a Galaxy
+S22; it was Android's reduce-animations setting, not performance). Before that,
+on 14 Aug: media photos rescued, registration hub built, favicon and social
+preview shipped, two layout/navigation bugs fixed.
 
 Plan: <https://claude.ai/code/artifact/b42e8908-c534-4c72-8ef2-7a465a78ad28>
 Branch: **`main`** — the migration was merged there in PR #2. **Working tree
@@ -286,6 +288,77 @@ it could not see.
   for a GDPR request is not yet functional. **This is the strongest argument for
   Phase 8 being real work, not polish.**
 
+## The reduced-motion freeze — ✅ fixed 15 August 2026
+
+**Reported as the hero's stage floor being completely static on a Galaxy S22,
+in several different browsers.** The cross-browser part was the clue and it was
+misread at first: independent rendering engines do not fail identically for
+performance reasons, so "static everywhere" points at a device setting, not at
+a slow GPU.
+
+**The cause was Samsung's *Instellingen → Toegankelijkheid →
+Zichtbaarheidsverbeteringen → Animaties verminderen*.** Android's Power saving
+mode does the same thing. Both make the browser report
+`prefers-reduced-motion: reduce`, and the floor's reduced-motion branch drew
+exactly one frame and stopped — which reads as a broken image, not as a
+deliberately still background. Confirmed on the device: turning the setting off
+made the unmodified site flow correctly.
+
+⚠️ **Ask about this setting before profiling anything.** The same guard gates
+the GSAP entrances, the custom cursor, magnetics, tilt and the pinned road
+section, so they all go inert together — a useful confirming signal. Chasing
+frame rate first cost most of a session.
+
+**What changed** (merge `e3d0352`, then `8f2d544`):
+
+- **The wave runs in a vertex shader.** It used to be computed in JS for every
+  point every frame — two sines, a `sqrt` and a third sine each — followed by a
+  full re-upload of the position buffer. Positions now upload once and each
+  frame writes three uniforms. Because point count is no longer a CPU cost,
+  mobile gets the same 130 × 70 grid as desktop instead of a thinned one.
+- **Reduced motion drifts instead of freezing** — a fifth of the speed, a third
+  of the travel, no cursor tracking. Both numbers were tried louder (0.33 / 0.5)
+  and taken back down after looking at them on the phone.
+- **The ticker was stopped dead by a pre-existing rule** in the same
+  `prefers-reduced-motion` block, with the same broken-looking result. It now
+  runs at **55s** instead of its normal 26s.
+- Mobile also gets no MSAA, a pixel-ratio cap of 1.5 (an S22 reports 3), a 30fps
+  cap, and no pointer listener where the ripple could never fire anyway.
+
+⚠️ **Two traps in this code, both easy to reintroduce:**
+
+- **`uScale` mirrors three's own points shader** — half the drawing-buffer
+  height, in device pixels — and **must be refreshed on resize**, or dot size
+  drifts with the viewport. A hardcoded constant there blows the dots into a
+  white haze on some pixel ratios; that bug was written and caught during this
+  work.
+- **The ticker override needs `!important` and must stay *after* the blanket
+  `*{ animation-duration:.01ms !important }`** in the same block. Without both,
+  it is silently overridden and the ticker stays frozen while the CSS looks
+  correct.
+
+**The perf half fixed nothing that was reported.** The old CPU loop measured
+~0.25ms/frame on a desktop core — real, but not what froze the floor. It was
+kept because it is written, tested and a genuine improvement; do not expect a
+visible speed change from it.
+
+**Verified:** shader compiles and links with no fallback (checked by
+instrumenting `shaderSource`/`compileShader`/`linkProgram`), rendering visually
+identical to the pre-merge `main` at mobile and desktop, ticker measured at 55s
+and actually moving under reduced motion while staying 26s without it, `npm
+test` 31 passed. **Then confirmed by Iain on the real S22 with the setting both
+on and off.**
+
+**The commit before this work is tagged `pre-stage-floor-gpu` (`0a39e36`).**
+`git reset --hard pre-stage-floor-gpu` undoes all of it; the merge was made with
+`--no-ff`, so `git revert -m 1 e3d0352` also takes it out as one unit.
+
+⚠️ **Unrelated, found while testing and still unfixed:** on mobile the hero has
+a strong white wash over its lower portion that makes the body text hard to
+read. It is **pre-existing** — reproduced on the pre-merge `main` — and looks
+like the `.hero::after` vignette in [style.css](src/lib/style.css). Worth a
+look in a copy/design pass.
+
 ## What was done on 14 August 2026
 
 Everything below is written up in full; this is the short version.
@@ -505,9 +578,11 @@ The home page is ported, with three pieces the sub-pages never exercised:
 - **[StageFloor.svelte](src/lib/components/StageFloor.svelte)** — the three.js
   particle floor. `three` is imported dynamically: it is ~500KB, only this route
   uses it, and it touches `window`, which would break the prerender. Verified to
-  land in its own chunk that no other page preloads. Renders one static frame
-  under reduced motion, and disposes geometry, material, renderer, the rAF loop,
-  the IntersectionObserver and both window listeners on destroy.
+  land in its own chunk that no other page preloads. Disposes geometry, material,
+  renderer, the rAF loop, the IntersectionObserver and both window listeners on
+  destroy. **The wave moved into a vertex shader on 15 Aug 2026, and the
+  reduced-motion path no longer renders a single static frame** — see *The
+  reduced-motion freeze* below.
 - **[Preloader.svelte](src/lib/components/Preloader.svelte)** — the curtain. It is
   a fixed 1.4s animation, never tied to real asset loading, so it cannot hang on
   a missing image. Three guards stop it stranding the page: it is absent from the
@@ -870,6 +945,16 @@ Both come back as links the moment the archives get real routes.
   accessibility tree — so `getByRole` finds nothing and visibility assertions would be
   testing scroll position. Scroll first (`settleReveals`) when a test needs the real
   a11y tree, as the tablist test does.
+- **An animation reported dead on a phone is a reduced-motion setting until
+  proven otherwise.** Android Power saving and Samsung's "Animaties verminderen"
+  both report `prefers-reduced-motion: reduce`. Ask before profiling — and treat
+  *identical failure across different browsers* as the tell, since independent
+  engines do not fail the same way for performance reasons. Cost most of a
+  session on 15 Aug 2026. See *The reduced-motion freeze* above.
+- **Honouring reduced motion does not mean freezing a frame.** A decorative
+  element stopped dead reads as broken, which is worse than the motion it
+  avoids. The stage floor drifts slowly and the ticker creeps at 55s instead of
+  stopping. New animations should follow that pattern rather than `animation:none`.
 - **Never put `scroll-behavior:smooth` on `html`.** It was inherited from the legacy site
   and removed 14 Aug 2026. Globally it also applies to SvelteKit's `scrollTo(0,0)`
   navigation reset, turning it into an animation that the layout's `ScrollTrigger.refresh()`

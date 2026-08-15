@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Static marketing site for **HHI Netherlands** — the Netherlands Hip Hop Dance Championship, the official national qualifier of Hip Hop International. Nine hand-written HTML pages plus one shared stylesheet and one shared script.
+Static marketing site for **HHI Netherlands** — the Netherlands Hip Hop Dance Championship, the official national qualifier of Hip Hop International.
+
+⚠️ **Most of the Architecture section below is pre-migration and stale.** The site was ported to **SvelteKit** (adapter-static, prerendered) across Phases 0–7; there are no hand-written HTML pages, no `assets/main.js`, and no `data-nl` attributes in the markup any more. Sections describing those are kept only because parts still explain *why* the current code looks as it does. **[MIGRATION-STATUS.md](MIGRATION-STATUS.md) is the authoritative document** — read it first, and trust it over this file wherever they disagree.
 
 **This folder is the live development site.** A previous port to a custom WordPress theme (`C:\Users\Iain\Local Sites\wordpress-7\...\themes\hhi-netherlands`) is dead — ignore it. Do not resurrect or sync to any other copy.
 
@@ -12,14 +14,18 @@ Remote: `https://github.com/gallwebdesign/HHI-Netherlands-Website.git`
 
 ## Commands
 
-There is no build step, package manager, test suite, or linter. Editing a file changes the site.
+There is a build step, a package manager, a test suite and a linter — the note that once said otherwise was pre-migration.
 
 ```bash
-# preview locally (any static server works)
-python -m http.server 8000
+npm run dev          # development
+npm run check        # svelte-check — expect 0 errors, 0 warnings
+npm run lint         # prettier --check + eslint — expect both clean
+npm run build        # prerenders every route; this is what proves the SSR guards
+npm test             # build + Playwright smoke test — expect 31 passed
+npm run preview      # serves build/ (see the port-4173 trap below)
 ```
 
-Open `index.html` directly via `file://` for quick checks, but prefer a server — the language switcher reads `?lang=nl` from the query string.
+⚠️ **`npm test` rebuilds first, and that matters.** Plain `npx playwright test` reuses whatever is already in `build/`, so a test can pass against a stale build while the bug is live in `src/`. Also kill any stray `vite preview` on **port 4173** before testing — it hijacks the harness and fails ~16 tests wholesale with `_app/immutable` 404s on pages you never touched.
 
 ## Architecture
 
@@ -72,7 +78,13 @@ Behaviour is attached declaratively via data attributes, so new markup opts in w
 
 ### Accessibility and motion
 
-`prefers-reduced-motion` is honoured throughout: it disables GSAP entrances, the custom cursor, magnetics, tilt, and the pinned road section, renders the three.js floor as a single static frame, and falls back to making `[data-reveal]` elements visible via inline styles. Any new animation must check `prefersReducedMotion` the same way. The custom cursor and pointer effects are additionally gated on `(pointer: fine)`.
+`prefers-reduced-motion` is honoured throughout: it disables GSAP entrances, the custom cursor, magnetics, tilt, and the pinned road section, and falls back to making `[data-reveal]` elements visible via inline styles. Any new animation must check `prefersReducedMotion` the same way. The custom cursor and pointer effects are additionally gated on `(pointer: fine)`.
+
+**Reduced motion means less motion, not a frozen frame.** The three.js floor used to render a single static frame and the ticker was `animation:none`; both read as broken rather than still, and that is exactly how the 15 Aug 2026 "static floor on a Galaxy S22" report arose — Android Power saving and Samsung's "Animaties verminderen" both report `prefers-reduced-motion: reduce`. The floor now drifts at a fifth speed and a third amplitude with no cursor tracking, and the ticker runs at 55s instead of 26s. Follow that pattern for anything new: slow it down, drop the pointer-following, keep it alive.
+
+⚠️ **When an animation is reported broken on a phone, ask about that setting before profiling.** Identical failure across several browsers is the tell — independent engines do not fail the same way for performance reasons.
+
+The floor's wave runs in a **vertex shader** ([StageFloor.svelte](src/lib/components/StageFloor.svelte)), not a JS loop. Its `uScale` uniform mirrors three's own points shader (half the drawing-buffer height in device pixels) and **must be refreshed on resize**; a constant there blows the dots into a white haze. The ticker's reduced-motion override needs `!important` and must stay *after* the blanket `*{ animation-duration:.01ms !important }` in the same block, or it is silently ignored.
 
 ### External dependencies
 
