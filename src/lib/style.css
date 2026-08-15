@@ -739,7 +739,7 @@ body.menu-open{ overflow:hidden; }
 .sponsor:hover{ background:var(--panel); }
 /* The logos are dark-on-transparent PNGs drawn for a white page — measured
    average luminance runs 20–159 against this near-black ground, so the
-   darkest of them would simply vanish. The plate is what makes all seven
+   darkest of them would simply vanish. The plate is what makes them all
    legible, and it is why they are not dropped straight onto --ink. */
 .sponsor__plate{
   display:grid; place-items:center; width:100%; aspect-ratio:5/2;

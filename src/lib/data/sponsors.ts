@@ -1,6 +1,8 @@
 /* ============================================================
-   Sponsors — the seven organisations that actually back the
-   championship, as listed on the legacy sponsors.php.
+   Sponsors — the organisations that actually back the
+   championship. The first seven are as listed on the legacy
+   sponsors.php; Houben Souren was added 15 Aug 2026 from a logo
+   and blurb Iain supplied directly.
 
    REWRITTEN 15 Aug 2026. The page used to advertise three
    sponsorship tiers ("Example packages", "Put your brand on the
@@ -9,9 +11,11 @@
    is gone with it — recover from git history if a sales page is
    ever wanted again.
 
-   Logos were rescued from the legacy host into
+   The legacy logos were rescued from the legacy host into
    static/img/sponsors/ on 15 Aug 2026, the same way the media
-   photos were. All seven are 180x180 PNGs with transparency.
+   photos were. All eight are 180x180 PNGs with transparency —
+   keep new ones square, because .sponsor__plate only looks
+   uniform while every logo shares those proportions.
 
    ⚠️ They are dark-on-transparent, drawn for a white page —
    measured average luminance runs from 20 (apsgroep) to 159
@@ -21,9 +25,10 @@
    three would be invisible. Do not "simplify" that away.
 
    Descriptions are the sponsors' own words from the legacy
-   page, trimmed only where they ran long. VSBfonds's is Dutch
-   in the original and is kept in Dutch — it is their copy, not
-   ours to translate.
+   page, trimmed only where they ran long. VSBfonds's was Dutch
+   in the original; Iain asked for it in English on 15 Aug 2026,
+   so it is now our translation of their line rather than their
+   own copy.
 
    Text is plain UTF-8 (– — ’ not &ndash; &mdash; &rsquo;).
    ============================================================ */
@@ -45,20 +50,30 @@ export interface Sponsor {
    rewrites root-relative paths written literally in markup. */
 const logo = (file: string) => withBase(`/img/sponsors/${file}.png`);
 
-/** Order follows the legacy page. */
+/* Order is Iain's, set 15 Aug 2026 — no longer the legacy page's. The venue
+   leads, then the two technical partners, then the funders and the city, with
+   the remaining suppliers last. The page renders this array as-is, so moving
+   an entry here is what reorders the grid. */
 export const SPONSORS: Sponsor[] = [
 	{
-		name: 'Heijnens Audio · Light · Vision',
-		logo: logo('heijnens'),
+		name: 'MECC Maastricht',
+		logo: logo('mecc'),
 		blurb:
-			'The complete supplier for the technical part of your event. Audio, light, vision and power.',
-		href: 'http://www.heijnensaudio.nl/'
+			'30,000 m² of exhibition space, a congress centre and auditoriums — and the home of the championship.',
+		href: 'https://www.mecc.nl/'
+	},
+	{
+		name: 'Houben Souren',
+		logo: logo('houben-souren'),
+		blurb:
+			'Balanced sound, lighting and media technology that leaves a lasting impression — AV solutions for everything from the meeting room to the main event.',
+		href: 'https://houbensouren.nl/'
 	},
 	{
 		name: 'VSBfonds',
 		logo: logo('vsbfonds'),
 		blurb:
-			'VSBfonds ondersteunt initiatieven van en voor iedereen die actief wil meedoen aan de samenleving.',
+			'VSBfonds supports initiatives by and for everyone who wants to take an active part in society.',
 		href: 'https://www.vsbfonds.nl/'
 	},
 	{
@@ -76,13 +91,6 @@ export const SPONSORS: Sponsor[] = [
 		href: 'https://www.gemeentemaastricht.nl/'
 	},
 	{
-		name: 'MECC Maastricht',
-		logo: logo('mecc'),
-		blurb:
-			'30,000 m² of exhibition space, a congress centre and auditoriums — and the home of the championship.',
-		href: 'https://www.mecc.nl/'
-	},
-	{
 		name: 'het Cultuurfonds',
 		logo: logo('bernhard'),
 		blurb: 'het Cultuurfonds supports culture, nature and science in the Netherlands.',
@@ -93,5 +101,12 @@ export const SPONSORS: Sponsor[] = [
 		logo: logo('apsgroep'),
 		blurb: 'APS Groep: for all your promotions.',
 		href: 'http://www.apsgroep.nl/'
+	},
+	{
+		name: 'Heijnens Audio · Light · Vision',
+		logo: logo('heijnens'),
+		blurb:
+			'The complete supplier for the technical part of your event. Audio, light, vision and power.',
+		href: 'http://www.heijnensaudio.nl/'
 	}
 ];

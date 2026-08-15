@@ -536,23 +536,34 @@ test('sponsors page credits real sponsors and does not solicit new ones', async 
 	/* Rewritten 15 Aug 2026 from a three-tier sales page to a credit page.
 	   Iain's instruction was explicit: show current sponsors, do not advertise
 	   for new ones — so the absence of a pitch is the requirement, not a
-	   side effect, and it is what this test is really guarding. */
+	   side effect, and it is what this test is really guarding.
+
+	   No hardcoded count: sponsors get added (Houben Souren, 15 Aug 2026) and
+	   a literal turns that into a failing test rather than a passing one.
+	   SPONSORS cannot be imported here either — it pulls in $lib/config and
+	   then $app, which only resolve inside Vite. So assert the shape instead:
+	   a plausible number of cards, each one complete. */
 	const cards = page.locator('.sponsor');
-	await expect(cards).toHaveCount(7);
+	const count = await cards.count();
+	expect(count, 'sponsor cards should render').toBeGreaterThanOrEqual(7);
 
 	await expect(page.locator('.sponsor__name', { hasText: 'MECC Maastricht' })).toBeAttached();
 	await expect(page.locator('.sponsor__name', { hasText: 'Provincie Limburg' })).toBeAttached();
 
-	/* Every card links out to the sponsor, in a new tab. */
+	/* Every card links out to the sponsor, in a new tab, and carries its
+	   name and blurb — a half-filled entry should fail here. */
 	for (const a of await cards.all()) {
 		await expect(a).toHaveAttribute('href', /^https?:\/\//);
 		await expect(a).toHaveAttribute('target', '_blank');
+		await expect(a.locator('.sponsor__name')).not.toBeEmpty();
+		await expect(a.locator('.sponsor__blurb')).not.toBeEmpty();
 	}
 
-	/* The seven logos are local: they were rescued off the legacy host and a
-	   404 here would leave seven blank plates. */
+	/* The logos are local: the original seven were rescued off the legacy
+	   host, and a 404 here would leave blank plates. One per card — that is
+	   what catches a sponsor added to the data without its logo shipped. */
 	const logos = page.locator('.sponsor__plate img');
-	await expect(logos).toHaveCount(7);
+	await expect(logos).toHaveCount(count);
 	for (const src of await logos.evaluateAll((imgs) =>
 		imgs.map((i) => i.getAttribute('src') ?? '')
 	)) {
