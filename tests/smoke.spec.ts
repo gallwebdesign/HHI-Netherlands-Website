@@ -270,6 +270,36 @@ test('events page shows the confirmed date and venue', async ({ page }) => {
 	await expect(page.locator('.board__num').first()).not.toHaveText('00');
 });
 
+test('events schedule splits into the two confirmed days', async ({ page }) => {
+	await page.goto('/events');
+
+	/* The day split was confirmed on 15 Aug 2026: 30 January is the HHI Open
+	   Division, 31 January the Netherlands HHDC. Before that the page carried a
+	   single indicative day and said the split was unannounced, so this guards
+	   against a regression to that shape as much as it checks the content.
+
+	   The dates derive from EVENT_DATE / EVENT_END_DATE in config.ts, so this
+	   also catches a day label drifting away from the countdown. */
+	const days = page.locator('.sched-day');
+	await expect(days).toHaveCount(2);
+
+	await expect(days.nth(0)).toContainText('30 January');
+	await expect(days.nth(0)).toContainText('HHI Open Division');
+	await expect(days.nth(1)).toContainText('31 January');
+	await expect(days.nth(1)).toContainText('Netherlands HHDC');
+
+	/* Each day carries its own running order, and the rows are time + category
+	   only — the old third column is gone. */
+	await expect(days.nth(0).locator('.sched__row')).toHaveCount(6);
+	await expect(days.nth(1).locator('.sched__row')).toHaveCount(6);
+	await expect(page.locator('.sched__note')).toHaveCount(0);
+
+	/* The times are indicative and the running order is not final, so the page
+	   must say so. Published times people plan travel around, presented as fact
+	   before the programme exists, is the failure mode this guards. */
+	await expect(page.locator('.footnote')).toContainText(/subject to change/i);
+});
+
 test('registration hub offers both competition forms', async ({ page }) => {
 	await page.goto('/registration');
 
@@ -277,25 +307,59 @@ test('registration hub offers both competition forms', async ({ page }) => {
 	   because a hub that renders but links nowhere useful is the failure mode
 	   worth catching — these are the only registration routes that exist.
 	   They split by competition, not by event day: the forms' own titles are
-	   "Netherlands HHDC" and "HHI Open Division". */
+	   "Netherlands HHDC" and "HHI Open Division".
+
+	   Asserted as a set, not per index. The card order is presentation — it was
+	   changed on 15 Aug 2026 to run in day order (Open Division first, since it
+	   dances on day one) — and an index-bound assertion fails on a reorder that
+	   broke nothing. What must hold is that both forms are linked exactly once. */
 	const forms = page.locator('.reg-day a[href*="form.jotform.com"]');
 	await expect(forms).toHaveCount(2);
-	await expect(forms.nth(0)).toHaveAttribute('href', /262132296237961/);
-	await expect(forms.nth(1)).toHaveAttribute('href', /262132162311946/);
+	const hrefs = await forms.evaluateAll((links) => links.map((a) => a.getAttribute('href') ?? ''));
+	expect(hrefs.filter((h) => h.includes('262132296237961'))).toHaveLength(1);
+	expect(hrefs.filter((h) => h.includes('262132162311946'))).toHaveLength(1);
 
-	await expect(page.getByText('Netherlands HHDC', { exact: true })).toBeAttached();
-	await expect(page.getByText('HHI Open Division', { exact: true })).toBeAttached();
+	/* Scoped to the card names. Both competitions are also named in bold inside
+	   the day notice below, so an unscoped exact-text match resolves to two
+	   elements and fails on strict mode. */
+	await expect(page.locator('.reg-day__name', { hasText: /^Netherlands HHDC$/ })).toBeAttached();
+	await expect(page.locator('.reg-day__name', { hasText: /^HHI Open Division$/ })).toBeAttached();
 
-	/* Guards against the earlier mistake of presenting these as a Saturday
-	   and a Sunday form — the day split is still unannounced. */
+	/* Guards against the earlier mistake of presenting these as a Saturday and a
+	   Sunday form. The day split is now confirmed (30 Jan Open, 31 Jan HHDC) and
+	   is stated on /events by date — weekday names are still wrong here, since a
+	   crew registers by competition, not by the day it happens to fall on. */
 	await expect(page.locator('.reg-days')).not.toContainText(/saturday|sunday/i);
+});
+
+test('registration hub states which competition dances on which day', async ({ page }) => {
+	await page.goto('/registration');
+
+	/* Until 15 Aug 2026 this notice said the split was unannounced. It now
+	   answers the question, which makes it load-bearing: a crew reads it to know
+	   when to turn up. The assertion is on the pairing, not on the two dates
+	   appearing somewhere on the page — the failure that actually costs someone
+	   their competition is the days being swapped, and a looser check would pass
+	   straight through it. */
+	/* The page has two .notice blocks — this one and the "Ready?" prompt at the
+	   end — so it is selected by its heading rather than by position. */
+	const notice = page.locator('.notice', { hasText: 'Which day do we dance?' });
+	await expect(notice).toContainText(/HHI Open Division dances on 30 January/i);
+	await expect(notice).toContainText(/Netherlands HHDC on 31 January/i);
+
+	/* The qualifier framing is the reason to enter the HHDC over the Open
+	   Division, and this is the page where that choice is made. Matched loosely
+	   on the Worlds name — the site calls it both "HHI Worlds" and "HHI World
+	   Finals" — because what must survive an edit is the claim, not the wording. */
+	await expect(notice).toContainText(/national qualifier/i);
+	await expect(notice).toContainText(/HHI World/i);
 });
 
 test('every "register" CTA points at the hub, not a form', async ({ page }) => {
 	/* The six CTAs deliberately funnel through /registration rather than
-	   doubling up per day, because the division split is unannounced. If one
-	   ever links straight to a JotForm, a crew is asked to pick a day from a
-	   button with no context to pick on. */
+	   doubling up per competition. The forms split by what a crew is entering,
+	   and the hub is where that choice gets explained; a CTA pointing straight
+	   at a JotForm asks a crew to pick with no context to pick on. */
 	/* Counts are chrome + page CTAs. Every page carries three chrome links to
 	   the hub (nav, mobile menu, footer); the home page adds its hero and
 	   closing CTAs, /events adds its hero CTA. Exact counts rather than a

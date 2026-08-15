@@ -1,23 +1,23 @@
 # Migration status
 
 Working notes for the static HTML → SvelteKit migration.
-Last updated **14 August 2026, end of day** — media photos rescued, registration
-hub built, favicon and social preview shipped, plus two layout/navigation bugs
-fixed and Iain's content pass applied.
+Last updated **15 August 2026** — the event day split was confirmed and carried
+through the site (events schedule now splits by day; registration notice states
+the mapping). Before that, on 14 Aug: media photos rescued, registration hub
+built, favicon and social preview shipped, two layout/navigation bugs fixed.
 
 Plan: <https://claude.ai/code/artifact/b42e8908-c534-4c72-8ef2-7a465a78ad28>
 Branch: **`main`** — the migration was merged there in PR #2. **Working tree
 clean and everything is pushed**; `main` and `origin/main` are level.
 `sveltekit-migration` merged and safe to delete.
 
-Verified at end of day on the final commit: `npm run check` 0 errors / 0
-warnings, `npm test` **19 passed**.
+Verified on the final commit: `npm run lint` clean, `npm run check` 0 errors / 0
+warnings, `npm test` **21 passed**.
 
-## ▶ Start here on 15 August 2026
+## ▶ Start here on 16 August 2026
 
-**Nothing is half-finished.** Every pre-purchase task is done and pushed, so
-there is no cleanup carried over from 14 Aug. What is left needs either the
-Cloud86 account or a decision:
+**Nothing is half-finished.** Every pre-purchase task is done and pushed. What
+is left needs either the Cloud86 account or a decision:
 
 1. **Buy the Cloud86 plan.** Two details to confirm at purchase: what "Git
    integratie" actually does, and whether a cheaper tier keeps mail + SSH +
@@ -29,10 +29,55 @@ Cloud86 account or a decision:
 4. **Phase 8** (needs the mailbox): `CONTACT_EMAIL` becomes real, and the
    contact form becomes a working PHP form.
 
-One small chore, unrelated to hosting: **`src/lib/config.ts` fails
-`npm run lint`** on line endings alone — Prettier wants to rewrite all 126
-lines CRLF→LF. It was left alone on 14 Aug so it would not bury that day's
-diffs. Run `npx prettier --write src/lib/config.ts` as its own commit.
+~~One small chore: `src/lib/config.ts` fails `npm run lint` on line endings.~~
+✅ **Done 15 Aug 2026** — formatted as part of the day-split work, since that
+commit had to touch `config.ts` anyway. `npm run lint` is clean.
+
+## The event day split — ✅ confirmed 15 August 2026
+
+**30 January is the HHI Open Division; 31 January is the Netherlands HHDC.**
+This closes open question 4 for everything except the running order within each
+day. Iain confirmed it and stated it on the events page first (`1ed0ea2`); the
+rest of the site was brought in line afterwards.
+
+Where it now lives:
+
+- **`EVENT_DAY_ONE` / `EVENT_DAY_TWO`** in [config.ts](src/lib/config.ts) —
+  derived from `EVENT_DATE` and `EVENT_END_DATE`, like `EVENT_DATE_RANGE`. **No
+  page hand-types a day label**, so the schedule cannot drift from the countdown.
+- **The events schedule is now two days side by side** — `SCHEDULE` in
+  [events.ts](src/lib/data/events.ts) is a `ScheduleDay[]`, each with its own
+  competition and rows. Two columns ≥1001px, stacked below. Rows are **time +
+  category only**; the old right-hand qualifier column (`.sched__note`) is gone.
+- **Each day's categories are that competition's own divisions**, taken from
+  `REGISTRATION_FORMS` rather than retyped — Open gets Parents and Special
+  Crews, HHDC gets MiniCrew and the two MegaCrews.
+- **The `/registration` notice answers the question** instead of promising an
+  announcement. It also carries the qualifier point, because that is the reason
+  to enter the HHDC over the Open Division and this is where crews choose.
+
+**The times are still indicative.** Both days reuse the same 10:00–19:30
+skeleton, and the events footnote says the schedule is subject to change. The
+data shape already lets the two days diverge — replace the rows per day when the
+official programme lands, and drop the "final times" sentence from the notice.
+
+**`REGISTRATION_FORMS` is ordered by day** (Open first) as of `1ed0ea2`, and the
+events schedule renders in the same order. The comment in `config.ts` says so;
+do not re-sort it alphabetically.
+
+⚠️ **Two naming inconsistencies, both harmless but worth knowing.** The
+registration notice says **"HHI World Finals"** while
+[events.ts](src/lib/data/events.ts) says **"HHI Worlds"** and the home page says
+**"World Hip Hop Dance Championship"** — three names for one event. The smoke
+test deliberately matches loosely (`/HHI World/`) so it asserts the claim, not
+the wording. Worth settling on one name in a copy pass.
+
+Three tests now guard this, and the day-mapping one was verified non-vacuous by
+swapping the two days and watching it fail:
+
+- `events schedule splits into the two confirmed days`
+- `registration hub states which competition dances on which day`
+- the footnote's "subject to change" wording
 
 ## What was done on 14 August 2026
 
@@ -471,9 +516,11 @@ what they are entering, which they know, not by a day nobody has announced.
 out to a form. `EXTERNAL.registration` is gone, replaced by `REGISTRATION_FORMS`
 and `REGISTRATION_HUB` in [config.ts](src/lib/config.ts).
 
-The unannounced day split is still addressed on the page — a notice says the
-programme decides which divisions dance when, rather than implying a crew should
-already know. Delete that notice when the schedule lands.
+**The "which day" notice was rewritten, not deleted** (15 Aug 2026). The earlier
+instruction here said to delete it once the schedule landed; that turned out to
+be wrong. The question does not go away when it gets an answer — crews still ask
+it, so the notice now states the mapping (Open on day one, HHDC on day two) and
+carries the qualifier point. See *The event day split* above.
 
 Two details worth keeping in mind:
 
@@ -507,9 +554,11 @@ Phase 8, and Cloud86's PHP means it can be a real form.
    `info@hhi-netherlands.com` becomes true by construction. Confirm on setup.
 3. ~~**Favicon and social preview**~~ — ✅ **settled 14 Aug 2026.** Iain supplied
    the official logo as a true vector. See *Brand assets* below.
-4. **Division split across the two event days** — not needed to ship. It no longer
-   gates the registration hub (the forms split by competition, not by day), but it
-   still gates the events schedule and the hub's "which day" notice.
+4. ~~**Division split across the two event days**~~ — ✅ **settled 15 Aug 2026:
+   30 Jan is the HHI Open Division, 31 Jan the Netherlands HHDC.** Live on the
+   events page and the registration hub. See *The event day split* above. What
+   is still open is narrower: **the running order within each day**, which is
+   why both days currently show the same indicative 10:00–19:30 skeleton.
 5. ~~**The photo archive**~~ — ✅ **settled 14 Aug 2026: Iain pulls it over FTP.**
    Not a repo task. No switch-off date is set, but it is the only irreversible
    deadline on the project, so do not let it drift. See the archive section above.
@@ -525,6 +574,13 @@ Phase 8, and Cloud86's PHP means it can be a real form.
   like a real regression). Anything served from our own origin still fails the
   test. Do not widen that filter to silence a local asset: verified by deleting an
   image from `build/` and confirming the test fails and names the URL.
+- **A second console flake, seen 15 Aug 2026:** `Permissions policy violation:
+  compute-pressure is not allowed in this document`. Chrome emits it, it hits a
+  random page (seen on `/media`), and it passes on re-run with identical code —
+  same shape as the `fonts.gstatic.com` flake above. **It was not filtered out**:
+  the console-error assertion is deliberately strict, and widening it to silence
+  browser chatter is how a real regression gets hidden. Re-run before believing a
+  lone console failure on a page you did not touch.
 - **Chrome's console message for a failed request does not include the URL** — it
   is literally `Failed to load resource: … 404 ()`. The smoke test therefore
   tracks requests through the `response` event, which does carry it, and drops the
@@ -600,7 +656,7 @@ npm run check        # svelte-check — expect 0 errors, 0 warnings
 npm run lint         # prettier --check + eslint — expect both clean
 npm run format       # prettier --write
 npm run build        # prerenders all nine routes; this is what proves SSR guards
-npm test             # build + Playwright smoke test — expect 17 passed
+npm test             # build + Playwright smoke test — expect 21 passed
 npm run preview      # trustworthy again since Phase 7
 npx serve build      # second opinion on the real output
 

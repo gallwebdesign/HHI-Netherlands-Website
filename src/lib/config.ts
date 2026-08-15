@@ -34,6 +34,17 @@ export const EVENT_DATE_RANGE = (() => {
 	return `${start.getUTCDate()} & ${end.getUTCDate()} ${month} ${end.getUTCFullYear()}`;
 })();
 
+/** The two competition days on their own, e.g. "30 January" / "31 January".
+ *  Derived for the same reason as EVENT_DATE_RANGE: the events schedule labels
+ *  each day, and a hand-typed date there would drift the moment EVENT_DATE
+ *  moves. Day one is the HHI Open Division, day two the Netherlands HHDC —
+ *  confirmed 15 Aug 2026. */
+const dayLabel = (iso: string) =>
+	new Date(iso).toLocaleString('en-GB', { day: 'numeric', month: 'long', timeZone: 'UTC' });
+
+export const EVENT_DAY_ONE = dayLabel(EVENT_DATE);
+export const EVENT_DAY_TWO = dayLabel(EVENT_END_DATE);
+
 /** First edition of the championship; the left half of the footer range. */
 export const FOUNDED_YEAR = 2016;
 
@@ -52,7 +63,11 @@ export const SITE_URL = 'https://hhi-netherlands.com';
  *  confirmed 14 Aug 2026 from the live forms, whose own titles read "HHI Open
  *  Division Registration Form 2027" and "Netherlands HHDC Registration Form
  *  2027". An earlier note called these the Saturday and Sunday forms; that was
- *  wrong, and the day split remains unannounced.
+ *  wrong — a crew registers by what it is entering, not by when it dances.
+ *
+ *  The day split is now confirmed (15 Aug 2026): the Open Division dances on
+ *  day one, the HHDC on day two. **The order below is deliberate — it follows
+ *  the days**, and the events schedule is rendered in the same order. Keep it.
  *
  *  Every CTA across the site points at the /registration hub rather than at a
  *  form, so the choice is made on a page with room to explain it. */
@@ -64,7 +79,8 @@ export const REGISTRATION_FORMS = [
 	},
 	{
 		name: 'Netherlands HHDC',
-		blurb: 'The National Championship — Junior, Varsity, Adult, JV MegaCrew, MiniCrew and MegaCrew.',
+		blurb:
+			'The National Championship — Junior, Varsity, Adult, JV MegaCrew, MiniCrew and MegaCrew.',
 		href: 'https://form.jotform.com/262132296237961'
 	}
 ] as const;

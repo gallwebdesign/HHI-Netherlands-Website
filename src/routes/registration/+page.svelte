@@ -1,7 +1,14 @@
 <script lang="ts">
 	import PageHero from '$lib/components/PageHero.svelte';
 	import { CHECKLIST, STEPS } from '$lib/data/registration';
-	import { EVENT_YEAR, EVENT_DATE_RANGE, EVENT_VENUE, REGISTRATION_FORMS } from '$lib/config';
+	import {
+		EVENT_YEAR,
+		EVENT_DATE_RANGE,
+		EVENT_DAY_ONE,
+		EVENT_DAY_TWO,
+		EVENT_VENUE,
+		REGISTRATION_FORMS
+	} from '$lib/config';
 	import { magnetic, reveal, smoothAnchor } from '$lib/attachments.svelte';
 
 	/* Step numbers derive from array position — 01, 02, … */
@@ -57,15 +64,20 @@
 				</div>
 			{/each}
 		</div>
-		<!-- Open question 4: which divisions dance on which day is still
-		     unannounced. That is a schedule question, not a registration one —
-		     the forms split by competition — but crews will ask it here, so
-		     say plainly that it is coming rather than leave it unaddressed. -->
+		<!-- The day split was confirmed 15 Aug 2026, so this notice answers the
+		     question outright instead of promising an announcement. The day labels
+		     derive from config.ts — never hand-type a date here. The competition
+		     names are the form names above, so the mapping cannot be misread.
+		     The qualifier point belongs here specifically: it is the reason to
+		     enter the HHDC rather than the Open Division, and this is the page
+		     where a crew chooses between them. -->
 		<div class="notice" {@attach reveal()}>
 			<b>Which day do we dance?</b>
 			<span
-				>The championship runs across both days, and which divisions dance on which day is announced
-				with the full programme. Register now — we&rsquo;ll confirm the schedule before the event.</span
+				>The <b>HHI Open Division</b> dances on {EVENT_DAY_ONE}, and the
+				<b>Netherlands HHDC</b> on {EVENT_DAY_TWO}. The HHDC is the official national qualifier —
+				its medallists represent the Netherlands at the HHI World Finals. Final times follow with
+				the full programme.</span
 			>
 		</div>
 	</section>
