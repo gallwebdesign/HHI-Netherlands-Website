@@ -540,11 +540,12 @@ body.menu-open{ overflow:hidden; }
   *{ transition-duration:.01ms !important; animation-duration:.01ms !important; }
   /* The ticker used to be stopped dead here, which reads as a broken
      strip rather than a still one — the same failure the stage floor had.
-     It creeps instead: slow enough not to pull the eye or demand tracking,
-     but clearly alive. Needs !important to beat the blanket rule above,
-     and must stay after it. Hover speed-up is dropped deliberately. */
-  .ticker__track{ animation-duration:90s !important; }
-  .ticker:hover .ticker__track{ animation-duration:90s !important; }
+     It runs slow instead: about twice the normal 26s, settled on after
+     trying 90s on a phone, where it was so slow it read as stuck again.
+     Needs !important to beat the blanket rule above, and must stay after
+     it. Hover speed-up is dropped deliberately. */
+  .ticker__track{ animation-duration:55s !important; }
+  .ticker:hover .ticker__track{ animation-duration:55s !important; }
 }
 
 /* ============================================================

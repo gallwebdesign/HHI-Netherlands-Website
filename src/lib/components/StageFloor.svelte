@@ -159,14 +159,15 @@
 				geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
 				geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
-				/* Reduced motion keeps the floor alive but calm: a third of the
-				   speed, half the travel, and no cursor tracking at all. A
-				   single frozen frame reads as a broken image rather than as a
-				   deliberately still background. Tuned up from 0.2/0.35 after
-				   testing on a Galaxy S22, where the gentler setting was too
-				   subtle to register on a small screen. */
-				const timeScale = reduced ? 0.33 : 1;
-				const amplitude = reduced ? 0.5 : 1;
+				/* Reduced motion keeps the floor alive but calm: a fifth of the
+				   speed, a third of the travel, and no cursor tracking at all.
+				   A single frozen frame reads as a broken image rather than as
+				   a deliberately still background. These numbers were briefly
+				   raised to 0.33/0.5 and taken back down after looking at both
+				   on a Galaxy S22 — the louder setting was more motion than
+				   someone asking for less motion should get. */
+				const timeScale = reduced ? 0.2 : 1;
+				const amplitude = reduced ? 0.35 : 1;
 
 				/* World units, matching the PointsMaterial `size` this replaces.
 				   uScale mirrors three's own points shader — drawing-buffer
