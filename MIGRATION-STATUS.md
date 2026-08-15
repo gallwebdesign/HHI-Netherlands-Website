@@ -14,7 +14,7 @@ clean and everything is pushed**; `main` and `origin/main` are level.
 `sveltekit-migration` merged and safe to delete.
 
 Verified on the final commit: `npm run lint` clean, `npm run check` 0 errors / 0
-warnings, `npm test` **28 passed**.
+warnings, `npm test` **29 passed**.
 
 ## ▶ Start here on 16 August 2026
 
@@ -113,7 +113,7 @@ worse than no caption. `figcaption` now renders only when a caption is
 non-empty, so filling them in later is a data edit in `home.ts` with no markup
 change. Alt text is generic by Iain's decision (15 Aug).
 
-## Results — 2026 and 2025 are real as of 15 August 2026
+## Results — 2026, 2025 and 2024 are real as of 15 August 2026
 
 **The legacy `results.php` had no tables at all.** It was six PDF score sheets,
 one per division — and for **2026**, not the 2023–2025 the migrated page had
@@ -165,10 +165,29 @@ The 2025 PDFs are in `static/download/results-2025/` and linked from the page
 anyway: unreadable by machine is not unreadable by people, and for this edition
 the repo may be the only copy outside Iain's drive.
 
-**2023–2024 remain placeholder.** The notice on the page names which years are
+### 2024 — added the same day, same route
+
+Read from the tabulation workbooks in
+`G:\HHI Netherlands 2024\HHI Tabulation\Excel\HHI NL`. Same six divisions, same
+sheet layout. Rank again disagrees with score order: in Junior, rank 3
+(Trouble) scored *higher* than rank 2 but took a 0.3 deduction for a fall and
+use of props.
+
+⚠️ **The workbooks mark defending champions with a trailing asterisk** —
+"C-Fam Adult *", "The Pack *", "C-Fam Mini *", "C-Fam *". Iain confirmed
+(15 Aug 2026) that this is tabulation notation and does not belong on the page,
+so it is stripped. A smoke test asserts no asterisk appears in the 2024 panel,
+since re-importing from source would reintroduce it.
+
+The 2024 PDFs were named `01_HHI NL 2024 Junior Division Tabulation.pdf` on the
+drive; they were **renamed on copy** to the `HHI-NL-<year>-<Division>-Division`
+convention the other years use, so one `sheetsFor(year)` builder covers all
+three editions.
+
+**2023 remains placeholder.** The notice on the page names which years are
 official, and it derives that from whichever years carry score sheets, so the
 copy cannot go stale as earlier editions are filled in. **Do not invent
-champions** — the smoke test asserts 2024 still says "fill from archive"
+champions** — the smoke test asserts 2023 still says "fill from archive"
 precisely to stop plausible-looking names appearing.
 
 ## Privacy policy — ✅ migrated 15 August 2026
@@ -831,7 +850,7 @@ npm run check        # svelte-check — expect 0 errors, 0 warnings
 npm run lint         # prettier --check + eslint — expect both clean
 npm run format       # prettier --write
 npm run build        # prerenders all ten routes; this is what proves SSR guards
-npm test             # build + Playwright smoke test — expect 28 passed
+npm test             # build + Playwright smoke test — expect 29 passed
 npm run preview      # trustworthy again since Phase 7
 npx serve build      # second opinion on the real output
 

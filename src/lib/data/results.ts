@@ -1,27 +1,27 @@
 /* ============================================================
    Results — one panel per edition, six divisions each.
 
-   2026 AND 2025 ARE REAL, both filled on 15 Aug 2026.
+   2026, 2025 AND 2024 ARE REAL, all filled on 15 Aug 2026.
 
    2026 came from the six official score sheets the legacy
    results.php linked to (dated 1 February 2026), recovered off
    the dying host. Every placement was checked against the rank
    number in its source PDF.
 
-   2025 came from the division tabulation workbooks Iain
-   supplied — the source those PDFs are generated from. That
-   detour was necessary: the 2025 PDFs embed subset fonts with
-   no ToUnicode map, so their text is not machine-readable at
-   all. The workbooks are, and are closer to the original record
-   in any case.
+   2025 and 2024 came from the division tabulation workbooks on
+   Iain's drive — the source those PDFs are generated from. That
+   detour was necessary for 2025: its PDFs embed subset fonts
+   with no ToUnicode map, so their text is not machine-readable
+   at all. The workbooks are, and are closer to the original
+   record in any case, so 2024 was read the same way.
 
-   Both years' PDFs are in static/download/results-<year>/ and
-   linked from the page. For 2025 this repo may be the only copy
-   outside Iain's own drive.
+   All three years' PDFs are in static/download/results-<year>/
+   and linked from the page. For 2025 and 2024 this repo may be
+   the only copy outside Iain's own drive.
 
-   2023–2024 ARE STILL PLACEHOLDER. Their rows keep the
-   "— fill from archive" text. Do not invent champions: filling
-   them in is a data edit, exactly like the two years above.
+   2023 IS STILL PLACEHOLDER. Its rows keep the "— fill from
+   archive" text. Do not invent champions: filling it in is a
+   data edit, exactly like the three years above.
 
    The years are listed rather than derived. They are the
    editions with an archive to publish, which is not the same as
@@ -108,6 +108,11 @@ const sheetsFor = (year: string) =>
 const SHEETS_2026 = sheetsFor('2026');
 const SHEETS_2025 = sheetsFor('2025');
 
+/* 2024's PDFs were named "01_HHI NL 2024 Junior Division Tabulation.pdf" on
+   Iain's drive. They were renamed to the convention the other years use when
+   copied in, so one builder covers all three editions. */
+const SHEETS_2024 = sheetsFor('2024');
+
 /* 2025, read from the division tabulation workbooks Iain supplied on 15 Aug
    2026 (HHI Tabulation/Excel/HHI NL/*.xlsm, "Final Scores" sheet) — the source
    the score-sheet PDFs were generated from. The 2025 PDFs themselves embed
@@ -126,9 +131,32 @@ const ROWS_2025: DivisionResult[] = [
 	{ division: 'MegaCrew', gold: 'D&D', silver: 'C-Fam', bronze: 'LEZ FAMILY' }
 ];
 
+/* 2024, from the same tabulation workbooks as 2025. Read from the Rank column
+   for the same reason: in Junior, rank 3 (Trouble) scored higher than rank 2 —
+   a 0.3 deduction for a fall and use of props put it third.
+
+   The workbooks mark some crews with a trailing asterisk to flag a defending
+   champion (C-Fam Adult *, The Pack *, C-Fam Mini *, C-Fam *). That is
+   tabulation notation, not part of the crew's name, and Iain confirmed on
+   15 Aug 2026 that it does not belong on the page — so it is stripped here
+   rather than reproduced. */
+const ROWS_2024: DivisionResult[] = [
+	{ division: 'Junior', gold: '225 crew', silver: 'D-Lions', bronze: 'Trouble' },
+	{ division: 'Varsity', gold: 'C-Fam Varsity', silver: 'D-Squad', bronze: 'Wanted' },
+	{ division: 'Adult', gold: 'C-Fam Adult', silver: 'D-Flame', bronze: 'NEW ENERGY' },
+	{ division: 'JV MegaCrew', gold: 'Young C-Fam', silver: 'O2', bronze: 'The Pack' },
+	{
+		division: 'MiniCrew',
+		gold: 'C-Fam Mini',
+		silver: 'A-SHAQUEENIES',
+		bronze: 'D-Three (DCBD - Brunssum)'
+	},
+	{ division: 'MegaCrew', gold: 'C-Fam', silver: 'D-Pack', bronze: 'Paradox' }
+];
+
 export const RESULTS: YearResults[] = [
 	{ year: '2026', rows: ROWS_2026, sheets: SHEETS_2026 },
 	{ year: '2025', rows: ROWS_2025, sheets: SHEETS_2025 },
-	{ year: '2024', rows: placeholderRows() },
+	{ year: '2024', rows: ROWS_2024, sheets: SHEETS_2024 },
 	{ year: '2023', rows: placeholderRows() }
 ];

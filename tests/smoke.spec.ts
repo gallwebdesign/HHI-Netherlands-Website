@@ -420,10 +420,10 @@ test('2026 results are the real podium, with their score sheets', async ({ page 
 		expect(res.headers()['content-type']).toContain('pdf');
 	}
 
-	/* 2024 and earlier are genuinely unknown and must stay that way — this is
-	   the guard against someone filling them with plausible-looking names. */
-	await expect(page.locator('#panel-2024')).toContainText('fill from archive');
-	await expect(page.locator('#panel-2024').locator('.sheets')).toHaveCount(0);
+	/* 2023 is genuinely unknown and must stay that way — this is the guard
+	   against someone filling it with plausible-looking names. */
+	await expect(page.locator('#panel-2023')).toContainText('fill from archive');
+	await expect(page.locator('#panel-2023').locator('.sheets')).toHaveCount(0);
 });
 
 test('2025 results are the real podium, from the tabulation workbooks', async ({ page }) => {
@@ -444,6 +444,33 @@ test('2025 results are the real podium, from the tabulation workbooks', async ({
 	await expect(row('JV MegaCrew')).toContainText('Elite');
 	await expect(row('MiniCrew')).toContainText('D&D-CREW');
 	await expect(row('MegaCrew').first()).toContainText('D&D');
+
+	await expect(panel).not.toContainText('fill from archive');
+	await expect(panel.locator('.sheets__links a')).toHaveCount(6);
+});
+
+test('2024 results are the real podium, without the tabulation asterisks', async ({ page }) => {
+	await page.goto('/results');
+	await settleReveals(page);
+
+	await page.getByRole('tab', { name: '2024' }).click();
+	const panel = page.locator('#panel-2024');
+	const row = (division: string) => panel.locator('tr', { hasText: division }).first();
+
+	/* Rank column again, not score order: in Junior, rank 3 (Trouble) scored
+	   higher than rank 2 but took a 0.3 deduction. */
+	await expect(row('Junior')).toContainText('225 crew');
+	await expect(row('Varsity')).toContainText('C-Fam Varsity');
+	await expect(row('Adult')).toContainText('C-Fam Adult');
+	await expect(row('JV MegaCrew')).toContainText('Young C-Fam');
+	await expect(row('MiniCrew')).toContainText('C-Fam Mini');
+	await expect(row('MegaCrew').first()).toContainText('C-Fam');
+
+	/* The workbooks flag defending champions with a trailing asterisk. That is
+	   tabulation notation, not part of a crew's name, and must not leak onto the
+	   page — four 2024 crews carry it at source. Asserted on the panel's whole
+	   text: a per-<td> locator resolves to 24 elements and trips strict mode. */
+	await expect(panel).not.toContainText('*');
 
 	await expect(panel).not.toContainText('fill from archive');
 	await expect(panel.locator('.sheets__links a')).toHaveCount(6);
