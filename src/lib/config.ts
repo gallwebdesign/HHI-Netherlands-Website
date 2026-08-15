@@ -88,13 +88,13 @@ export const REGISTRATION_FORMS = [
 /** Where every "Register" CTA points — the hub, not a form. See above. */
 export const REGISTRATION_HUB = '/registration';
 
-/** Off-site destinations. Two still point at the legacy production host.
- *  `privacy` was removed on 15 Aug 2026 — the policy now has a real route at
- *  /privacy, so the footer links there instead of at the dying host. */
+/** Off-site destinations. **Nothing here points at the legacy host any more**
+ *  (cleared 15 Aug 2026), so none of these break when it is switched off:
+ *  `privacy` became the /privacy route, `regulations` became the two local PDFs
+ *  below, and `contactForm` was dropped — the legacy contact.php was only a
+ *  Dutch form posting to mail.php and carried nothing /contact lacks. */
 export const EXTERNAL = {
 	tickets: 'https://shop.celebratix.io/?c=2mdtq',
-	contactForm: 'https://hhi-netherlands.com/contact.php',
-	regulations: 'https://hhi-netherlands.com/regulations.php',
 	instagram: 'https://www.instagram.com/hhinetherlands',
 	facebook: 'https://www.facebook.com/hhinetherlands/',
 	youtube: 'https://www.youtube.com/c/HipHopInternationalNetherlands'
@@ -110,6 +110,30 @@ export const EXTERNAL = {
    matters while the site is served from a sub-path (GitHub Pages
    preview); base is '' everywhere else, making this a no-op. */
 export const withBase = (href: string) => (href.startsWith('/') ? `${base}${href}` : href);
+
+/** The official rules, as PDFs in static/download/. These are what the legacy
+ *  regulations.php actually served — it was only a wrapper around these two
+ *  files — so copying them into the repo (Iain, 15 Aug 2026) is what let the
+ *  last regulations link off the dying host be removed.
+ *
+ *  withBase() because the page binds href from this array, and Kit only
+ *  rewrites root-relative paths written literally in markup.
+ *
+ *  ⚠️ The manual is named for the **2025–2026** season while the event is 2027.
+ *  That is the file HHI published; do not rename it to look current. Replace it
+ *  when HHI issues the next edition. */
+export const RULES_PDFS = [
+	{
+		label: 'Simplified rules',
+		note: 'The short version — divisions, crew sizes and the essentials.',
+		href: withBase('/download/HHI-Official-Rules-Regulations-Simplified.pdf')
+	},
+	{
+		label: 'Full rules manual',
+		note: 'The complete HHI 2025–2026 rules manual.',
+		href: withBase('/download/HHI2025-2026-RULES-MANUAL.pdf')
+	}
+] as const;
 
 /** Primary nav — order matters, it is the visible desktop nav. */
 export const NAV_LINKS = [

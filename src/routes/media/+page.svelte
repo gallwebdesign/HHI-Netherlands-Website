@@ -38,15 +38,13 @@
 
 <main>
 	<section class="section media">
+		<!-- The "Full photo archive" button was removed on 15 Aug 2026. It pointed
+		     at the legacy photos.php, which dies with the old host and has no
+		     migrated equivalent — the ~8,163-image archive is being pulled over
+		     FTP and has not been republished. A button that 404s on cutover day
+		     is worse than no button. Restore it if the archive gets real routes. -->
 		<div class="media__head">
 			<p class="tag" {@attach reveal()}>Photos</p>
-			<a
-				class="btn btn--ghost btn--sm"
-				{@attach magnetic()}
-				href="https://hhi-netherlands.com/photos.php"
-				target="_blank"
-				rel="noopener">Full photo archive</a
-			>
 		</div>
 		<div class="gallery">
 			{#each PHOTOS as photo (photo.src)}

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import PageHero from '$lib/components/PageHero.svelte';
 	import { RULES } from '$lib/data/regulations';
-	import { EXTERNAL } from '$lib/config';
+	import { RULES_PDFS } from '$lib/config';
 	import { magnetic, reveal } from '$lib/attachments.svelte';
 
 	/* Rule numbers derive from array position — 01, 02, … — so adding
@@ -38,16 +38,23 @@
 				</article>
 			{/each}
 		</div>
+		<!-- Two PDFs, not one link. The legacy regulations.php was only a wrapper
+		     around these same two files; they now live in static/download/, so
+		     the page links them directly rather than bouncing through a host
+		     that is being switched off. -->
 		<div class="notice" {@attach reveal()}>
 			<b>Heads up</b>
-			<span>This is a summary. The full, binding rules live on the official page.</span>
-			<a
-				class="btn btn--sm"
-				{@attach magnetic()}
-				href={EXTERNAL.regulations}
-				target="_blank"
-				rel="noopener">Official regulations</a
-			>
+			<span>This is a summary. The full, binding rules are the official HHI PDFs.</span>
+			{#each RULES_PDFS as pdf (pdf.href)}
+				<a
+					class="btn btn--sm"
+					{@attach magnetic()}
+					href={pdf.href}
+					target="_blank"
+					rel="noopener"
+					title={pdf.note}>{pdf.label}</a
+				>
+			{/each}
 		</div>
 	</section>
 </main>

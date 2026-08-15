@@ -383,6 +383,49 @@ test('privacy policy serves the Dutch text and can switch to English', async ({ 
 	await expect(page.locator('.notice').first()).toContainText(/Dutch text prevails/i);
 });
 
+test('regulations links both rules PDFs, and they actually download', async ({ page }) => {
+	await page.goto('/regulations');
+
+	/* The legacy regulations.php was only a wrapper around these two PDFs. They
+	   are now in static/download/, so the page links them directly instead of
+	   bouncing through a host that is being switched off. */
+	const pdfs = page.locator('.notice a[href$=".pdf"]');
+	await expect(pdfs).toHaveCount(2);
+
+	/* Fetched, not just asserted on the href. A link to a PDF that 404s looks
+	   perfectly correct in the markup, and this is the binding rulebook — the
+	   one document on the site a crew is told to go and read. */
+	for (const href of await pdfs.evaluateAll((links) =>
+		links.map((a) => a.getAttribute('href') ?? '')
+	)) {
+		const res = await page.request.get(href);
+		expect(res.status(), `${href} should serve`).toBe(200);
+		expect(res.headers()['content-type']).toContain('pdf');
+		expect(Number(res.headers()['content-length'] ?? 0)).toBeGreaterThan(100_000);
+	}
+
+	// New tab: leaving the site to read a PDF should not lose the page behind it.
+	for (const target of await pdfs.evaluateAll((links) =>
+		links.map((a) => a.getAttribute('target'))
+	)) {
+		expect(target).toBe('_blank');
+	}
+});
+
+test('no link anywhere still points at the legacy host', async ({ page }) => {
+	/* EXTERNAL was emptied of legacy-host links on 15 Aug 2026 — privacy became
+	   a route, regulations became local PDFs, contactForm was dropped. This
+	   asserts the result across every page rather than trusting config.ts, since
+	   a hardcoded href in markup would bypass it entirely. */
+	for (const route of ROUTES) {
+		await page.goto(route);
+		const stale = page.locator(
+			'a[href*="hhi-netherlands.com/"][href$=".php"], a[href*="compoticketing"]'
+		);
+		expect(await stale.count(), `${route} still links at the legacy host`).toBe(0);
+	}
+});
+
 test('the footer privacy link points at the migrated route', async ({ page }) => {
 	await page.goto('/');
 

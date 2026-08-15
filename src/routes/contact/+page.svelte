@@ -58,14 +58,17 @@
 							>
 						</dd>
 					</div>
+					<!-- Was "Prefer the official form?", linking to the legacy
+					     contact.php. That page was only a Dutch form posting to
+					     mail.php — nothing this page lacks — and it dies with the
+					     old host, so it is replaced by the address itself. The
+					     privacy policy sends people here to exercise their data
+					     rights, so a working route out of this page matters. -->
 					<div class="event__fact" {@attach reveal()}>
-						<dt>Official</dt>
+						<dt>E-mail</dt>
 						<dd>
 							<small class="tight"
-								>Prefer the official form?
-								<a href={EXTERNAL.contactForm} target="_blank" rel="noopener" class="link--accent"
-									>hhi-netherlands.com/contact</a
-								></small
+								><a href="mailto:{CONTACT_EMAIL}" class="link--accent">{CONTACT_EMAIL}</a></small
 							>
 						</dd>
 					</div>

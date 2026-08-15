@@ -14,7 +14,7 @@ clean and everything is pushed**; `main` and `origin/main` are level.
 `sveltekit-migration` merged and safe to delete.
 
 Verified on the final commit: `npm run lint` clean, `npm run check` 0 errors / 0
-warnings, `npm test` **24 passed**.
+warnings, `npm test` **26 passed**.
 
 ## ▶ Start here on 16 August 2026
 
@@ -582,14 +582,33 @@ Two details worth keeping in mind:
 host serves static files and mail only, and `registration.php` dies with the old
 site.
 
-**Two `EXTERNAL` links still point at the dying host** and break when it goes:
-`contactForm` and `regulations` (used on [contact](src/routes/contact/+page.svelte#L76)
-and [regulations](src/routes/regulations/+page.svelte#L47)). Regulations probably
-wants to become a hosted PDF; the contact form is Phase 8, and Cloud86's PHP
-means it can be a real form.
+✅ **Nothing points at the legacy host any more** (15 Aug 2026). `EXTERNAL` now
+holds only genuinely off-site destinations — ticketing and the three socials —
+so no link on the site breaks when the old host is switched off.
 
-~~`privacy` in the footer~~ — ✅ **fixed 15 Aug 2026**: `/privacy` is a real
-route now and `EXTERNAL.privacy` is gone. See *Privacy policy* above.
+What changed, and why none of these was a simple repoint:
+
+- ~~`privacy`~~ → the `/privacy` route. See *Privacy policy* above.
+- ~~`regulations`~~ → **two local PDFs.** The legacy `regulations.php` was only a
+  wrapper around `HHI-Official-Rules-Regulations-Simplified.pdf` and
+  `HHI2025-2026-RULES-MANUAL.pdf`; Iain put both in `static/download/`, so the
+  page links them directly via `RULES_PDFS` in `config.ts`.
+- ~~`contactForm`~~ → **removed.** `contact.php` was only a Dutch form posting to
+  `mail.php` and carried nothing `/contact` lacks. The "Prefer the official
+  form?" block is now the e-mail address instead — which matters because the
+  privacy policy sends people to this page to exercise their data rights.
+
+**Two more hardcoded legacy links were found by the new sweep test**, not by
+reading `config.ts` — they bypassed `EXTERNAL` entirely:
+
+- **`/media`'s "Full photo archive" button** → removed. It pointed at
+  `photos.php`; the ~8,163-image archive is being pulled over FTP and has not
+  been republished, so there is nothing to point at.
+- **`/results`' "Official results" button** → removed, along with the claim that
+  the complete archive "lives in the official archive" — it will not, once the
+  old site is gone. The notice now says results are being restored.
+
+Both come back as links the moment the archives get real routes.
 
 ## Open questions — need answers
 
@@ -611,6 +630,12 @@ route now and `EXTERNAL.privacy` is gone. See *Privacy policy* above.
 
 ## Things to remember
 
+- **`static/download/` holds the two official rules PDFs** (added by Iain,
+  15 Aug 2026): the simplified rules and the full manual. They are what
+  `/regulations` links to, and what the legacy `regulations.php` served. Note the
+  manual is named for the **2025–2026** season while the event is 2027 — that is
+  HHI's own filename; do not rename it to look current. Replace both when HHI
+  publishes the next edition, keeping the paths in `RULES_PDFS` in step.
 - **`static/img/` is irreplaceable.** The eight photos and the logo SVG there are
   the only copies in existence — the host the photos came from is being switched
   off. Never "clean" that directory, and never treat it as build output.
@@ -702,7 +727,7 @@ npm run check        # svelte-check — expect 0 errors, 0 warnings
 npm run lint         # prettier --check + eslint — expect both clean
 npm run format       # prettier --write
 npm run build        # prerenders all ten routes; this is what proves SSR guards
-npm test             # build + Playwright smoke test — expect 24 passed
+npm test             # build + Playwright smoke test — expect 26 passed
 npm run preview      # trustworthy again since Phase 7
 npx serve build      # second opinion on the real output
 

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import PageHero from '$lib/components/PageHero.svelte';
 	import { RESULTS } from '$lib/data/results';
-	import { magnetic, reveal } from '$lib/attachments.svelte';
+	import { reveal } from '$lib/attachments.svelte';
 
 	/* The legacy version toggled .is-active by hand across two
 	   NodeLists. It is one piece of state: which year is open. */
@@ -86,15 +86,15 @@
 				</div>
 			{/each}
 		</div>
+		<!-- The "Official results" button pointed at the legacy results.php,
+		     which dies with the old host and has no migrated equivalent. Removed
+		     15 Aug 2026 along with the claim that the full archive lives
+		     elsewhere — it does not, once the old site is gone. Give the archive
+		     real routes and this becomes a link again. -->
 		<div class="notice" {@attach reveal()}>
 			<b>Archive</b>
-			<span>Complete results for every year live in the official archive.</span>
-			<a
-				class="btn btn--sm"
-				{@attach magnetic()}
-				href="https://hhi-netherlands.com/results.php"
-				target="_blank"
-				rel="noopener">Official results</a
+			<span
+				>Results from earlier years are being restored — check back before the championship.</span
 			>
 		</div>
 	</section>
