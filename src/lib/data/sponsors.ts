@@ -70,6 +70,13 @@ export const SPONSORS: Sponsor[] = [
 		href: 'https://houbensouren.nl/'
 	},
 	{
+		name: 'Gemeente Maastricht',
+		logo: logo('maastricht'),
+		blurb:
+			'Embedding art and culture more deeply in the city, and creating new connections between the arts and the public.',
+		href: 'https://www.gemeentemaastricht.nl/'
+	},
+	{
 		name: 'VSBfonds',
 		logo: logo('vsbfonds'),
 		blurb:
@@ -82,13 +89,6 @@ export const SPONSORS: Sponsor[] = [
 		blurb:
 			'Taking an active role in supporting, facilitating, connecting and networking with organisations working for the social domain.',
 		href: 'https://www.limburg.nl/'
-	},
-	{
-		name: 'Gemeente Maastricht',
-		logo: logo('maastricht'),
-		blurb:
-			'Embedding art and culture more deeply in the city, and creating new connections between the arts and the public.',
-		href: 'https://www.gemeentemaastricht.nl/'
 	},
 	{
 		name: 'het Cultuurfonds',
