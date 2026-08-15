@@ -8,14 +8,6 @@
 	   RESULTS[0] is the newest edition, and the one with real data. */
 	let active = $state(RESULTS[0].year);
 
-	/* Derived so the notice cannot go stale as earlier editions are filled in.
-	   A year counts as filled when it carries its official score sheets.
-	   Joined as a sentence rather than a bare list — "The 2026, 2025 results"
-	   reads as a typo, "The 2026 and 2025 results" does not. */
-	const filled = RESULTS.filter((r) => r.sheets).map((r) => r.year);
-	const FILLED_YEARS =
-		filled.length > 1 ? `${filled.slice(0, -1).join(', ')} and ${filled.at(-1)}` : filled[0];
-
 	/* The markup carried role="tablist" but the buttons had no
 	   role="tab" and no aria-selected, so the tablist announced
 	   itself and then contradicted its own contract. Completing it
@@ -110,14 +102,14 @@
 				</div>
 			{/each}
 		</div>
-		<!-- 2026 is real, recovered from the official score sheets on 15 Aug 2026.
-		     The earlier editions are genuinely still missing, so the notice says
-		     which is which rather than implying the whole page is provisional. -->
+		<!-- Every edition on the page is real as of 15 Aug 2026, so this no longer
+		     distinguishes filled years from empty ones — it says where the numbers
+		     come from, which is what makes them checkable. -->
 		<div class="notice" {@attach reveal()}>
 			<b>Archive</b>
 			<span
-				>The {FILLED_YEARS} results are official, taken from the judges&rsquo; score sheets. Earlier editions
-				are still being restored.</span
+				>Every result here is official, taken from the judges&rsquo; score sheets. The full
+				rankings, scores and deductions are in the sheets above.</span
 			>
 		</div>
 	</section>

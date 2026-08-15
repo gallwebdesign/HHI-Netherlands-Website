@@ -396,7 +396,13 @@ test('2026 results are the real podium, with their score sheets', async ({ page 
 	   someone's championship, so the podium is asserted row by row rather than
 	   by counting cells. */
 	const panel = page.locator('#panel-2026');
-	const row = (division: string) => panel.locator('tr', { hasText: division }).first();
+	/* Anchored on the first cell's exact text, not the row's. A plain
+	   hasText:'MegaCrew' also matches the JV MegaCrew row — and matches it
+	   first, since it comes earlier in competition order. */
+	const row = (division: string) =>
+		panel
+			.locator('tr')
+			.filter({ has: page.locator('td', { hasText: new RegExp(`^${division}$`) }) });
 
 	await expect(row('Junior')).toContainText('C-Fam Jr');
 	await expect(row('Varsity')).toContainText('C-Fam Varsity');
@@ -420,10 +426,14 @@ test('2026 results are the real podium, with their score sheets', async ({ page 
 		expect(res.headers()['content-type']).toContain('pdf');
 	}
 
-	/* 2023 is genuinely unknown and must stay that way — this is the guard
-	   against someone filling it with plausible-looking names. */
-	await expect(page.locator('#panel-2023')).toContainText('fill from archive');
-	await expect(page.locator('#panel-2023').locator('.sheets')).toHaveCount(0);
+	/* Every edition is real as of 15 Aug 2026 — no panel may show a
+	   placeholder, and each must carry its six score sheets. */
+	const panels = page.locator('[role="tabpanel"]');
+	expect(await panels.count()).toBeGreaterThan(3);
+	for (let i = 0; i < (await panels.count()); i++) {
+		await expect(panels.nth(i)).not.toContainText('fill from archive');
+		await expect(panels.nth(i).locator('.sheets__links a')).toHaveCount(6);
+	}
 });
 
 test('2025 results are the real podium, from the tabulation workbooks', async ({ page }) => {
@@ -436,7 +446,13 @@ test('2025 results are the real podium, from the tabulation workbooks', async ({
 	   MegaCrew, deductions put two higher-scoring crews below rank 7. */
 	await page.getByRole('tab', { name: '2025' }).click();
 	const panel = page.locator('#panel-2025');
-	const row = (division: string) => panel.locator('tr', { hasText: division }).first();
+	/* Anchored on the first cell's exact text, not the row's. A plain
+	   hasText:'MegaCrew' also matches the JV MegaCrew row — and matches it
+	   first, since it comes earlier in competition order. */
+	const row = (division: string) =>
+		panel
+			.locator('tr')
+			.filter({ has: page.locator('td', { hasText: new RegExp(`^${division}$`) }) });
 
 	await expect(row('Junior')).toContainText('OXYKIDZ');
 	await expect(row('Varsity')).toContainText('C-Fam Varsity');
@@ -455,7 +471,13 @@ test('2024 results are the real podium, without the tabulation asterisks', async
 
 	await page.getByRole('tab', { name: '2024' }).click();
 	const panel = page.locator('#panel-2024');
-	const row = (division: string) => panel.locator('tr', { hasText: division }).first();
+	/* Anchored on the first cell's exact text, not the row's. A plain
+	   hasText:'MegaCrew' also matches the JV MegaCrew row — and matches it
+	   first, since it comes earlier in competition order. */
+	const row = (division: string) =>
+		panel
+			.locator('tr')
+			.filter({ has: page.locator('td', { hasText: new RegExp(`^${division}$`) }) });
 
 	/* Rank column again, not score order: in Junior, rank 3 (Trouble) scored
 	   higher than rank 2 but took a 0.3 deduction. */
@@ -474,6 +496,37 @@ test('2024 results are the real podium, without the tabulation asterisks', async
 
 	await expect(panel).not.toContainText('fill from archive');
 	await expect(panel.locator('.sheets__links a')).toHaveCount(6);
+});
+
+test('2023 results keep their two easily-mistaken crew names', async ({ page }) => {
+	await page.goto('/results');
+	await settleReveals(page);
+
+	await page.getByRole('tab', { name: '2023' }).click();
+	const panel = page.locator('#panel-2023');
+	/* Anchored on the first cell's exact text, not the row's. A plain
+	   hasText:'MegaCrew' also matches the JV MegaCrew row — and matches it
+	   first, since it comes earlier in competition order. */
+	const row = (division: string) =>
+		panel
+			.locator('tr')
+			.filter({ has: page.locator('td', { hasText: new RegExp(`^${division}$`) }) });
+
+	await expect(row('Junior')).toContainText('Wanted');
+	await expect(row('Varsity')).toContainText('Oxygen 2.0');
+	await expect(row('Adult')).toContainText('C-Fam Adult');
+	await expect(row('JV MegaCrew')).toContainText('The Pack');
+
+	/* Two spellings a well-meaning edit would "fix" and get wrong:
+	   - MiniCrew's gold and silver are C-Fam Mini and Mini C-Fam. Two different
+	     crews in the same division, not a transcription slip.
+	   - MegaCrew's silver is "D & D", spaced. Every other year writes "D&D". */
+	await expect(row('MiniCrew')).toContainText('C-Fam Mini');
+	await expect(row('MiniCrew')).toContainText('Mini C-Fam');
+	await expect(row('MegaCrew').first()).toContainText('D & D');
+
+	// Defending-champion asterisks must not leak here either.
+	await expect(panel).not.toContainText('*');
 });
 
 test('regulations links both rules PDFs, and they actually download', async ({ page }) => {

@@ -1,27 +1,32 @@
 /* ============================================================
    Results — one panel per edition, six divisions each.
 
-   2026, 2025 AND 2024 ARE REAL, all filled on 15 Aug 2026.
+   ALL FOUR EDITIONS ARE REAL, filled on 15 Aug 2026. Nothing
+   here is placeholder any more.
 
    2026 came from the six official score sheets the legacy
    results.php linked to (dated 1 February 2026), recovered off
    the dying host. Every placement was checked against the rank
    number in its source PDF.
 
-   2025 and 2024 came from the division tabulation workbooks on
-   Iain's drive — the source those PDFs are generated from. That
-   detour was necessary for 2025: its PDFs embed subset fonts
-   with no ToUnicode map, so their text is not machine-readable
-   at all. The workbooks are, and are closer to the original
-   record in any case, so 2024 was read the same way.
+   2025, 2024 and 2023 came from the division tabulation
+   workbooks on Iain's drive — the source those PDFs are
+   generated from. That detour was necessary for 2025: its PDFs
+   embed subset fonts with no ToUnicode map, so their text is
+   not machine-readable at all. The workbooks are, and are
+   closer to the original record in any case, so the two earlier
+   years were read the same way.
 
-   All three years' PDFs are in static/download/results-<year>/
-   and linked from the page. For 2025 and 2024 this repo may be
-   the only copy outside Iain's own drive.
+   Every year's PDFs are in static/download/results-<year>/ and
+   linked from the page. For 2023–2025 this repo may be the only
+   copy outside Iain's own drive.
 
-   2023 IS STILL PLACEHOLDER. Its rows keep the "— fill from
-   archive" text. Do not invent champions: filling it in is a
-   data edit, exactly like the three years above.
+   TWO RULES FOR ADDING A YEAR:
+   1. Read the Rank column. Do NOT sort by score — deductions
+      mean the two disagree, and they have in three of the four
+      years here.
+   2. Strip the trailing asterisk. The workbooks use it to flag
+      a defending champion; it is not part of a crew's name.
 
    The years are listed rather than derived. They are the
    editions with an archive to publish, which is not the same as
@@ -31,20 +36,19 @@
 
 import { withBase } from '$lib/config';
 
-/** Stand-in used wherever a crew name is not yet known. */
-export const TBC = '—';
-
-/** Longer stand-in for the gold column, which carries the note. */
-export const TBC_GOLD = '— fill from archive';
+/* The TBC / TBC_GOLD stand-ins and placeholderRows() were removed on 15 Aug
+   2026 once the last edition was filled in. Nothing renders "— fill from
+   archive" any more. If a future year is added before its results exist, add
+   the panel only when the data does — an empty tab is worse than no tab. */
 
 export interface DivisionResult {
 	/** Division name, e.g. "Junior". */
 	division: string;
-	/** Winning crew, or TBC_GOLD while the archive is unconfirmed. */
+	/** Winning crew. */
 	gold: string;
-	/** Runner-up, or TBC. */
+	/** Runner-up. */
 	silver: string;
-	/** Third place, or TBC. */
+	/** Third place. */
 	bronze: string;
 }
 
@@ -53,21 +57,22 @@ export interface YearResults {
 	year: string;
 	/** One row per division, in competition order. */
 	rows: DivisionResult[];
-	/** Official score sheets for that edition, if they exist. Omitted for
-	 *  years whose archive has not been recovered. */
+	/** Official score sheets for that edition. Optional so a future year can
+	 *  be published before its PDFs are to hand; all four current editions
+	 *  carry theirs. */
 	sheets?: { label: string; href: string }[];
 }
 
-const DIVISIONS = ['Junior', 'Varsity', 'Adult', 'JV MegaCrew', 'MiniCrew', 'MegaCrew'];
-
-/** Every division for a year, all podium places still unconfirmed. */
-const placeholderRows = (): DivisionResult[] =>
-	DIVISIONS.map((division) => ({
-		division,
-		gold: TBC_GOLD,
-		silver: TBC,
-		bronze: TBC
-	}));
+/** Competition order. Every year's rows follow it, so the tables line up
+ *  when a reader switches tabs. All four editions ran the same six. */
+export const DIVISIONS = [
+	'Junior',
+	'Varsity',
+	'Adult',
+	'JV MegaCrew',
+	'MiniCrew',
+	'MegaCrew'
+] as const;
 
 /* 2026, read off the official score sheets. Division order matches DIVISIONS
    above, which is competition order rather than the order the PDFs happen to
@@ -108,10 +113,11 @@ const sheetsFor = (year: string) =>
 const SHEETS_2026 = sheetsFor('2026');
 const SHEETS_2025 = sheetsFor('2025');
 
-/* 2024's PDFs were named "01_HHI NL 2024 Junior Division Tabulation.pdf" on
-   Iain's drive. They were renamed to the convention the other years use when
-   copied in, so one builder covers all three editions. */
+/* 2024's and 2023's PDFs were named "01_HHI NL <year> Junior Division
+   Tabulation.pdf" on Iain's drive. They were renamed to the convention the
+   other years use when copied in, so one builder covers all four editions. */
 const SHEETS_2024 = sheetsFor('2024');
+const SHEETS_2023 = sheetsFor('2023');
 
 /* 2025, read from the division tabulation workbooks Iain supplied on 15 Aug
    2026 (HHI Tabulation/Excel/HHI NL/*.xlsm, "Final Scores" sheet) — the source
@@ -154,9 +160,24 @@ const ROWS_2024: DivisionResult[] = [
 	{ division: 'MegaCrew', gold: 'C-Fam', silver: 'D-Pack', bronze: 'Paradox' }
 ];
 
+/* 2023, from the same tabulation workbooks. Asterisks stripped as elsewhere.
+
+   Two spellings here are deliberate and must not be "corrected":
+   - "D & D" is spaced in 2023 only; every other year writes it "D&D".
+   - MiniCrew's gold and silver are "C-Fam Mini" and "Mini C-Fam" — two
+     different crews, not a transcription slip. */
+const ROWS_2023: DivisionResult[] = [
+	{ division: 'Junior', gold: 'Wanted', silver: 'D-Reaction Crew', bronze: 'D&D-Lions' },
+	{ division: 'Varsity', gold: 'Oxygen 2.0', silver: 'C-Fam Varsity', bronze: 'D&D-Fear' },
+	{ division: 'Adult', gold: 'C-Fam Adult', silver: 'D&D-VIII', bronze: 'D&D-New Flame' },
+	{ division: 'JV MegaCrew', gold: 'The Pack', silver: 'CDDEMO', bronze: 'Tha Radicalz' },
+	{ division: 'MiniCrew', gold: 'C-Fam Mini', silver: 'Mini C-Fam', bronze: 'D&D-Three' },
+	{ division: 'MegaCrew', gold: 'C-Fam', silver: 'D & D', bronze: 'MDF CREW' }
+];
+
 export const RESULTS: YearResults[] = [
 	{ year: '2026', rows: ROWS_2026, sheets: SHEETS_2026 },
 	{ year: '2025', rows: ROWS_2025, sheets: SHEETS_2025 },
 	{ year: '2024', rows: ROWS_2024, sheets: SHEETS_2024 },
-	{ year: '2023', rows: placeholderRows() }
+	{ year: '2023', rows: ROWS_2023, sheets: SHEETS_2023 }
 ];
