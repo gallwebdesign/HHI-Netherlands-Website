@@ -124,33 +124,23 @@ export interface TeaserPhoto {
 	src: string;
 	/** Alt text — these are described shots, unlike the media grid. */
 	alt: string;
-	/** Caption shown under the image. */
+	/** Caption overlaid on the image. Empty string renders no caption at all —
+	 *  see the note on TEASER_PHOTOS below. */
 	caption: string;
 }
 
-/* Four of the same eight files the media page uses — local since
-   14 Aug 2026, and withBase() for the same reason as there. The load
-   guard on the page stays: a failed image hides its whole figure
-   rather than leaving a gap in the row. */
-export const TEASER_PHOTOS: TeaserPhoto[] = [
-	{
-		src: withBase('/img/slideshow-v1.jpg'),
-		alt: 'Crew performing at the Netherlands Hip Hop Dance Championship',
-		caption: 'Nationals · Finals'
-	},
-	{
-		src: withBase('/img/slideshow-v120.jpg'),
-		alt: 'Dancers mid-routine on the championship stage',
-		caption: 'MegaCrew'
-	},
-	{
-		src: withBase('/img/slideshow-v160.jpg'),
-		alt: 'Audience and crews at the championship',
-		caption: 'The crowd'
-	},
-	{
-		src: withBase('/img/slideshow-v190.jpg'),
-		alt: 'Award ceremony at the Netherlands championship',
-		caption: 'Podium'
-	}
-];
+/* The first four of the eight files the media page uses — replaced with new
+   photography on 15 Aug 2026, and withBase() for the same reason as there.
+   The load guard on the page stays: a failed image hides its whole figure
+   rather than leaving a gap in the row.
+
+   ⚠️ The captions and alt text were specific to the old photos ("MegaCrew",
+   "Podium", "Award ceremony"), and those claims do not survive a change of
+   image — a caption reading "Podium" under a crowd shot is worse than no
+   caption. They are generic until someone says what the new photos show;
+   fill them in then, one entry per file. */
+export const TEASER_PHOTOS: TeaserPhoto[] = [1, 2, 3, 4].map((n) => ({
+	src: withBase(`/img/image${String(n).padStart(2, '0')}.jpg`),
+	alt: 'Netherlands Hip Hop Dance Championship — event photo',
+	caption: ''
+}));

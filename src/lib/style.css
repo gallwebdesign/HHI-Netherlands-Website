@@ -381,8 +381,13 @@ html.has-cursor .cursor-ring{ display:block; }
 .media{ padding-left:0; padding-right:0; }
 .media__head{ padding:0 var(--gutter); margin-bottom:44px; display:flex; justify-content:space-between; align-items:end; gap:24px; flex-wrap:wrap; }
 .media__row{ display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--line); }
+/* 4:3, changed from 3:4 portrait on 15 Aug 2026 when the photography was
+   replaced. The source frames are 3:2 landscape (6720x4480 off the camera);
+   a portrait cell cropped away about two thirds of every frame and cut
+   dancers' arms and legs off, which is the worst thing to do to dance
+   photography. 4:3 trims ~11% from the sides and keeps the grid dense. */
 .media__cell{
-  position:relative; aspect-ratio:3/4; overflow:hidden;
+  position:relative; aspect-ratio:4/3; overflow:hidden;
   background:linear-gradient(160deg, var(--panel-2), var(--ink));
 }
 .media__cell img{

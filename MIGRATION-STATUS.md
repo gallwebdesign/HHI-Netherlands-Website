@@ -81,6 +81,38 @@ swapping the two days and watching it fail:
 - `registration hub states which competition dances on which day`
 - the footnote's "subject to change" wording
 
+## Photography replaced — 15 August 2026
+
+**The eight legacy `slideshow-v*.jpg` banners are gone**, replaced by
+`image01`–`image08`: real crew photography from the championship, shot at
+6720 × 4480 (3:2) and exported to **1200 × 900 (4:3)**.
+
+**`.media__cell` changed from 3:4 portrait to 4:3 landscape.** The old cell was
+built around 3.33:1 letterbox banners and cropped roughly two thirds off a
+landscape frame, cutting dancers' limbs — the worst thing to do to dance
+photography. 4:3 trims ~11% from the sides of a 3:2 frame and keeps the grid
+dense: two rows of four on desktop, four rows of two on mobile.
+
+**Eight is the right count** — the grid is four across, so the number must stay
+a multiple of four or the last row goes short.
+
+**JPEG, 1.79 MB for the eight** (130–349 KB each). They arrived as PNG first, at
+4.32 MB; Iain re-exported them to JPEG the same day, a 59% saving with no visible
+difference. For comparison, the eight legacy banners they replaced were 5.64 MB.
+
+**The filenames are built in exactly two places** — `media.ts` and `home.ts`.
+Change both together. **The build fails hard on a missing image**
+(`Error: 404 /img/image01.jpg`), which is a useful property: a misnamed or
+missing photo cannot ship silently. It also means the repo will not build until
+all eight exist.
+
+**The home teaser captions are deliberately empty.** They used to be specific to
+the old photos ("MegaCrew", "Podium", "Award ceremony"), and those claims do not
+survive a change of image — a caption reading "Podium" under a crowd shot is
+worse than no caption. `figcaption` now renders only when a caption is
+non-empty, so filling them in later is a data edit in `home.ts` with no markup
+change. Alt text is generic by Iain's decision (15 Aug).
+
 ## Privacy policy — ✅ migrated 15 August 2026
 
 **The last page of the old site still serving real content with no migrated
@@ -438,6 +470,13 @@ slideshow-v0.jpg    slideshow-v1.jpg    slideshow-v2.jpg    slideshow-v120.jpg
 slideshow-v130.jpg  slideshow-v160.jpg  slideshow-v190.jpg  slideshow-v200.jpg
 ```
 
+📌 **Superseded 15 Aug 2026.** All eight were replaced by real crew photography
+(`image01`–`image08`) and deleted — see *Photography replaced* above. The
+section below is kept as the record of the rescue, since it explains why
+`withBase()` is required and why the smoke test's exemption was removed. The
+rescue still mattered: it is what kept the site from having no photography at
+all during the gap.
+
 What changed:
 
 - [media.ts](src/lib/data/media.ts) and [home.ts](src/lib/data/home.ts) now build
@@ -636,9 +675,13 @@ Both come back as links the moment the archives get real routes.
   manual is named for the **2025–2026** season while the event is 2027 — that is
   HHI's own filename; do not rename it to look current. Replace both when HHI
   publishes the next edition, keeping the paths in `RULES_PDFS` in step.
-- **`static/img/` is irreplaceable.** The eight photos and the logo SVG there are
-  the only copies in existence — the host the photos came from is being switched
-  off. Never "clean" that directory, and never treat it as build output.
+- **`static/img/` is irreplaceable.** The photography and the logo SVG there are
+  the only copies in the repo. Never "clean" that directory, and never treat it
+  as build output. **Updated 15 Aug 2026:** the eight rescued
+  `slideshow-v*.jpg` banners were deleted here once `image01`–`image08` replaced
+  them — recoverable from git history at `4a7c57c` if ever needed, but note they
+  were themselves the only copy off the dying host, so recover from git rather
+  than assuming they can be re-fetched.
 - **The smoke test exempts third-party origins only, and by origin — not by
   resource type.** `fonts.gstatic.com` intermittently 404s a `.woff2` (seen ~1 run
   in 3, and it fails a *different* page each time, which is what makes it look

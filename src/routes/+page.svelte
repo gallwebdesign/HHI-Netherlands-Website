@@ -179,7 +179,12 @@
 							loading="lazy"
 							onerror={() => onError(photo.src)}
 						/>
-						<figcaption>{photo.caption}</figcaption>
+						<!-- Optional: the captions were specific to the old photos and are
+						     empty until someone describes the new ones. Four identical
+						     captions read as unfinished, which is worse than none. -->
+						{#if photo.caption}
+							<figcaption>{photo.caption}</figcaption>
+						{/if}
 					</figure>
 				{/if}
 			{/each}

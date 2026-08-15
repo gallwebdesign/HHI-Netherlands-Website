@@ -22,13 +22,25 @@ export interface Photo {
 	alt: string;
 }
 
-const PHOTO_IDS = ['v0', 'v1', 'v2', 'v120', 'v130', 'v160', 'v190', 'v200'];
+/* Eight photos, image01…image08, replacing the eight legacy slideshow-vN
+   banners on 15 Aug 2026. Eight because the grid is four across: two full
+   rows on desktop, four rows of two on mobile, no ragged final row. Change
+   the count in fours or the last row goes short.
+
+   Source frames are 3:2 landscape, exported to 4:3 at 1200x900 to match
+   .media__cell — see the note above that rule in style.css. JPEG, 1.79 MB for
+   the eight.
+
+   The filenames are built in exactly two places, here and home.ts. Change both
+   together or the build fails on a 404, which is the intended behaviour — a
+   missing photo should never ship silently. */
+const PHOTO_COUNT = 8;
 
 /* withBase() because the page binds src from this variable — Kit only
    rewrites root-relative paths written literally in markup. Without it
    every photo 404s on the GitHub Pages sub-path. */
-export const PHOTOS: Photo[] = PHOTO_IDS.map((id) => ({
-	src: withBase(`/img/slideshow-${id}.jpg`),
+export const PHOTOS: Photo[] = Array.from({ length: PHOTO_COUNT }, (_, i) => ({
+	src: withBase(`/img/image${String(i + 1).padStart(2, '0')}.jpg`),
 	alt: 'Netherlands Hip Hop Dance Championship — event photo'
 }));
 
