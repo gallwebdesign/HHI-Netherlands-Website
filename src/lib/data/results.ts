@@ -1,18 +1,27 @@
 /* ============================================================
    Results — one panel per edition, six divisions each.
 
-   2026 IS REAL. It was recovered on 15 Aug 2026 from the six
-   official score sheets the legacy results.php linked to
-   (HHI-NL-2026-<Division>-Division.pdf, dated 1 February 2026).
-   Those PDFs are now in static/download/results-2026/ — they
-   were on the dying host and this is the only other copy.
-   Every placement below was checked against the rank number in
-   its source PDF.
+   2026 AND 2025 ARE REAL, both filled on 15 Aug 2026.
 
-   2023–2025 ARE STILL PLACEHOLDER. Those editions were never on
-   the legacy site in any form I could find, so their rows keep
-   the "— fill from archive" text. Do not invent champions:
-   filling them in is a data edit, exactly like 2026 was.
+   2026 came from the six official score sheets the legacy
+   results.php linked to (dated 1 February 2026), recovered off
+   the dying host. Every placement was checked against the rank
+   number in its source PDF.
+
+   2025 came from the division tabulation workbooks Iain
+   supplied — the source those PDFs are generated from. That
+   detour was necessary: the 2025 PDFs embed subset fonts with
+   no ToUnicode map, so their text is not machine-readable at
+   all. The workbooks are, and are closer to the original record
+   in any case.
+
+   Both years' PDFs are in static/download/results-<year>/ and
+   linked from the page. For 2025 this repo may be the only copy
+   outside Iain's own drive.
+
+   2023–2024 ARE STILL PLACEHOLDER. Their rows keep the
+   "— fill from archive" text. Do not invent champions: filling
+   them in is a data edit, exactly like the two years above.
 
    The years are listed rather than derived. They are the
    editions with an archive to publish, which is not the same as
@@ -75,25 +84,51 @@ const ROWS_2026: DivisionResult[] = [
 	{ division: 'MegaCrew', gold: 'D&D', silver: 'C-FAM', bronze: 'D-PACK' }
 ];
 
-/* The score sheets behind the 2026 table. They carry far more than the podium —
+/* The score sheets behind a year's table. They carry far more than the podium —
    full rankings, per-judge performance and skill scores, and deductions with
    their reasons — so they are worth offering rather than summarising away.
-   withBase() because the page binds href from this array. */
-const SHEETS_2026 = [
+   Both editions use the same six files and the same naming, so the list is
+   built rather than written out twice. withBase() because the page binds href
+   from this array. */
+const SHEET_FILES = [
 	['Junior', 'Junior'],
 	['Varsity', 'Varsity'],
 	['Adult', 'Adult'],
 	['JV MegaCrew', 'JV-MegaCrew'],
 	['MiniCrew', 'MiniCrew'],
 	['MegaCrew', 'MegaCrew']
-].map(([label, file]) => ({
-	label,
-	href: withBase(`/download/results-2026/HHI-NL-2026-${file}-Division.pdf`)
-}));
+] as const;
+
+const sheetsFor = (year: string) =>
+	SHEET_FILES.map(([label, file]) => ({
+		label,
+		href: withBase(`/download/results-${year}/HHI-NL-${year}-${file}-Division.pdf`)
+	}));
+
+const SHEETS_2026 = sheetsFor('2026');
+const SHEETS_2025 = sheetsFor('2025');
+
+/* 2025, read from the division tabulation workbooks Iain supplied on 15 Aug
+   2026 (HHI Tabulation/Excel/HHI NL/*.xlsm, "Final Scores" sheet) — the source
+   the score-sheet PDFs were generated from. The 2025 PDFs themselves embed
+   subset fonts with no ToUnicode map, so their text is not machine-readable;
+   the workbooks are, which makes them the better source anyway.
+
+   Taken from the Rank column, not by sorting on score. In MegaCrew, ranks 8
+   and 9 hold higher combined scores than rank 7 — deductions of 0.15 and 0.5
+   put them below it — so score order and finishing order are not the same. */
+const ROWS_2025: DivisionResult[] = [
+	{ division: 'Junior', gold: 'OXYKIDZ', silver: 'D-Lions', bronze: 'Trouble' },
+	{ division: 'Varsity', gold: 'C-Fam Varsity', silver: 'D&D-Fear', bronze: 'Wanted' },
+	{ division: 'Adult', gold: 'D&D-VIII', silver: 'C-Fam Adult', bronze: 'D-Flame' },
+	{ division: 'JV MegaCrew', gold: 'Elite', silver: 'Young C-Fam', bronze: 'D&D-Young' },
+	{ division: 'MiniCrew', gold: 'D&D-CREW', silver: 'C-Fam Mini', bronze: 'Triple Connected' },
+	{ division: 'MegaCrew', gold: 'D&D', silver: 'C-Fam', bronze: 'LEZ FAMILY' }
+];
 
 export const RESULTS: YearResults[] = [
 	{ year: '2026', rows: ROWS_2026, sheets: SHEETS_2026 },
-	{ year: '2025', rows: placeholderRows() },
+	{ year: '2025', rows: ROWS_2025, sheets: SHEETS_2025 },
 	{ year: '2024', rows: placeholderRows() },
 	{ year: '2023', rows: placeholderRows() }
 ];

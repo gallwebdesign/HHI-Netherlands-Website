@@ -420,10 +420,33 @@ test('2026 results are the real podium, with their score sheets', async ({ page 
 		expect(res.headers()['content-type']).toContain('pdf');
 	}
 
-	/* The earlier editions are genuinely unknown and must stay that way — this
-	   is the guard against someone filling them with plausible-looking names. */
-	await expect(page.locator('#panel-2025')).toContainText('fill from archive');
-	await expect(page.locator('#panel-2025').locator('.sheets')).toHaveCount(0);
+	/* 2024 and earlier are genuinely unknown and must stay that way — this is
+	   the guard against someone filling them with plausible-looking names. */
+	await expect(page.locator('#panel-2024')).toContainText('fill from archive');
+	await expect(page.locator('#panel-2024').locator('.sheets')).toHaveCount(0);
+});
+
+test('2025 results are the real podium, from the tabulation workbooks', async ({ page }) => {
+	await page.goto('/results');
+	await settleReveals(page);
+
+	/* 2025 came from the division tabulation workbooks rather than the PDFs:
+	   those PDFs embed subset fonts with no ToUnicode map and cannot be read by
+	   machine. Taken from the Rank column, not by sorting on score — in
+	   MegaCrew, deductions put two higher-scoring crews below rank 7. */
+	await page.getByRole('tab', { name: '2025' }).click();
+	const panel = page.locator('#panel-2025');
+	const row = (division: string) => panel.locator('tr', { hasText: division }).first();
+
+	await expect(row('Junior')).toContainText('OXYKIDZ');
+	await expect(row('Varsity')).toContainText('C-Fam Varsity');
+	await expect(row('Adult')).toContainText('D&D-VIII');
+	await expect(row('JV MegaCrew')).toContainText('Elite');
+	await expect(row('MiniCrew')).toContainText('D&D-CREW');
+	await expect(row('MegaCrew').first()).toContainText('D&D');
+
+	await expect(panel).not.toContainText('fill from archive');
+	await expect(panel.locator('.sheets__links a')).toHaveCount(6);
 });
 
 test('regulations links both rules PDFs, and they actually download', async ({ page }) => {

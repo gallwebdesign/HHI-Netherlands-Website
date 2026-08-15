@@ -9,10 +9,12 @@
 	let active = $state(RESULTS[0].year);
 
 	/* Derived so the notice cannot go stale as earlier editions are filled in.
-	   A year counts as filled when it carries its official score sheets. */
-	const FILLED_YEARS = RESULTS.filter((r) => r.sheets)
-		.map((r) => r.year)
-		.join(', ');
+	   A year counts as filled when it carries its official score sheets.
+	   Joined as a sentence rather than a bare list — "The 2026, 2025 results"
+	   reads as a typo, "The 2026 and 2025 results" does not. */
+	const filled = RESULTS.filter((r) => r.sheets).map((r) => r.year);
+	const FILLED_YEARS =
+		filled.length > 1 ? `${filled.slice(0, -1).join(', ')} and ${filled.at(-1)}` : filled[0];
 
 	/* The markup carried role="tablist" but the buttons had no
 	   role="tab" and no aria-selected, so the tablist announced

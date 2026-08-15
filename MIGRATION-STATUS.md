@@ -14,7 +14,7 @@ clean and everything is pushed**; `main` and `origin/main` are level.
 `sveltekit-migration` merged and safe to delete.
 
 Verified on the final commit: `npm run lint` clean, `npm run check` 0 errors / 0
-warnings, `npm test` **27 passed**.
+warnings, `npm test` **28 passed**.
 
 ## ▶ Start here on 16 August 2026
 
@@ -113,7 +113,7 @@ worse than no caption. `figcaption` now renders only when a caption is
 non-empty, so filling them in later is a data edit in `home.ts` with no markup
 change. Alt text is generic by Iain's decision (15 Aug).
 
-## Results — 2026 is real as of 15 August 2026
+## Results — 2026 and 2025 are real as of 15 August 2026
 
 **The legacy `results.php` had no tables at all.** It was six PDF score sheets,
 one per division — and for **2026**, not the 2023–2025 the migrated page had
@@ -143,12 +143,33 @@ casing that is inconsistent between divisions — "D&D" in MegaCrew but "D&D CRE
 in MiniCrew, "C-Fam Jr" but "C-FAM". Do not tidy it: these are the names crews
 entered under.
 
-**2023–2025 remain placeholder** (Iain's call, 15 Aug: keep the empty tabs).
-Those editions were not on the legacy site in any form. The notice on the page
-names which years are official, and `FILLED_YEARS` derives that from whichever
-years carry score sheets, so the copy cannot go stale as earlier editions are
-filled in. **Do not invent champions** — the smoke test asserts 2025 still says
-"fill from archive" precisely to stop plausible-looking names appearing.
+### 2025 — added the same day, from the tabulation workbooks
+
+Iain pointed at `G:\HHI Netherlands 2025\HHI Tabulation\`. **The PDFs there are
+not machine-readable**: unlike the 2026 set they embed subset fonts with no
+`/ToUnicode` map and store objects in `/ObjStm` streams, so the text comes out as
+glyph indices. Two decoding attempts produced convincing-looking garbage
+("MegaeCrw Dvsnvs"), which is exactly how a wrong crew name gets published.
+
+**The `.xlsm` tabulation workbooks in `Excel/HHI NL/` are the better source** —
+they are the origin the PDFs are generated from, and are plain readable XML
+inside the zip. Their "Final Scores" sheet carries rank, crew and every judge's
+score.
+
+⚠️ **Podiums are taken from the Rank column, never by sorting on score.** In
+MegaCrew 2025, ranks 8 and 9 hold *higher* combined scores than rank 7 —
+deductions of 0.15 and 0.5 put them below it. Sorting by score would have
+published the wrong order.
+
+The 2025 PDFs are in `static/download/results-2025/` and linked from the page
+anyway: unreadable by machine is not unreadable by people, and for this edition
+the repo may be the only copy outside Iain's drive.
+
+**2023–2024 remain placeholder.** The notice on the page names which years are
+official, and it derives that from whichever years carry score sheets, so the
+copy cannot go stale as earlier editions are filled in. **Do not invent
+champions** — the smoke test asserts 2024 still says "fill from archive"
+precisely to stop plausible-looking names appearing.
 
 ## Privacy policy — ✅ migrated 15 August 2026
 
@@ -810,7 +831,7 @@ npm run check        # svelte-check — expect 0 errors, 0 warnings
 npm run lint         # prettier --check + eslint — expect both clean
 npm run format       # prettier --write
 npm run build        # prerenders all ten routes; this is what proves SSR guards
-npm test             # build + Playwright smoke test — expect 27 passed
+npm test             # build + Playwright smoke test — expect 28 passed
 npm run preview      # trustworthy again since Phase 7
 npx serve build      # second opinion on the real output
 
