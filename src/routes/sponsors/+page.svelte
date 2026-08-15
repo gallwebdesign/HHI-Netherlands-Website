@@ -1,43 +1,45 @@
 <script lang="ts">
 	import PageHero from '$lib/components/PageHero.svelte';
-	import { base } from '$app/paths';
-	import { TIERS } from '$lib/data/sponsors';
-	import { magnetic, reveal } from '$lib/attachments.svelte';
+	import { SPONSORS } from '$lib/data/sponsors';
+	import { EVENT_YEAR } from '$lib/config';
+	import { reveal } from '$lib/attachments.svelte';
 </script>
 
 <svelte:head>
 	<title>Sponsors | HHI Netherlands</title>
-	<meta name="description" content="Partner with the Netherlands Hip Hop Dance Championship." />
+	<meta
+		name="description"
+		content="The organisations behind the Netherlands Hip Hop Dance Championship."
+	/>
 </svelte:head>
 
+<!-- Rewritten 15 Aug 2026: this page thanks the sponsors the championship
+     already has. It used to sell packages ("Put your brand on the floor",
+     three tiers, a Get in touch CTA) — Iain's instruction is to show current
+     sponsors and not advertise for new ones, so there is deliberately no
+     approach-us CTA anywhere on this page. -->
 <PageHero
 	tag="Sponsors"
-	titleTop="Put your brand"
-	titleBottom="on the floor."
+	titleTop="Behind"
+	titleBottom="the floor."
 	treatment="accent"
-	lede="A full house, a young energetic audience, and a stage that ends at the World Championship. That&rsquo;s the room your brand steps into."
+	lede="The championship runs on the people who back it. These are the organisations that make the {EVENT_YEAR} Netherlands Hip Hop Dance Championship happen."
 />
 
 <main>
 	<section class="section">
-		<p class="tag" {@attach reveal()}>Example packages</p>
-		<div class="tiers">
-			{#each TIERS as tier (tier.title)}
-				<div class="tier" class:tier--hot={tier.featured} {@attach reveal()}>
-					<p class="tier__tag">{tier.tag}</p>
-					<h3>{tier.title}</h3>
-					<ul>
-						{#each tier.items as item (item)}
-							<li>{item}</li>
-						{/each}
-					</ul>
-				</div>
+		<div class="sponsors">
+			{#each SPONSORS as sponsor (sponsor.href)}
+				<a class="sponsor" {@attach reveal()} href={sponsor.href} target="_blank" rel="noopener">
+					<!-- The logos are dark-on-transparent, drawn for a white page. The
+					     plate is what keeps the darker ones visible on --ink. -->
+					<span class="sponsor__plate">
+						<img src={sponsor.logo} alt="" loading="lazy" />
+					</span>
+					<span class="sponsor__name">{sponsor.name}</span>
+					<span class="sponsor__blurb">{sponsor.blurb}</span>
+				</a>
 			{/each}
-		</div>
-		<div class="notice" {@attach reveal()}>
-			<b>Interested?</b>
-			<span>Packages are indicative — every partnership is built to fit.</span>
-			<a class="btn btn--sm btn--solid" {@attach magnetic()} href="{base}/contact">Get in touch</a>
 		</div>
 	</section>
 </main>

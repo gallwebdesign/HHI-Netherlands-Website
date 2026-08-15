@@ -713,18 +713,52 @@ body.menu-open{ overflow:hidden; }
 .org-card p{ color:var(--muted); font-size:14px; }
 .org-card .division__age{ margin-bottom:2px; }
 
-/* sponsors */
-.tiers{ display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:1px; background:var(--line); border:1px solid var(--line); }
-.tier{ background:var(--panel-2); padding:32px 28px; display:flex; flex-direction:column; gap:16px; }
-.tier--hot{ background:var(--oranje); color:var(--ink); }
-.tier h3{ font-family:var(--font-display); font-weight:400; text-transform:uppercase; font-size:30px; }
-.tier ul{ list-style:none; display:grid; gap:10px; }
-.tier li{ font-size:14px; color:var(--muted); display:grid; grid-template-columns:20px 1fr; gap:8px; }
-.tier li::before{ content:"★"; color:var(--oranje); font-size:11px; }
-.tier--hot li{ color:rgba(10,10,14,.78); }
-.tier--hot li::before{ color:var(--ink); }
-.tier__tag{ font-family:var(--font-mono); font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:var(--oranje); }
-.tier--hot .tier__tag{ color:var(--ink); }
+/* ==== SPONSORS ====
+   Rewritten 15 Aug 2026. The .tiers/.tier rules that were here built a
+   three-package sales grid; the page now thanks the sponsors the
+   championship has, so they were removed rather than left as dead weight.
+   Recover from git history if a sales page is ever wanted again.
+
+   Each card is a whole <a>: the logo, the name and the blurb are one
+   target, which is a bigger and more obvious hit area than a link buried
+   in the text. */
+/* Four across, not auto-fit. With seven sponsors, auto-fit settles on five
+   columns at desktop width and leaves three empty cells; four gives 4 + 3.
+
+   Borders sit on the cards, not on a 1px grid gap over a lit background —
+   the gap technique paints the empty cells of a short row as a solid panel,
+   which reads as a hole rather than as the row simply ending. */
+.sponsors{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+.sponsor{
+  background:var(--panel-2); border:1px solid var(--line);
+  padding:26px 24px; display:flex; flex-direction:column;
+  align-items:flex-start; gap:14px; text-decoration:none; color:inherit;
+  transition:background-color .3s, border-color .3s;
+}
+.sponsor:hover{ border-color:var(--oranje); }
+.sponsor:hover{ background:var(--panel); }
+/* The logos are dark-on-transparent PNGs drawn for a white page — measured
+   average luminance runs 20–159 against this near-black ground, so the
+   darkest of them would simply vanish. The plate is what makes all seven
+   legible, and it is why they are not dropped straight onto --ink. */
+.sponsor__plate{
+  display:grid; place-items:center; width:100%; aspect-ratio:5/2;
+  background:#fff; padding:16px 20px;
+}
+.sponsor__plate img{ max-width:100%; max-height:100%; object-fit:contain; }
+.sponsor__name{
+  font-family:var(--font-display); font-weight:400; text-transform:uppercase;
+  font-size:20px; line-height:1.15;
+}
+.sponsor:hover .sponsor__name{ color:var(--oranje); }
+.sponsor__blurb{ color:var(--muted); font-size:14px; line-height:1.6; }
+
+@media (max-width:1000px){
+  .sponsors{ grid-template-columns:repeat(2,1fr); }
+}
+@media (max-width:560px){
+  .sponsors{ grid-template-columns:1fr; }
+}
 
 /* contact */
 .contact-grid{ display:grid; grid-template-columns:minmax(0,5fr) minmax(0,6fr); gap:60px; align-items:start; }

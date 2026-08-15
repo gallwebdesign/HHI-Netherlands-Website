@@ -529,6 +529,42 @@ test('2023 results keep their two easily-mistaken crew names', async ({ page }) 
 	await expect(panel).not.toContainText('*');
 });
 
+test('sponsors page credits real sponsors and does not solicit new ones', async ({ page }) => {
+	await page.goto('/sponsors');
+	await settleReveals(page);
+
+	/* Rewritten 15 Aug 2026 from a three-tier sales page to a credit page.
+	   Iain's instruction was explicit: show current sponsors, do not advertise
+	   for new ones — so the absence of a pitch is the requirement, not a
+	   side effect, and it is what this test is really guarding. */
+	const cards = page.locator('.sponsor');
+	await expect(cards).toHaveCount(7);
+
+	await expect(page.locator('.sponsor__name', { hasText: 'MECC Maastricht' })).toBeAttached();
+	await expect(page.locator('.sponsor__name', { hasText: 'Provincie Limburg' })).toBeAttached();
+
+	/* Every card links out to the sponsor, in a new tab. */
+	for (const a of await cards.all()) {
+		await expect(a).toHaveAttribute('href', /^https?:\/\//);
+		await expect(a).toHaveAttribute('target', '_blank');
+	}
+
+	/* The seven logos are local: they were rescued off the legacy host and a
+	   404 here would leave seven blank plates. */
+	const logos = page.locator('.sponsor__plate img');
+	await expect(logos).toHaveCount(7);
+	for (const src of await logos.evaluateAll((imgs) =>
+		imgs.map((i) => i.getAttribute('src') ?? '')
+	)) {
+		expect(src).toContain('/img/sponsors/');
+		expect((await page.request.get(src)).status(), `${src} should serve`).toBe(200);
+	}
+
+	// No sales language, and no "approach us" CTA.
+	await expect(page.locator('main')).not.toContainText(/package|become a sponsor|get in touch/i);
+	await expect(page.locator('main a[href*="/contact"]')).toHaveCount(0);
+});
+
 test('regulations links both rules PDFs, and they actually download', async ({ page }) => {
 	await page.goto('/regulations');
 

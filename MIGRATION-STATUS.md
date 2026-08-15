@@ -14,7 +14,7 @@ clean and everything is pushed**; `main` and `origin/main` are level.
 `sveltekit-migration` merged and safe to delete.
 
 Verified on the final commit: `npm run lint` clean, `npm run check` 0 errors / 0
-warnings, `npm test` **30 passed**.
+warnings, `npm test` **31 passed**.
 
 ## ▶ Start here on 16 August 2026
 
@@ -209,6 +209,41 @@ numbers come from instead, which is what makes them checkable.
 
 **If a future edition is added before its results exist, add the panel when the
 data does.** An empty tab is worse than no tab.
+
+## Sponsors — rewritten as a credit page, 15 August 2026
+
+**Iain's instruction: show the current sponsors, do not advertise for new
+ones.** The page used to be a sales pitch — "Put your brand on the floor", three
+`TIERS` packages (Support / Stage / Title partner), and a *Get in touch* CTA.
+All of it is gone, along with the `TIERS` data and the `.tiers`/`.tier` CSS.
+Recover from git history if a sales page is ever wanted again.
+
+**The seven real sponsors** were read off the legacy `sponsors.php`, with their
+own descriptions and websites: Heijnens Audio · Light · Vision, VSBfonds,
+Provincie Limburg, Gemeente Maastricht, MECC Maastricht, het Cultuurfonds, and
+APS Groep. VSBfonds's blurb is Dutch in the original and is **kept in Dutch** —
+it is their copy, not ours to translate.
+
+**Their logos were rescued** into `static/img/sponsors/` (seven 180×180 PNGs,
+104 KB total), the same way the media photos were. The legacy host was the only
+source.
+
+⚠️ **The logos are dark-on-transparent, drawn for a white page.** Measured
+average luminance against this site's near-black ground runs from **20**
+(APS Groep) to 159 (Heijnens) — the darkest three would have been effectively
+invisible dropped straight onto `--ink`. `.sponsor__plate` paints a white panel
+behind each one. **Do not "simplify" that away**; it is the only reason all
+seven are legible.
+
+**The grid is four columns, not `auto-fit`.** With seven cards, auto-fit settles
+on five at desktop width and leaves three empty cells; four gives 4 + 3. Borders
+also sit on the cards rather than on a 1px gap over a lit background — the gap
+technique paints a short row's empty cells as a solid panel, which reads as a
+hole rather than as the row ending.
+
+A smoke test asserts all seven cards, that every logo actually serves, and that
+**no sales language or `/contact` CTA appears on the page** — the absence of a
+pitch is the requirement here, not a side effect.
 
 ## Privacy policy — ✅ migrated 15 August 2026
 
@@ -871,7 +906,7 @@ npm run check        # svelte-check — expect 0 errors, 0 warnings
 npm run lint         # prettier --check + eslint — expect both clean
 npm run format       # prettier --write
 npm run build        # prerenders all ten routes; this is what proves SSR guards
-npm test             # build + Playwright smoke test — expect 30 passed
+npm test             # build + Playwright smoke test — expect 31 passed
 npm run preview      # trustworthy again since Phase 7
 npx serve build      # second opinion on the real output
 
