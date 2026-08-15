@@ -58,14 +58,14 @@ export const SITE_URL = 'https://hhi-netherlands.com';
  *  form, so the choice is made on a page with room to explain it. */
 export const REGISTRATION_FORMS = [
 	{
-		name: 'Netherlands HHDC',
-		blurb: 'The National Championship — Junior, Varsity, Adult, JV MegaCrew, MiniCrew and MegaCrew.',
-		href: 'https://form.jotform.com/262132296237961'
-	},
-	{
 		name: 'HHI Open Division',
 		blurb: 'The Open Division Categories — Junior, Varsity, Adult, Parents and Special Crews.',
 		href: 'https://form.jotform.com/262132162311946'
+	},
+	{
+		name: 'Netherlands HHDC',
+		blurb: 'The National Championship — Junior, Varsity, Adult, JV MegaCrew, MiniCrew and MegaCrew.',
+		href: 'https://form.jotform.com/262132296237961'
 	}
 ] as const;
 

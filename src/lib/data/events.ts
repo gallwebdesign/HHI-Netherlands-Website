@@ -30,7 +30,7 @@ export const FACTS: Fact[] = [
 	{
 		term: 'When',
 		value: EVENT_DATE_RANGE,
-		note: 'Two days of competition, finals on day two'
+		note: 'Two days of competition, 30 January - HHI Open Division, 31 January - Netherlands HHDC'
 	},
 	{
 		term: 'Where',
