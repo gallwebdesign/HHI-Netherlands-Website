@@ -665,6 +665,17 @@ body.menu-open{ overflow:hidden; }
 .rtable tr:hover td{ background:var(--panel); }
 .rtable .gold{ color:var(--oranje); }
 
+/* Official score sheets, shown under a year's table when that edition's PDFs
+   were recovered. One link per division, so six buttons that wrap freely
+   rather than a fixed grid — the count is a property of the year, not the
+   layout. */
+.sheets{ margin-top:26px; }
+.sheets__label{
+  font-family:var(--font-mono); font-size:11px; letter-spacing:.2em;
+  text-transform:uppercase; color:var(--muted); margin-bottom:14px;
+}
+.sheets__links{ display:flex; flex-wrap:wrap; gap:10px; }
+
 /* checklist (registration) */
 .check{ display:grid; gap:14px; border-top:1px solid var(--line); padding-top:26px; }
 /* The ::before marker sits in the 26px track and <b>+<span> share the

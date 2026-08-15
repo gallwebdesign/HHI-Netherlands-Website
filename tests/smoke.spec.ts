@@ -86,8 +86,11 @@ test('results tabs switch panels', async ({ page }) => {
 	await page.goto('/results');
 	await settleReveals(page);
 
+	/* One tab per published edition. Asserted as "more than one" rather than an
+	   exact count: this test is about the tablist contract, not the size of the
+	   archive, and it was hard-coded to 3 until 2026 was added on 15 Aug 2026. */
 	const tabs = page.getByRole('tab');
-	await expect(tabs).toHaveCount(3);
+	expect(await tabs.count()).toBeGreaterThan(1);
 
 	// First year open by default, the others closed.
 	await expect(tabs.first()).toHaveAttribute('aria-selected', 'true');
@@ -381,6 +384,46 @@ test('privacy policy serves the Dutch text and can switch to English', async ({ 
 	/* The precedence notice is the point of shipping both languages — without
 	   it the translation reads as equally binding. */
 	await expect(page.locator('.notice').first()).toContainText(/Dutch text prevails/i);
+});
+
+test('2026 results are the real podium, with their score sheets', async ({ page }) => {
+	await page.goto('/results');
+	await settleReveals(page);
+
+	/* 2026 was recovered from the six official score sheets on 15 Aug 2026 and
+	   every placement checked against the rank number in its source PDF. These
+	   are real crews and real placings — a silent corruption here misreports
+	   someone's championship, so the podium is asserted row by row rather than
+	   by counting cells. */
+	const panel = page.locator('#panel-2026');
+	const row = (division: string) => panel.locator('tr', { hasText: division }).first();
+
+	await expect(row('Junior')).toContainText('C-Fam Jr');
+	await expect(row('Varsity')).toContainText('C-Fam Varsity');
+	await expect(row('Adult')).toContainText('D&D VIII');
+	await expect(row('JV MegaCrew')).toContainText('ELITE');
+	await expect(row('MiniCrew')).toContainText('D&D CREW');
+	await expect(row('MegaCrew').first()).toContainText('D&D');
+
+	/* No placeholder may survive in a year that is published as official. */
+	await expect(panel).not.toContainText('fill from archive');
+
+	/* The six score sheets carry the full rankings and deductions. Fetched, not
+	   just asserted on the href — they are the evidence for the table above. */
+	const sheets = panel.locator('.sheets__links a');
+	await expect(sheets).toHaveCount(6);
+	for (const href of await sheets.evaluateAll((links) =>
+		links.map((a) => a.getAttribute('href') ?? '')
+	)) {
+		const res = await page.request.get(href);
+		expect(res.status(), `${href} should serve`).toBe(200);
+		expect(res.headers()['content-type']).toContain('pdf');
+	}
+
+	/* The earlier editions are genuinely unknown and must stay that way — this
+	   is the guard against someone filling them with plausible-looking names. */
+	await expect(page.locator('#panel-2025')).toContainText('fill from archive');
+	await expect(page.locator('#panel-2025').locator('.sheets')).toHaveCount(0);
 });
 
 test('regulations links both rules PDFs, and they actually download', async ({ page }) => {
