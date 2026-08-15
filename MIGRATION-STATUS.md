@@ -3,8 +3,10 @@
 Working notes for the static HTML → SvelteKit migration.
 Last updated **15 August 2026** — the event day split was confirmed and carried
 through the site (events schedule now splits by day; registration notice states
-the mapping). Before that, on 14 Aug: media photos rescued, registration hub
-built, favicon and social preview shipped, two layout/navigation bugs fixed.
+the mapping), and the **privacy policy was migrated to `/privacy`**, which was
+the last legacy page still serving real content. Before that, on 14 Aug: media
+photos rescued, registration hub built, favicon and social preview shipped, two
+layout/navigation bugs fixed.
 
 Plan: <https://claude.ai/code/artifact/b42e8908-c534-4c72-8ef2-7a465a78ad28>
 Branch: **`main`** — the migration was merged there in PR #2. **Working tree
@@ -12,7 +14,7 @@ clean and everything is pushed**; `main` and `origin/main` are level.
 `sveltekit-migration` merged and safe to delete.
 
 Verified on the final commit: `npm run lint` clean, `npm run check` 0 errors / 0
-warnings, `npm test` **21 passed**.
+warnings, `npm test` **24 passed**.
 
 ## ▶ Start here on 16 August 2026
 
@@ -78,6 +80,47 @@ swapping the two days and watching it fail:
 - `events schedule splits into the two confirmed days`
 - `registration hub states which competition dances on which day`
 - the footnote's "subject to change" wording
+
+## Privacy policy — ✅ migrated 15 August 2026
+
+**The last page of the old site still serving real content with no migrated
+route.** It is now [/privacy](src/routes/privacy/+page.svelte), with the text in
+[privacy.ts](src/lib/data/privacy.ts).
+
+**The Dutch is the authoritative text and is reproduced verbatim.** Only the
+encoding was touched: the legacy page served Latin-1 mislabelled as UTF-8, so
+`geïnteresseerd`, `enquête` and `video’s` arrived as mojibake. **Do not reword
+the Dutch** — it is a legal document, and rewriting it changes what was
+published.
+
+**Both languages ship, Dutch primary** (decided with Iain, 15 Aug). The site is
+otherwise English-only, so a visitor would reasonably assume an English policy
+is the real document. A notice at the top of the page states in both languages
+that the Dutch prevails, and a local toggle switches between them. That toggle is
+**not** the site-wide i18n removed in Phase 2 — it is a local `$state` swap
+between two fields on the same records, so it needs no store and no URL
+parameter, and both languages are in the prerendered HTML either way.
+
+**`EXTERNAL.privacy` is gone.** The footer now links to `/privacy` internally
+rather than at the dying host, and `.htaccess` gained the two rules its own
+comment had been asking for (`privacy-policy.php` and `.html` → `/privacy`).
+
+**Two things on the page are deliberately not `reveal()`'d**: the precedence
+notice and the language switch. `reveal()` parks an element at `autoAlpha:0`
+until its ScrollTrigger fires, which also drops it out of the accessibility
+tree — wrong for a control that chooses the language and for the text stating
+the document's legal standing. This was caught by a test timing out on a button
+it could not see.
+
+⚠️ **Two things to confirm with Iain before the old host goes dark:**
+
+- **The controller named in the policy is Marion Gall-Wierts.** Carried over
+  as-is (confirmed 15 Aug), but worth re-checking it is still current.
+- **The policy tells people to use "het contact formulier" to exercise their
+  rights.** That was `contact.php`. The page links to `/contact` instead, whose
+  form is still the Phase 8 placeholder — so the route a visitor is told to use
+  for a GDPR request is not yet functional. **This is the strongest argument for
+  Phase 8 being real work, not polish.**
 
 ## What was done on 14 August 2026
 
@@ -152,7 +195,7 @@ and still true:
 ## Where we stopped
 
 **Phases 0–6 are complete and deployed**, and **Phase 7 items 2–5 are done**
-and pushed. All nine routes are ported. What remains in Phase 7 is the URL
+and pushed. All nine legacy routes are ported, plus /privacy (15 Aug). What remains in Phase 7 is the URL
 cutover (item 1), which is no longer blocked — **hosting is settled: Cloud86**
 (see below). It has not been executed yet.
 
@@ -225,14 +268,14 @@ The `.php` set was read off the live site's own nav, not guessed.
   redirects to `/events`, which carries the current (Celebratix) tickets CTA —
   it cannot go to a local route because ticketing is off-site.
 
-[static/.htaccess](static/.htaccess) now holds 15 rules, all `[R=301,L]`.
+[static/.htaccess](static/.htaccess) now holds 17 rules, all `[R=301,L]`.
 `.html` is still handled — cheap, and those URLs were linked over the years even
 though they served a stub.
 
-**`privacy-policy.php` is deliberately NOT redirected.** It is real, still linked
-from the footer as `EXTERNAL.privacy`, and has no migrated route. Sending a legal
-document people go looking for specifically to the home page is worse than a 404.
-Give it a route, then add the rule.
+~~**`privacy-policy.php` is deliberately NOT redirected.**~~ ✅ **Resolved 15 Aug
+2026** — it now has a real route at `/privacy`, so both `privacy-policy.php` and
+`privacy-policy.html` 301 there, and the footer links internally. `.htaccess` is
+17 rules. See *Privacy policy* below.
 
 **Verified** by replaying Apache's first-match-wins semantics over the parsed
 rules: 24 cases pass including the negatives (clean routes, `/img` assets,
@@ -539,11 +582,14 @@ Two details worth keeping in mind:
 host serves static files and mail only, and `registration.php` dies with the old
 site.
 
-**Three `EXTERNAL` links still point at the dying host** and break when it goes:
+**Two `EXTERNAL` links still point at the dying host** and break when it goes:
 `contactForm` and `regulations` (used on [contact](src/routes/contact/+page.svelte#L76)
-and [regulations](src/routes/regulations/+page.svelte#L47)) and `privacy` in the
-footer. Regulations probably wants to become a hosted PDF; the contact form is
-Phase 8, and Cloud86's PHP means it can be a real form.
+and [regulations](src/routes/regulations/+page.svelte#L47)). Regulations probably
+wants to become a hosted PDF; the contact form is Phase 8, and Cloud86's PHP
+means it can be a real form.
+
+~~`privacy` in the footer~~ — ✅ **fixed 15 Aug 2026**: `/privacy` is a real
+route now and `EXTERNAL.privacy` is gone. See *Privacy policy* above.
 
 ## Open questions — need answers
 
@@ -655,8 +701,8 @@ npm run dev          # development
 npm run check        # svelte-check — expect 0 errors, 0 warnings
 npm run lint         # prettier --check + eslint — expect both clean
 npm run format       # prettier --write
-npm run build        # prerenders all nine routes; this is what proves SSR guards
-npm test             # build + Playwright smoke test — expect 21 passed
+npm run build        # prerenders all ten routes; this is what proves SSR guards
+npm test             # build + Playwright smoke test — expect 24 passed
 npm run preview      # trustworthy again since Phase 7
 npx serve build      # second opinion on the real output
 

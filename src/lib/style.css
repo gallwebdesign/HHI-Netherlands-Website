@@ -765,3 +765,37 @@ body.menu-open{ overflow:hidden; }
 @media (max-width:560px){
   .reg-days{ grid-template-columns:1fr; }
 }
+
+/* ==== PRIVACY POLICY ====
+   A long legal document, which the rest of the site is not. The measure is
+   capped at 72ch and the body steps up to 16px: this is the one page people
+   actually read top to bottom rather than scan, and the display-font
+   treatment used elsewhere would fight that. Headings stay in the display
+   font so the page still reads as part of the site. */
+.lang-switch{ display:flex; gap:1px; background:var(--line); border:1px solid var(--line); width:max-content; margin:24px 0 40px; }
+.lang-switch__btn{
+  background:var(--panel-2); color:var(--muted); border:0; cursor:pointer;
+  font-family:var(--font-mono); font-size:11px; letter-spacing:.16em; text-transform:uppercase;
+  padding:12px 20px; transition:color .25s, background-color .25s;
+}
+.lang-switch__btn:hover{ color:var(--bone); }
+.lang-switch__btn.is-active{ background:var(--oranje); color:var(--ink); }
+.lang-switch__btn:focus-visible{ outline:2px solid var(--oranje); outline-offset:2px; }
+/* The notices carry .notice--measure so they share the policy's width — a
+   full-bleed notice above 72ch of text reads as a mistake. */
+.policy, .notice--measure{ max-width:72ch; }
+.policy__lede{ color:var(--bone); font-size:17px; line-height:1.7; margin-bottom:40px; }
+.policy__section{ margin-bottom:40px; }
+.policy__h{
+  font-family:var(--font-display); font-weight:400; text-transform:uppercase;
+  font-size:clamp(20px,2vw,26px); line-height:1.15; margin-bottom:16px;
+  padding-bottom:12px; border-bottom:1px solid var(--line);
+}
+.policy p{ color:var(--muted); font-size:16px; line-height:1.75; margin-bottom:16px; }
+.policy p:last-child{ margin-bottom:0; }
+.policy__list{ list-style:none; margin:0 0 16px; padding:0; }
+.policy__list li{
+  color:var(--muted); font-size:16px; line-height:1.75; padding-left:22px; position:relative;
+}
+.policy__list li::before{ content:'—'; position:absolute; left:0; color:var(--oranje); }
+.policy + .notice{ margin-top:40px; }

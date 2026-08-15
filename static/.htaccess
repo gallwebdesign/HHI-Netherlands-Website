@@ -52,16 +52,17 @@ RewriteRule ^tickets\.php$         /events         [R=301,L]
 RewriteRule ^hhi(nl)?[0-9]{4}[a-z]?\.php$  /media  [R=301,L]
 
 # --- Privacy policy ---------------------------------------------
-# Still an external link in the footer (EXTERNAL.privacy) and has
-# no migrated route yet. Left deliberately unredirected: sending
-# it to the home page would be worse than a 404, since a privacy
-# policy is a legal document people go looking for specifically.
-# Give it a route, then add the rule.
+# Held unredirected until 15 Aug 2026, because sending a legal
+# document people go looking for specifically to the home page is
+# worse than a 404. It now has a real route carrying the same
+# Dutch text, so the rule this file asked for is here.
+RewriteRule ^privacy-policy\.php$  /privacy  [R=301,L]
 
 # --- Trailing .html ---------------------------------------------
 # The .html URLs never served real content, but they were linked
 # often enough over the years to be worth catching. Handled with
 # one rule rather than nine, since the mapping is identical.
 RewriteRule ^(events|registration|organisation|sponsors|contact|regulations|results)\.html$  /$1  [R=301,L]
+RewriteRule ^privacy-policy\.html$  /privacy  [R=301,L]
 RewriteRule ^(index|home)\.html$   /               [R=301,L]
 RewriteRule ^(photos|videos|media)\.html$  /media  [R=301,L]

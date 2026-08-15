@@ -88,12 +88,13 @@ export const REGISTRATION_FORMS = [
 /** Where every "Register" CTA points — the hub, not a form. See above. */
 export const REGISTRATION_HUB = '/registration';
 
-/** Off-site destinations. Three still point at the legacy production host. */
+/** Off-site destinations. Two still point at the legacy production host.
+ *  `privacy` was removed on 15 Aug 2026 — the policy now has a real route at
+ *  /privacy, so the footer links there instead of at the dying host. */
 export const EXTERNAL = {
 	tickets: 'https://shop.celebratix.io/?c=2mdtq',
 	contactForm: 'https://hhi-netherlands.com/contact.php',
 	regulations: 'https://hhi-netherlands.com/regulations.php',
-	privacy: 'https://hhi-netherlands.com/privacy-policy.php',
 	instagram: 'https://www.instagram.com/hhinetherlands',
 	facebook: 'https://www.facebook.com/hhinetherlands/',
 	youtube: 'https://www.youtube.com/c/HipHopInternationalNetherlands'
@@ -138,5 +139,5 @@ export const FOOTER_LINKS = [
 	{ href: EXTERNAL.instagram, label: 'Instagram', external: true },
 	{ href: EXTERNAL.facebook, label: 'Facebook', external: true },
 	{ href: EXTERNAL.youtube, label: 'YouTube', external: true },
-	{ href: EXTERNAL.privacy, label: 'Privacy', external: true }
+	{ href: '/privacy', label: 'Privacy' }
 ] as const;

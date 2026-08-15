@@ -15,7 +15,8 @@ const ROUTES = [
 	'/sponsors',
 	'/contact',
 	'/regulations',
-	'/results'
+	'/results',
+	'/privacy'
 ];
 
 for (const route of ROUTES) {
@@ -353,6 +354,45 @@ test('registration hub states which competition dances on which day', async ({ p
 	   Finals" — because what must survive an edit is the claim, not the wording. */
 	await expect(notice).toContainText(/national qualifier/i);
 	await expect(notice).toContainText(/HHI World/i);
+});
+
+test('privacy policy serves the Dutch text and can switch to English', async ({ page }) => {
+	await page.goto('/privacy');
+
+	/* The Dutch is the authoritative legal text, carried over verbatim from the
+	   legacy privacy-policy.php. It must be what loads — the site is otherwise
+	   English-only, so a default of English would quietly present a convenience
+	   translation as the published document. */
+	await expect(page.locator('.policy')).toHaveAttribute('lang', 'nl');
+	await expect(page.locator('.policy')).toContainText('Gebruikersrechten');
+	await expect(page.locator('.policy')).toContainText('Marion Gall-Wierts');
+
+	/* Prerendered, not client-rendered: a legal page has to be readable with no
+	   JavaScript at all. Asserted on the served HTML rather than the DOM. */
+	const html = await (await page.request.get('/privacy')).text();
+	expect(html).toContain('Gebruikersrechten');
+
+	// The toggle is a local $state swap, not the removed site-wide i18n.
+	await page.getByRole('button', { name: 'English' }).click();
+	await expect(page.locator('.policy')).toHaveAttribute('lang', 'en');
+	await expect(page.locator('.policy')).toContainText('User rights');
+	await expect(page.locator('.policy')).not.toContainText('Gebruikersrechten');
+
+	/* The precedence notice is the point of shipping both languages — without
+	   it the translation reads as equally binding. */
+	await expect(page.locator('.notice').first()).toContainText(/Dutch text prevails/i);
+});
+
+test('the footer privacy link points at the migrated route', async ({ page }) => {
+	await page.goto('/');
+
+	/* It pointed at the legacy host until 15 Aug 2026, which dies with the old
+	   site. A footer link to a switched-off host is the exact failure the
+	   migration exists to prevent. */
+	const privacy = page.locator('.footer a', { hasText: /^Privacy$/ });
+	await expect(privacy).toHaveAttribute('href', /\/privacy$/);
+	await expect(privacy).not.toHaveAttribute('href', /hhi-netherlands\.com/);
+	await expect(privacy).not.toHaveAttribute('target', '_blank');
 });
 
 test('every "register" CTA points at the hub, not a form', async ({ page }) => {
