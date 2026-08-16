@@ -17,11 +17,11 @@ export interface Rule {
 export const RULES: Rule[] = [
 	{
 		title: 'Divisions & ages',
-		body: 'Junior (7–12), Varsity (13–17), Adult (18+), plus MiniCrew and MegaCrew open to all ages. Your division is set by your dancers’ ages on competition day.'
+		body: 'Junior (7–12), Varsity (13–17), Adult (18+), JV-MegaCrew (17 and younger) plus MiniCrew and MegaCrew open to all ages. Your division is set by your dancers’ ages on competition day.'
 	},
 	{
 		title: 'Crew size',
-		body: 'Crews are 5–9 dancers, MiniCrews exactly 3, MegaCrews 10–40. Each dancer may compete in only one crew per division.'
+		body: 'Junior, Varsity & Adult Crews are 5–9 dancers, MiniCrews are 3-4 dancers, JV-MegaCrew & MegaCrews are 10–40 dancers. Each dancer may compete in two crews per division.'
 	},
 	{
 		title: 'Routine & music',
