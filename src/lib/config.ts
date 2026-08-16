@@ -160,9 +160,9 @@ export const MENU_LINKS = [
 /** Footer nav. Internal links first, then socials and privacy. */
 export const FOOTER_LINKS = [
 	{ href: '/events', label: 'Events' },
+	{ href: '/registration', label: 'Registration' },
 	{ href: '/regulations', label: 'Regulations' },
 	{ href: '/results', label: 'Results' },
-	{ href: '/registration', label: 'Registration' },
 	{ href: '/sponsors', label: 'Sponsors' },
 	{ href: EXTERNAL.instagram, label: 'Instagram', external: true },
 	{ href: EXTERNAL.facebook, label: 'Facebook', external: true },
