@@ -61,7 +61,12 @@
 					<p class="sched-day__date">{day.date}</p>
 					<p class="sched-day__comp">{day.competition}</p>
 					<div class="sched">
-						{#each day.rows as row (row.time)}
+						<!-- Key on `what`, never on `time`. The times are provisional and
+						     collapse to a shared placeholder ("TBA") whenever the programme
+						     is pulled — seven identical keys, and the each block throws
+						     each_key_duplicate on hydration. The category is the row's
+						     actual identity and is unique within a day. -->
+						{#each day.rows as row (row.what)}
 							<div class="sched__row">
 								<span class="sched__time">{row.time}</span><span class="sched__what"
 									>{row.what}</span
@@ -75,9 +80,7 @@
 		<!-- The day split above is confirmed; the running order within each day is
 		     not. The footnote has to mark the whole schedule as provisional without
 		     reading as though which competition dances when is still open. -->
-		<p class="footnote" {@attach reveal()}>
-			*  Times will be posted after registration is closed.
-		</p>
+		<p class="footnote" {@attach reveal()}>* Times will be posted after registration is closed.</p>
 	</section>
 
 	<section class="cta">

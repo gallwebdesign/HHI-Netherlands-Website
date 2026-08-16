@@ -306,8 +306,15 @@ test('events schedule splits into the two confirmed days', async ({ page }) => {
 
 	/* The times are indicative and the running order is not final, so the page
 	   must say so. Published times people plan travel around, presented as fact
-	   before the programme exists, is the failure mode this guards. */
-	await expect(page.locator('.footnote')).toContainText(/subject to change/i);
+	   before the programme exists, is the failure mode this guards.
+
+	   Matched on intent rather than one phrase: the footnote said "subject to
+	   change" until 16 Aug 2026, when the times were pulled to TBA and it became
+	   a promise to post them after registration closes. Both discharge the duty
+	   to mark the schedule provisional, so either wording passes. */
+	await expect(page.locator('.footnote')).toContainText(
+		/subject to change|will be posted|to be announced|TBA/i
+	);
 });
 
 test('registration hub offers both competition forms', async ({ page }) => {
