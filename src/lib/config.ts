@@ -11,7 +11,7 @@ import { base } from '$app/paths';
 /** Championship date. Drives the countdown and every displayed year.
  *  This is day one — the countdown target. The event runs two days;
  *  see EVENT_END_DATE and EVENT_DATE_RANGE for what gets displayed. */
-export const EVENT_DATE = '2027-01-30T12:08:00+01:00';
+export const EVENT_DATE = '2027-01-30T08:00:00+01:00';
 
 /** Final day of the championship. Confirmed 11 Aug 2026. */
 export const EVENT_END_DATE = '2027-01-31T23:59:00+01:00';
