@@ -82,7 +82,7 @@ export const ROAD_PANELS: RoadPanel[] = [
 	},
 	{
 		title: 'Build the routine',
-		body: 'Two to three minutes judged on performance, skill, musicality and style variety — the official HHI scoring system. Read the regulations, then break them open creatively.',
+		body: 'One minute thirty seconds to four minutes judged on performance, skill, musicality, and style variety — the official HHI scoring system. Read the regulations, then break them open creatively.',
 		where: 'HHI rulebook · Regulations'
 	},
 	{
