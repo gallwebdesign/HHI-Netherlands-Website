@@ -1,8 +1,11 @@
 # Migration status
 
 Working notes for the static HTML → SvelteKit migration.
-Last updated **16 August 2026** — a **scroll-to-top button** was added to every
-route (see below). Earlier the same day, **`/regulations` was split into two
+Last updated **16 August 2026** — the home hero was **rebuilt as two columns**
+with the NHHDC lockup, on the unmerged branch `hero-two-column` (see below); it
+is awaiting Iain's verdict and is **not on `main`**. Earlier the same day, a
+**scroll-to-top button** was added to every
+route (see below), and **`/regulations` was split into two
 competition columns** (Open Division and Netherlands HHDC), Iain wrote the real
 Open Division rules, and the two columns were then made to align row-for-row.
 Before that, on 15 Aug: the event day split was confirmed and carried through
@@ -15,19 +18,29 @@ photos rescued, registration hub built, favicon and social preview shipped, two
 layout/navigation bugs fixed.
 
 Plan: <https://claude.ai/code/artifact/b42e8908-c534-4c72-8ef2-7a465a78ad28>
-Branch: **`main`** — the migration was merged there in PR #2. **Working tree
-clean and everything is pushed**; `main` and `origin/main` are level.
-`sveltekit-migration` merged and safe to delete.
+Branch: **`main`** — the migration was merged there in PR #2. **`main` is clean
+and pushed**, level with `origin/main`, and ends at the scroll-to-top button
+(`b6e895b`). `sveltekit-migration` merged and safe to delete.
 
-Verified on the final commit: `npm run lint` clean, `npm run check` 0 errors / 0
+⚠️ **`hero-two-column` is unmerged and unpushed** — four commits of home-hero
+work awaiting Iain's verdict. Nothing on `main` depends on it. See *The hero
+experiments* below, which also records the two rejected attempts so they are
+not tried again.
+
+Verified on `main`: `npm run lint` clean, `npm run check` 0 errors / 0
 warnings, `npm test` **36 passed** (31 → 33 with the two regulations layout
 tests, → 36 with the three scroll-to-top tests, both on 16 Aug 2026).
+On `hero-two-column`: **37 passed**, the extra one being the hero layout test.
 
 ## ▶ Start here on 17 August 2026
 
-**Nothing is half-finished.** Every pre-purchase task is done and pushed. What
-is left needs either the Cloud86 account or a decision:
+**Nothing on `main` is half-finished.** Every pre-purchase task is done and
+pushed. What is left needs either the Cloud86 account or a decision:
 
+0. **Decide on `hero-two-column`.** Four commits, local only, `npm test` green.
+   Either merge it or delete the branch — it is the only unresolved piece of
+   work in the repo, and it will rot if it sits. `git checkout hero-two-column`
+   then `npm run dev` to look at it.
 1. **Buy the Cloud86 plan.** Two details to confirm at purchase: what "Git
    integratie" actually does, and whether a cheaper tier keeps mail + SSH +
    `.htaccess`. This unblocks everything below.
@@ -41,6 +54,101 @@ is left needs either the Cloud86 account or a decision:
 ~~One small chore: `src/lib/config.ts` fails `npm run lint` on line endings.~~
 ✅ **Done 15 Aug 2026** — formatted as part of the day-split work, since that
 commit had to touch `config.ts` anyway. `npm run lint` is clean.
+
+## The hero experiments — 16 August 2026, branch `hero-two-column`
+
+**Iain wanted the championship logo in the home hero.** Three designs were built
+before one was accepted; the two rejected ones are recorded here because the
+reasons they failed are design decisions, not bugs, and re-proposing them would
+waste another session.
+
+### ❌ Attempt 1 — logo inline in the title, joined by an "@"
+
+*"Own the floor @ [HHI plates logo]"*, using
+`Hip Hop International Logo.svg`. **Rejected on sight.** Worth knowing why the
+markup fought back, since the same trap applies to any graphic set inside the
+title rows:
+
+⚠️ **The title rows are `overflow:hidden` masks with `line-height:.88`, and
+flex breaks them.** As a flex *item* the word's own Anton font box (~1.5em)
+drives the container height instead of the line-height, which inflated row 2
+from 196px to 316px and dropped the logo onto the line below. Pinning the
+container height pushed it out of the bottom instead (393px). **Plain inline
+flow is correct** — the line box then governs all three children exactly as it
+does for the other rows. Two flex versions were built and measured before this
+was understood.
+
+Also: the copy read *"Own the floor @ Hip Hop International Netherlands"*, a
+venue construction, which reads as though HHI Netherlands were the *place*
+rather than the championship.
+
+### ❌ Attempt 2 — NHHDC lockup centred above a one-line title
+
+Logo centred, `OWN THE FLOOR.` on a single centred line beneath, footnote
+"Represent the Netherlands at the Worlds." **Also rejected.** The build was
+sound and the measurements were fine; Iain simply did not want it.
+
+⚠️ **One real trap surfaced here.** Its `.hero__title--centred` overrides had to
+sit **after** the `.hero__title` rules in the file: both are specificity
+(0,2,0), so source order decides, and written earlier the footnote kept the 96px
+hollow-outline treatment and rendered as a full-width second headline. **The
+screenshot showed it; the numbers did not.** That class no longer exists — it
+was removed when attempt 3 replaced this layout — but the ordering rule it
+taught applies to every `--modifier` override in this stylesheet.
+
+### ✅ Attempt 3 — two columns, lockup left, title right
+
+**This is what `hero-two-column` holds.** Four commits:
+
+| Commit | What |
+|---|---|
+| `48bd779` | The two-column split |
+| `d63de5d` | Meta row moved to full width beneath both columns |
+| `a953ec2` | Mobile becomes one centred column |
+| `d9e59a4` | Desktop hero centred, cutting the black band above it |
+
+**Shape.** Above 1000px the NHHDC lockup and the title sit side by side; the
+lede, countdown and both CTAs span the full width underneath, exactly as on
+`main`. Below 1000px everything stacks and centres, with the countdown and both
+buttons stretched to the column width.
+
+**The hero keeps `main`'s height on desktop** — that was Iain's constraint, and
+the baselines were measured on `main` first: 900px at 1440×900 with the CTAs
+ending at 864px. On mobile the constraint was **deliberately dropped** (Iain's
+call): the lockup gets real size and the hero runs to 978px on a 780px screen,
+so the CTAs sit below the fold and the page scrolls.
+
+⚠️ **Four things that were got wrong first, all found by measuring rather than
+looking:**
+
+- **The title is sized in `cqw`, not `vw`.** At `15.5vw` it was scaling off the
+  whole window while living in a ~45% column, so the hero hit 978px against a
+  900px viewport with the CTAs off the bottom. `.hero__copy` is a
+  `container-type:inline-size` so the type resolves against its own column.
+- **`.hero__meta` belongs at `grid-column:1 / -1`, not inside the right
+  column.** Nested there it crushed the lede to ~8 words a line and stacked the
+  CTAs; full width, `main`'s own 1.4fr/1fr/auto grid applies unchanged.
+- **Mobile overrides must repeat the `.hero__inner--split` prefix.** A media
+  query adds no specificity, so the desktop two-column meta rule (0,2,0) beat a
+  plain `.hero__meta` (0,1,0) and the countdown stayed squeezed at 390px with
+  the hero 891px tall. **The same trap caught the desktop-centring rule**, which
+  leaked to mobile until it was wrapped in `min-width:1001px`.
+- **`min-height:auto` is required on the mobile hero.** Left at `100svh` with
+  `justify-content:flex-end`, a block taller than the screen is bottom-anchored
+  and its top is pushed up under the fixed nav — the S24+ collision class again.
+
+**The black band above the hero** (Iain, same day) was `justify-content:flex-end`
+on `.hero`. Bottom-anchoring suited a hero whose content nearly filled the
+screen; with the shorter two-column block all the slack collected above it —
+165px above against 36px below. It is now `center`, scoped with
+`:has(.hero__inner--split)` so the eight `.page-hero` sub-pages are untouched.
+
+**`static/img/NHHDC_Zwart-Wit-Rood_No Shadow.svg`** is the graffiti lockup
+(898 × 590, true vector, no embedded raster). ⚠️ **It was sitting untracked in
+`static/img/` and was nearly lost** when an experiment branch was deleted — the
+build caught it (`Error: 404 …`) and it was recovered from the dangling commit.
+It is committed on `hero-two-column` only; **if that branch is deleted, commit
+this file to `main` first.**
 
 ## Scroll-to-top button — 16 August 2026
 
@@ -1147,6 +1255,25 @@ Both come back as links the moment the archives get real routes.
   misleading, since it captures reveals before they fire. The two regulations
   tests added that day are the model for closing this on another page: assert
   measured positions, then **prove the test fails** by reintroducing the bug.
+- **A media query adds no specificity.** A desktop rule written as
+  `.a .b { … }` (0,2,0) beats a mobile `.b { … }` (0,1,0) inside
+  `@media (max-width:1000px)`, so the mobile rule is silently dead. This bit
+  twice in one session on the hero — once leaving the countdown squeezed at
+  390px, once leaking desktop centring to mobile where it happened to be
+  harmless *only* because there was no slack to distribute. Either repeat the
+  prefix in the media query or scope the desktop rule with `min-width`.
+- **Equal specificity means source order decides.** `.hero__title--centred
+  .row--sub` and `.hero__title .row--sub` are both (0,2,0); the override has to
+  come **after** in the file. Written earlier it loses silently, and the result
+  looks like the rule was never written at all.
+- **Sizing type in `vw` is wrong inside a column.** `clamp(…, 15.5vw, …)`
+  resolves against the window, not the container, so a headline moved into a
+  half-width column overflows it. Use `cqw` with `container-type:inline-size`
+  on the column.
+- **Flex breaks the hero's title rows.** They are `overflow:hidden` masks
+  relying on `line-height:.88`; as flex items the children's own font boxes
+  drive the height instead, inflating the row and pushing content onto the line
+  below. Keep those rows in plain inline flow.
 - **A fixed-position control can cover a link without looking like it does.**
   The scroll-to-top button sat exactly on the footer's PRIVACY link at 1440px,
   and the screenshot showed nothing — the footer row was below the fold when it

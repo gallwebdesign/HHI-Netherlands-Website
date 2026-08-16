@@ -21,7 +21,7 @@ npm run dev          # development
 npm run check        # svelte-check — expect 0 errors, 0 warnings
 npm run lint         # prettier --check + eslint — expect both clean
 npm run build        # prerenders every route; this is what proves the SSR guards
-npm test             # build + Playwright smoke test — expect 36 passed
+npm test             # build + Playwright smoke test — expect 36 passed (37 on hero-two-column)
 npm run preview      # serves build/ (see the port-4173 trap below)
 ```
 
@@ -70,6 +70,13 @@ Consequences to respect when editing:
 
 The file is organised by banner comments (`/* ==== NAV ==== */`) roughly in page order, with a `MULTIPAGE ADDITIONS` section at the end holding sub-page styles like `.page-hero`. Classes follow BEM-ish naming (`.nav__logo`, `.division__age`, `.btn--solid`). Breakpoints are `max-width:1000px` and `max-width:560px`.
 
+⚠️ **Two specificity traps, both of which have shipped visible bugs here.** The file is one flat global stylesheet with no nesting, so cascade order is the only thing separating rules:
+
+- **A media query adds no specificity.** A desktop `.a .b {…}` (0,2,0) beats a mobile `.b {…}` (0,1,0) inside `@media (max-width:1000px)` — the mobile rule is silently dead. Repeat the prefix inside the media query, or scope the desktop rule with `min-width`.
+- **Equal specificity means source order wins.** A `--modifier` override must be written *after* the base rule it overrides, not before. Written earlier it loses, and the page looks as though the rule was never added.
+
+**Never verify a layout change from the numbers alone, and never from a screenshot alone.** Both have missed real bugs on this site: a full-page screenshot captures reveals before they fire and hides below-the-fold collisions, while a passing measurement can be asserting the wrong box entirely. Measure *and* look.
+
 ### Page structure
 
 `index.html` is the bespoke home page. The other eight pages share a common skeleton: nav → mobile menu → `.page-hero` → content sections → footer. **The nav and mobile menu blocks are duplicated verbatim across all nine files** — a nav change means editing all nine, and marking `is-active` on the current page's link.
@@ -88,7 +95,9 @@ The floor's wave runs in a **vertex shader** ([StageFloor.svelte](src/lib/compon
 
 ### External dependencies
 
-Media images live in `static/img/` — eight 2000×600 JPEGs, rescued off the legacy host on 14 Aug 2026 before it was switched off, plus `Hip Hop International Logo.svg`, the official logo. **There is no other copy of these files**; the photos are the only real photography the site has, and the favicon (`src/lib/assets/favicon.svg`, the logo's front plate cropped square) and `static/og-image.png` are both generated from the logo. They are referenced through `withBase()` in [media.ts](src/lib/data/media.ts) and [home.ts](src/lib/data/home.ts), because the pages bind `src` from a variable and Kit only rewrites root-relative paths written literally in markup. Each page keeps a load guard that hides a failed image's whole `<figure>` rather than leaving a gap.
+Media images live in `static/img/` — eight 1200×900 JPEGs (`image01`–`image08`), real crew photography that replaced the rescued legacy banners on 15 Aug 2026 — plus two logos: `Hip Hop International Logo.svg` (the HHI plates lockup) and `NHHDC_Zwart-Wit-Rood_No Shadow.svg` (the graffiti *Netherlands Hip Hop Dance Championship* lockup, used in the home hero). **There is no other copy of these files**; the photos are the only real photography the site has, and the favicon (`src/lib/assets/favicon.svg`, the HHI logo's front plate cropped square) and `static/og-image.png` are both generated from the HHI logo. They are referenced through `withBase()` in [media.ts](src/lib/data/media.ts) and [home.ts](src/lib/data/home.ts), because the pages bind `src` from a variable and Kit only rewrites root-relative paths written literally in markup. Each page keeps a load guard that hides a failed image's whole `<figure>` rather than leaving a gap.
+
+⚠️ **Treat `static/img/` as source material, never build output**, and check `git status` there before deleting a branch: the NHHDC lockup sat untracked for a session and was nearly lost with an experiment branch. A missing image fails the build hard (`Error: 404 /img/…`), which is the property that caught it.
 
 Off-site destinations live in `EXTERNAL` in [src/lib/config.ts](src/lib/config.ts), not in the markup. Ticketing is `shop.celebratix.io` (**not** the older `shop.compoticketing.eu`).
 
