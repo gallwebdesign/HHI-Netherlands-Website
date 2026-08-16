@@ -247,8 +247,9 @@ test('home tears down its animations on navigation', async ({ page }) => {
 	await page.waitForTimeout(600);
 
 	/* Any nav link that leaves home does; Sponsors used to, until it moved out
-	   of the desktop nav to make room for Regulations (16 Aug 2026). */
-	await page.locator('.nav__links a', { hasText: 'Regulations' }).click();
+	   of the desktop nav (16 Aug 2026). The label is "Rules" while the route is
+	   /regulations — see NAV_LINKS for why the nav abbreviates it. */
+	await page.locator('.nav__links a', { hasText: 'Rules' }).click();
 	await expect(page).toHaveURL(/regulations/);
 	await page.waitForTimeout(800);
 
@@ -295,9 +296,12 @@ test('events schedule splits into the two confirmed days', async ({ page }) => {
 	await expect(days.nth(1)).toContainText('Netherlands HHDC');
 
 	/* Each day carries its own running order, and the rows are time + category
-	   only — the old third column is gone. */
-	await expect(days.nth(0).locator('.sched__row')).toHaveCount(6);
-	await expect(days.nth(1).locator('.sched__row')).toHaveCount(6);
+	   only — the old third column is gone. Seven rows per day: five competition
+	   categories bracketed by doors-open and the awards ceremony (confirmed
+	   16 Aug 2026 — the schedule gained those bookends and this count trailed
+	   it at 6). */
+	await expect(days.nth(0).locator('.sched__row')).toHaveCount(7);
+	await expect(days.nth(1).locator('.sched__row')).toHaveCount(7);
 	await expect(page.locator('.sched__note')).toHaveCount(0);
 
 	/* The times are indicative and the running order is not final, so the page

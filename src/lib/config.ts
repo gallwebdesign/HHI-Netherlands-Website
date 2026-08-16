@@ -135,33 +135,38 @@ export const RULES_PDFS = [
 	}
 ] as const;
 
-/** Primary nav — order matters, it is the visible desktop nav. */
+/** Primary nav — order matters, it is the visible desktop nav.
+ *
+ *  ⚠️ Eight items is the ceiling, and the labels are load-bearing. At the 1001px
+ *  breakpoint the row has no slack left: with "Regulations" spelled out the nav
+ *  needed 945px against a 906px content box, which flex paid for by closing the
+ *  logo/links/Tickets gaps to zero — the logo ran into "HOME" and the Tickets
+ *  button clipped "CONTACT". Hence "Rules" here — and in the footer too, so the
+ *  label reads the same everywhere; only the /regulations route keeps the full
+ *  word. Measure at 1001px before adding a ninth item or lengthening a label. */
 export const NAV_LINKS = [
 	{ href: '/', label: 'Home' },
 	{ href: '/events', label: 'Events' },
 	{ href: '/registration', label: 'Registration' },
-	{ href: '/regulations', label: 'Regulations' },
+	{ href: '/regulations', label: 'Rules' },
+	{ href: '/results', label: 'Results' },
 	{ href: '/media', label: 'Media' },
 	{ href: '/organisation', label: 'Organisation' },
 	{ href: '/contact', label: 'Contact' }
 ] as const;
 
-/** Mobile menu carries the two links the desktop nav omits. The mobile menu has
- *  vertical room the nav does not, so it stays complete while the nav is kept to
- *  seven items — Regulations traded places with Sponsors on 16 Aug 2026, since
- *  Sponsors is already carried by the footer. Regulations is spread in from
- *  NAV_LINKS now; do not re-add it here or it renders twice. */
-export const MENU_LINKS = [
-	...NAV_LINKS,
-	{ href: '/sponsors', label: 'Sponsors' },
-	{ href: '/results', label: 'Results' }
-] as const;
+/** Mobile menu carries the one link the desktop nav omits. The mobile menu has
+ *  vertical room the nav does not, so it stays complete. Regulations traded
+ *  places with Sponsors on 16 Aug 2026 (Sponsors is already carried by the
+ *  footer), and Results was promoted into the nav the same day. Both are spread
+ *  in from NAV_LINKS now; do not re-add either here or it renders twice. */
+export const MENU_LINKS = [...NAV_LINKS, { href: '/sponsors', label: 'Sponsors' }] as const;
 
 /** Footer nav. Internal links first, then socials and privacy. */
 export const FOOTER_LINKS = [
 	{ href: '/events', label: 'Events' },
 	{ href: '/registration', label: 'Registration' },
-	{ href: '/regulations', label: 'Regulations' },
+	{ href: '/regulations', label: 'Rules' },
 	{ href: '/results', label: 'Results' },
 	{ href: '/sponsors', label: 'Sponsors' },
 	{ href: EXTERNAL.instagram, label: 'Instagram', external: true },
