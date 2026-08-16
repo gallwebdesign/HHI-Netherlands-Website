@@ -192,6 +192,15 @@ test('hero splits into two columns without growing taller', async ({ page }) => 
 				ctaBottom: q('.hero__ctas').getBoundingClientRect().bottom,
 				metaWidth: q('.hero__meta').getBoundingClientRect().width,
 				innerWidth: q('.hero__inner').getBoundingClientRect().width,
+				/* Dead space above the first painted content vs below the last. */
+				gapAbove:
+					Math.min(
+						logo.getBoundingClientRect().top,
+						q('.hero__eyebrow').getBoundingClientRect().top
+					) - q('.nav').getBoundingClientRect().bottom,
+				gapBelow:
+					q('.hero').getBoundingClientRect().bottom -
+					q('.hero__meta').getBoundingClientRect().bottom,
 				/* How far the lockup's centre sits from the column's centre. */
 				logoCentreOffset: (() => {
 					const l = logo.getBoundingClientRect();
@@ -226,6 +235,17 @@ test('hero splits into two columns without growing taller', async ({ page }) => 
 			expect(m.ctaBottom, `${label}: CTAs should stay on screen`).toBeLessThanOrEqual(
 				m.viewportH + 2
 			);
+
+			/* The hero is centred rather than bottom-anchored, so leftover
+			   height splits instead of collecting above the content. Reported
+			   by Iain as too much black above the hero (16 Aug 2026): with
+			   justify-content:flex-end it measured 165px above against 36px
+			   below at 1440x900. Asserted as a ratio, not fixed pixels — the
+			   numbers move with viewport height, the imbalance is the bug. */
+			expect(
+				m.gapAbove,
+				`${label}: dead space above the hero should not dwarf the space below`
+			).toBeLessThanOrEqual(m.gapBelow * 2);
 		}
 
 		/* Only the lockup and the title share the two columns. The lede,

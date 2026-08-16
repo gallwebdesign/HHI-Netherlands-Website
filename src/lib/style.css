@@ -192,6 +192,30 @@ html.has-cursor .cursor-ring{ display:block; }
    min-height:100svh with justify-content:flex-end, so a tall left column
    does not stretch it — it pushes the CTAs off the bottom. The lockup is
    therefore capped in vh as well as by its column. */
+
+/* The hero is bottom-anchored (justify-content:flex-end), which was right
+   when the content nearly filled the screen. With the lockup beside the
+   type the block is shorter, so ALL the leftover height collected above
+   it: measured 165px of dead space between the nav and the first pixel
+   of content against 36px below, at 1440x900.
+
+   Centring the block splits that slack instead. It is scoped to :has()
+   on the split variant so it applies to the home hero only — the eight
+   sub-pages use .page-hero and are untouched, and a home page reverted to
+   the single-column hero would keep its original anchoring too.
+   The padding-top stays: it is the fixed nav's reservation, and centring
+   does not remove the need for it on short viewports.
+
+   ⚠️ Desktop only, and the media query is required rather than tidy. This
+   selector is (0,2,0) and later in the file than the mobile block's plain
+   .hero (0,1,0), so unscoped it wins there too — measured: mobile
+   justify-content computed to center instead of the flex-start the mobile
+   rules set. It was harmless only because min-height is 0 there, leaving
+   no slack to distribute; it would have become a real bug the moment
+   mobile had spare height. */
+@media (min-width:1001px){
+  .hero:has(.hero__inner--split){ justify-content:center; }
+}
 .hero__inner--split{
   display:grid;
   /* Even-ish split now that the CTAs no longer live in the right column:
