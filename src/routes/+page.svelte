@@ -62,7 +62,7 @@
 				/>
 			</div>
 
-			<!-- Right column: everything that was in the hero before, unchanged. -->
+			<!-- Right column: the eyebrow and the title only. -->
 			<div class="hero__copy">
 				<p class="hero__eyebrow" {@attach heroFade(0, heroReady)}>
 					Netherlands Hip Hop Dance Championship &middot; {EVENT_YEAR}
@@ -75,21 +75,27 @@
 						><span class="hollow" {@attach heroRow(2, heroReady)}>Rep NL at Worlds.</span></span
 					>
 				</h1>
-				<div class="hero__meta">
-					<p class="hero__lede" {@attach heroFade(1, heroReady)}>
-						The official national qualifier of <strong>Hip Hop International</strong>. Crews battle
-						for the Dutch title — and the winners carry the flag to the
-						<strong>World Hip Hop Dance Championship</strong>.
-					</p>
-					<Countdown heroEntrance ready={heroReady} />
-					<div class="hero__ctas" {@attach heroFade(3, heroReady)}>
-						<a class="btn btn--solid" {@attach magnetic()} href="{base}/registration"
-							>Register your crew</a
-						>
-						<a class="btn btn--ghost" {@attach magnetic()} href="{base}/events"
-							>The {EVENT_YEAR} event</a
-						>
-					</div>
+			</div>
+
+			<!-- Full-width row beneath BOTH columns, not inside the right one:
+			     lede, countdown and CTAs span the whole hero, exactly as they do
+			     on main. It stays a child of the same grid (spanning 1 / -1)
+			     rather than a sibling of .hero__inner, so it keeps the same
+			     positioning context and its own three-column layout. -->
+			<div class="hero__meta">
+				<p class="hero__lede" {@attach heroFade(1, heroReady)}>
+					The official national qualifier of <strong>Hip Hop International</strong>. Crews battle
+					for the Dutch title — and the winners carry the flag to the
+					<strong>World Hip Hop Dance Championship</strong>.
+				</p>
+				<Countdown heroEntrance ready={heroReady} />
+				<div class="hero__ctas" {@attach heroFade(3, heroReady)}>
+					<a class="btn btn--solid" {@attach magnetic()} href="{base}/registration"
+						>Register your crew</a
+					>
+					<a class="btn btn--ghost" {@attach magnetic()} href="{base}/events"
+						>The {EVENT_YEAR} event</a
+					>
 				</div>
 			</div>
 		</div>

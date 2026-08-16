@@ -184,25 +184,25 @@ html.has-cursor .cursor-ring{ display:block; }
 }
 .hero__inner{ position:relative; z-index:2; }
 
-/* ---- two-column hero: lockup left, the original copy right ----------
-   (16 Aug 2026) Everything in the right-hand column is unchanged from
-   the single-column hero; only the container and the title's sizing
-   basis differ.
+/* ---- two-column hero: lockup left, title right, meta full width -----
+   (16 Aug 2026) Only the lockup and the title share the two columns. The
+   lede, countdown and CTAs sit in a full-width row underneath, spanning
+   both — exactly as they do on main.
    ⚠️ The hero must stay exactly the height it is on main. It is
    min-height:100svh with justify-content:flex-end, so a tall left column
    does not stretch it — it pushes the CTAs off the bottom. The lockup is
    therefore capped in vh as well as by its column. */
 .hero__inner--split{
   display:grid;
-  /* .7/1.3, not an even split: measured, anything above ~.78fr on the left
-     leaves the copy column too narrow for "Register your crew" and "The
-     2027 event" to share a line, and the two CTAs wrap into a stack that
-     the single-column hero never had. The logo still renders 441px wide
-     at 1440px. */
-  grid-template-columns:minmax(0,.7fr) minmax(0,1.3fr);
+  /* Even-ish split now that the CTAs no longer live in the right column:
+     the earlier .7/1.3 existed only to keep the two buttons on one line
+     inside it, and that constraint is gone. */
+  grid-template-columns:minmax(0,1fr) minmax(0,1.12fr);
   gap:clamp(24px,3.4vw,64px);
   align-items:center;
 }
+/* Spans both columns, so it is full width regardless of the split above. */
+.hero__inner--split .hero__meta{ grid-column:1 / -1; }
 .hero__brand{ display:flex; justify-content:center; }
 .hero__mark{
   width:100%; height:auto;
@@ -217,27 +217,18 @@ html.has-cursor .cursor-ring{ display:block; }
    its half and ran under the logo. cqw resolves against the column
    itself, which is what the type actually has to fit. */
 .hero__copy{ container-type:inline-size; }
-/* The cap is 140px, not the single-column 240px, and it is a height
-   constraint rather than a taste one: measured at 1440x900, 150px pushes
-   the hero to 908px and 170px puts the CTAs off the bottom entirely.
-   The vh term lets a taller window take more. */
-.hero__inner--split .hero__title{ font-size:clamp(52px, min(26cqw, 15.5vh), 140px); }
-.hero__inner--split .hero__title .row--sub{ font-size:clamp(24px, min(10cqw, 6vh), 56px); }
-/* ⚠️ .hero__meta is a 1.4fr/1fr/auto three-column grid built for the full
-   page width. Left alone inside this ~720px column it crushes the lede to
-   about eight words a line and forces the two CTAs to stack — measured,
-   not guessed. Two rows here instead: the lede across the top, countdown
-   and buttons sharing the row beneath. */
-.hero__inner--split .hero__meta{
-  grid-template-columns:1fr auto;
-  gap:18px clamp(16px,2vw,28px);
-  align-items:end;
-}
-.hero__inner--split .hero__lede{
-  grid-column:1 / -1;
-  max-width:none;
-}
-.hero__inner--split .hero__ctas{ justify-content:flex-end; }
+/* The cap is 180px rather than main's 240px, because the type now shares
+   the row with the lockup. An earlier revision of this branch capped it at
+   140px — that was a consequence of the CTAs living in this column and
+   needing room, and it stopped applying once the meta row moved to full
+   width. Re-measured at 1440x900: every size to 180px keeps the hero at
+   900px with the CTAs on screen and the title inside its column. */
+.hero__inner--split .hero__title{ font-size:clamp(52px, min(30cqw, 20vh), 180px); }
+.hero__inner--split .hero__title .row--sub{ font-size:clamp(24px, min(12cqw, 8vh), 72px); }
+/* .hero__meta keeps main's own 1.4fr/1fr/auto three-column layout — it is
+   full width again, which is what that grid was built for. An earlier
+   version of this branch put it inside the right column and had to
+   override it to two rows; that is no longer needed. */
 .hero__eyebrow{
   font-family:var(--font-mono); font-size:12px; letter-spacing:.28em;
   text-transform:uppercase; color:var(--oranje);
@@ -592,15 +583,7 @@ body.menu-open{ overflow:hidden; }
      390x780, CTAs ending at 749px). At 22vh/180px this pushed the hero to
      917px and the buttons off the bottom. The title gives back the rest
      below. */
-  .hero__mark{ max-height:min(12vh, 96px); max-width:min(100%, 240px); }
-  /* ⚠️ Must repeat the .hero__inner--split prefix. The desktop two-column
-     meta rule above is specificity 0,2,0 and a plain .hero__meta here is
-     0,1,0 — a media query does not add specificity, so the desktop rule
-     won and the meta row stayed a 200px + 130px grid at 390px: countdown
-     squeezed, CTAs in a three-line stack, hero 891px tall against a 780px
-     viewport with the buttons off the bottom. */
-  .hero__inner--split .hero__meta{ grid-template-columns:1fr; }
-  .hero__inner--split .hero__ctas{ justify-content:flex-start; }
+  .hero__mark{ max-height:min(10vh, 78px); max-width:min(100%, 210px); }
   /* Stacked, the copy column is full width again so the sizing is
      viewport-based as on main — but slightly reduced, because the logo
      above now occupies height that main gave entirely to type. The vh

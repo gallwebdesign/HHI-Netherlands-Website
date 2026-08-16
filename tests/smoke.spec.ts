@@ -153,7 +153,10 @@ test('home renders its ported sections', async ({ page }) => {
 });
 
 test('hero splits into two columns without growing taller', async ({ page }) => {
-	/* Iain's constraint when the lockup was added: keep the original hero
+	/* Layout: the lockup and the title sit side by side as two columns; the
+	   lede, countdown and CTAs run full width beneath both.
+
+	   Iain's constraint when the lockup was added: keep the original hero
 	   height. It is min-height:100svh with justify-content:flex-end, so a
 	   tall left column does not stretch the hero — it pushes the countdown
 	   and CTAs off the bottom, which is what the first attempt did (978px
@@ -187,6 +190,8 @@ test('hero splits into two columns without growing taller', async ({ page }) => 
 				logoRight: logo.getBoundingClientRect().right,
 				copyLeft: q('.hero__copy').getBoundingClientRect().left,
 				ctaBottom: q('.hero__ctas').getBoundingClientRect().bottom,
+				metaWidth: q('.hero__meta').getBoundingClientRect().width,
+				innerWidth: q('.hero__inner').getBoundingClientRect().width,
 				overflowsX: document.documentElement.scrollWidth > window.innerWidth,
 				stacked: window.innerWidth <= 1000
 			};
@@ -201,6 +206,15 @@ test('hero splits into two columns without growing taller', async ({ page }) => 
 			m.viewportH + 2
 		);
 		expect(m.overflowsX, `${label}: nothing should overflow sideways`).toBe(false);
+
+		/* Only the lockup and the title share the two columns. The lede,
+		   countdown and CTAs span the full width beneath them, as on main —
+		   an earlier revision nested them inside the right-hand column, which
+		   crushed the lede to ~8 words a line and stacked the buttons. */
+		expect(
+			Math.abs(m.metaWidth - m.innerWidth),
+			`${label}: meta row should span the full hero width`
+		).toBeLessThanOrEqual(2);
 
 		/* Side by side above the breakpoint, stacked below it. Without the
 		   column split the logo and copy would share the same left edge. */
