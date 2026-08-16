@@ -1,14 +1,17 @@
 # Migration status
 
 Working notes for the static HTML → SvelteKit migration.
-Last updated **15 August 2026** — the event day split was confirmed and carried
-through the site (events schedule now splits by day; registration notice states
-the mapping), the **privacy policy was migrated to `/privacy`**, which was the
-last legacy page still serving real content, and **the reduced-motion freeze on
-the hero was found and fixed** (reported as a static stage floor on a Galaxy
-S22; it was Android's reduce-animations setting, not performance). Before that,
-on 14 Aug: media photos rescued, registration hub built, favicon and social
-preview shipped, two layout/navigation bugs fixed.
+Last updated **16 August 2026** — **`/regulations` was split into two
+competition columns** (Open Division and Netherlands HHDC), Iain wrote the real
+Open Division rules, and the two columns were then made to align row-for-row.
+Before that, on 15 Aug: the event day split was confirmed and carried through
+the site (events schedule now splits by day; registration notice states the
+mapping), the **privacy policy was migrated to `/privacy`**, which was the last
+legacy page still serving real content, and **the reduced-motion freeze on the
+hero was found and fixed** (reported as a static stage floor on a Galaxy S22; it
+was Android's reduce-animations setting, not performance). On 14 Aug: media
+photos rescued, registration hub built, favicon and social preview shipped, two
+layout/navigation bugs fixed.
 
 Plan: <https://claude.ai/code/artifact/b42e8908-c534-4c72-8ef2-7a465a78ad28>
 Branch: **`main`** — the migration was merged there in PR #2. **Working tree
@@ -16,9 +19,10 @@ clean and everything is pushed**; `main` and `origin/main` are level.
 `sveltekit-migration` merged and safe to delete.
 
 Verified on the final commit: `npm run lint` clean, `npm run check` 0 errors / 0
-warnings, `npm test` **31 passed**.
+warnings, `npm test` **33 passed** (was 31 until the two regulations layout
+tests were added on 16 Aug 2026).
 
-## ▶ Start here on 16 August 2026
+## ▶ Start here on 17 August 2026
 
 **Nothing is half-finished.** Every pre-purchase task is done and pushed. What
 is left needs either the Cloud86 account or a decision:
@@ -36,6 +40,117 @@ is left needs either the Cloud86 account or a decision:
 ~~One small chore: `src/lib/config.ts` fails `npm run lint` on line endings.~~
 ✅ **Done 15 Aug 2026** — formatted as part of the day-split work, since that
 commit had to touch `config.ts` anyway. `npm run lint` is clean.
+
+## Regulations split into two columns — 16 August 2026
+
+**`/regulations` now carries one column per competition**, headed the way the
+events page heads its two day columns: display-font name over a mono accent
+sub-label. Left is the **HHI Open Division**, right the **Netherlands HHDC** —
+the same order as `REGISTRATION_FORMS` and the events schedule, which follow the
+event days. Built in `b9deecc`, aligned in `9f23e9a`.
+
+**Iain wrote the real Open Division rules** in the same pass (`b9deecc`): the
+divisions now read Junior/Varsity/Adult/Parents/Special Crews, crew size is
+5–20 across all Open categories, and routine length is capped at 2:30. **The
+HHDC column still holds the original six rules** carried over from the
+single-column page — those are the ones to replace as the per-competition text
+lands.
+
+**The two rule lists are written out separately and in full** in
+[regulations.ts](src/lib/data/regulations.ts) — `OPEN_DIVISION_RULES` and
+`HHDC_RULES`, each marked with a `COLUMN 1` / `COLUMN 2` banner comment.
+⚠️ **That duplication is deliberate; do not factor it back into one shared
+array.** The first build did exactly that (both columns built from a single
+`GENERAL_RULES` via `.map()`) and Iain could not find where to edit a single
+column — which is the whole point of the page. Column headings live in
+`RULE_COLUMNS` at the bottom of the same file.
+
+⚠️ **Rule titles must be unique *within* a column.** The each block is keyed on
+the title, so two identical titles in one column throw `each_key_duplicate` on
+hydration — the same crash class as the events schedule bug in `f54bcb4`. The
+same title appearing in *both* columns is fine, and is the current state for
+five of the six rules.
+
+### The rows align because it is ONE grid, not two
+
+**Rule N sits level with rule N across the columns even when one body is much
+shorter.** That matters as soon as the two texts diverge, which they now have:
+Open Division rules 01 and 02 are visibly shorter than their HHDC counterparts.
+
+The mechanism, and the trap in it:
+
+- **`.rule-cols` is a single grid spanning both columns.** A grid row is as tall
+  as its tallest cell, so the shorter card is padded to match its opposite
+  number. Per-column grids — which is how this was first built — size their rows
+  independently and drift apart the moment the texts differ in length. **No
+  fixed heights are involved**; it keeps working as the copy is edited.
+- **`.rule-col` is `display:contents`**, so the wrapper survives for the header
+  but generates no box and its children become real items of the outer grid.
+- ⚠️ **Both `grid-column` *and* `grid-row` are required**, set from `--col` and
+  `--row` in the markup. With only `grid-column`, auto-placement gives every
+  item a row of its own and **column 2 lands entirely below column 1** — which
+  looks plausible in the CSS and is completely wrong on screen. That bug was
+  written and caught during this work, by measuring card positions rather than
+  eyeballing the page.
+- **`reveal()` therefore cannot live on `.rule-col`** — an element with
+  `display:contents` has no box for ScrollTrigger to measure. It sits on the
+  `.rule-cols` container instead, once for the whole block.
+- **Cards draw their own borders now.** The old 1px-gap-over-`--line` separator
+  trick needs a dedicated wrapper, which `display:contents` removes; `.rule`
+  carries the hairline and `.rule--first` adds the top one.
+- **Below 1000px the whole grid is unwound** back to plain blocks. Leaving
+  `display:contents` with an explicit `grid-column` would drop both columns into
+  the single remaining track and interleave them — header, six rules, header,
+  six rules is the required stacked order.
+
+⚠️ **An earlier version of this page rendered as two empty grey boxes.**
+`reveal()` was on both the column *and* each card inside it; it animates
+`autoAlpha`, so a revealed card inside a not-yet-revealed ancestor stays
+`visibility:hidden` forever. **Never nest `reveal()`** — the events page follows
+the same rule (`.sched-day` reveals, its rows do not). **No test caught this**:
+the suite passed green while the page was visibly broken, because nothing
+asserted rule content. It was found by screenshotting the page.
+
+**Verified in a browser at 1440px and 390px**, not just by the test suite: all
+six rows measured `topDelta: 0` and `bottomDelta: 0` between columns with
+matching heights; stacked mobile keeps each column's header with its own rules
+and does not overflow horizontally.
+
+### Two tests now cover the page — added 16 Aug 2026
+
+The coverage gap that let both bugs ship is closed. `npm test` is now
+**33 passed**, and the geometry is asserted by measurement rather than by
+reading CSS, because the failure mode is a layout that computes plausibly and
+renders wrong:
+
+- **`regulations splits into two competition columns, aligned row for row`** —
+  two columns in day order, 12 cards, numbering restarting at 01 per column,
+  and every rule's top *and* bottom level with its opposite number to within
+  1px, with column 2 to the right of column 1.
+- **`regulations columns stack in reading order on mobile`** — at 390px the two
+  headings sit at positions 0 and 7, i.e. each column keeps its own six rules
+  instead of interleaving, and nothing overflows sideways.
+
+**Both were verified non-vacuous by reintroducing the real bugs** and watching
+them fail: dropping `grid-row` produced *"rule 1: tops should align across
+columns"*, making `.rule-col` `display:block` (per-column grids again) produced
+*"rule 1: bottoms should align across columns"*, and removing the mobile unwind
+failed the reading-order check.
+
+⚠️ **One assertion is knowingly inert.** The `toBeVisible()` check on the cards
+does **not** reproduce the nested-`reveal()` bug: `.rule-col` is
+`display:contents`, so it generates no box and cannot hide its children whatever
+`reveal()` does to it. Confirmed by re-adding `reveal()` to the cards and
+watching the test still pass. It is kept as a guard for the day that wrapper
+regains a box, and the test comment says so — **the alignment assertions are
+what actually carry the test.** The general rule against nesting `reveal()`
+still stands everywhere else, where wrappers *do* generate boxes.
+
+**`nl.json` still holds `regulations.rule.*` keys that nothing reads.** The page
+has rendered English straight from the data file since Phase 3, so the Dutch
+there is dead until the NL/EN toggle returns — and it now describes the *old*
+single list, not the split. Worth knowing before trusting it as a translation
+source.
 
 ## The event day split — ✅ confirmed 15 August 2026
 
@@ -446,7 +561,7 @@ remains needs the Cloud86 account or the mailbox.
 | 0 · Safety net | ✅ branch, 18 baselines, `.js [data-reveal]` bug fixed |
 | 1 · Scaffold | ✅ skeleton + TypeScript, adapter-static, prerender |
 | 2 · Layout | ✅ nav/menu/footer once, PageHero, `config.ts`, NL/EN toggle removed |
-| 3 · Pilot (regulations) | ✅ data file + `nl.json`, entities → UTF-8 |
+| 3 · Pilot (regulations) | ✅ data file + `nl.json`, entities → UTF-8; **split into two competition columns 16 Aug 2026** |
 | 4 · Shared JavaScript | ✅ attachments, GSAP bundled, teardown, motion watchdog |
 | 5 · Remaining sub-pages | ✅ all six ported, smoke test green |
 | 6 · index.html | ✅ hero, stage floor, preloader, road pin, all sections |
@@ -885,7 +1000,9 @@ Both come back as links the moment the archives get real routes.
   `/regulations` links to, and what the legacy `regulations.php` served. Note the
   manual is named for the **2025–2026** season while the event is 2027 — that is
   HHI's own filename; do not rename it to look current. Replace both when HHI
-  publishes the next edition, keeping the paths in `RULES_PDFS` in step.
+  publishes the next edition, keeping the paths in `RULES_PDFS` in step. The
+  page's own rule summaries are now **per competition** — see *Regulations split
+  into two columns* above; the HHDC column is still the pre-split generic text.
 - **`static/img/` is irreplaceable.** The photography and the logo SVG there are
   the only copies in the repo. Never "clean" that directory, and never treat it
   as build output. **Updated 15 Aug 2026:** the eight rescued
@@ -945,6 +1062,26 @@ Both come back as links the moment the archives get real routes.
   accessibility tree — so `getByRole` finds nothing and visibility assertions would be
   testing scroll position. Scroll first (`settleReveals`) when a test needs the real
   a11y tree, as the tablist test does.
+- **Never nest `reveal()` inside another `reveal()`.** It animates `autoAlpha`,
+  which holds `visibility:hidden` until the element's *own* ScrollTrigger fires —
+  so a revealed child inside a not-yet-revealed parent never becomes visible, and
+  the parent renders as an empty panel. Reveal the container or the items, never
+  both: `.sched-day` reveals but its rows do not, `.rule-cols` reveals but its
+  cards do not. Caught on `/regulations` 16 Aug 2026, **with the whole suite
+  green** — no test asserts that page's content.
+- **A green `npm test` is not evidence the page looks right.** The suite covers
+  routes, links, results data and CTAs; outside `/regulations` it asserts almost
+  nothing about layout. Two visibly broken renders shipped past it on 16 Aug
+  (empty grey rule cards, then a second column stacked below the first). **Look
+  at the page in a browser** after any layout change, and measure geometry rather
+  than trusting a screenshot glance — the full-page screenshot is itself
+  misleading, since it captures reveals before they fire. The two regulations
+  tests added that day are the model for closing this on another page: assert
+  measured positions, then **prove the test fails** by reintroducing the bug.
+- **`display:contents` grid items need both `grid-column` and `grid-row`.**
+  Setting only the column leaves auto-placement to give each item its own row, so
+  a second logical column stacks *below* the first instead of beside it. Used on
+  `/regulations` to make both columns share one grid; see that section above.
 - **An animation reported dead on a phone is a reduced-motion setting until
   proven otherwise.** Android Power saving and Samsung's "Animaties verminderen"
   both report `prefers-reduced-motion: reduce`. Ask before profiling — and treat
@@ -991,7 +1128,7 @@ npm run check        # svelte-check — expect 0 errors, 0 warnings
 npm run lint         # prettier --check + eslint — expect both clean
 npm run format       # prettier --write
 npm run build        # prerenders all ten routes; this is what proves SSR guards
-npm test             # build + Playwright smoke test — expect 31 passed
+npm test             # build + Playwright smoke test — expect 33 passed
 npm run preview      # trustworthy again since Phase 7
 npx serve build      # second opinion on the real output
 

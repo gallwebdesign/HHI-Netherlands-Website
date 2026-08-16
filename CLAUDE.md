@@ -21,7 +21,7 @@ npm run dev          # development
 npm run check        # svelte-check — expect 0 errors, 0 warnings
 npm run lint         # prettier --check + eslint — expect both clean
 npm run build        # prerenders every route; this is what proves the SSR guards
-npm test             # build + Playwright smoke test — expect 31 passed
+npm test             # build + Playwright smoke test — expect 33 passed
 npm run preview      # serves build/ (see the port-4173 trap below)
 ```
 

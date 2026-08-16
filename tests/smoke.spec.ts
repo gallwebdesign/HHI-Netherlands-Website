@@ -589,6 +589,112 @@ test('sponsors page credits real sponsors and does not solicit new ones', async 
 	await expect(page.locator('main a[href*="/contact"]')).toHaveCount(0);
 });
 
+test('regulations splits into two competition columns, aligned row for row', async ({ page }) => {
+	/* Nothing asserted this page's content until 16 Aug 2026, and two visibly
+	   broken renders shipped past a green suite because of it: first every rule
+	   card rendered as an empty grey box (reveal() nested inside reveal(), so the
+	   cards stayed visibility:hidden forever), then the second column stacked
+	   below the first (grid-column set without grid-row, so auto-placement gave
+	   every item its own row). Both looked correct in the markup.
+
+	   The geometry assertions below were verified to catch the second bug and a
+	   per-column-grid regression, each by reintroducing it and watching this
+	   fail. The first bug is no longer reproducible in this markup — see the
+	   note on the visibility check. */
+	await page.setViewportSize({ width: 1440, height: 1000 });
+	await page.goto('/regulations');
+	await settleReveals(page);
+
+	/* One column per competition, ordered by event day like REGISTRATION_FORMS
+	   and the events schedule — Open Division dances first. */
+	const cols = page.locator('.rule-col');
+	await expect(cols).toHaveCount(2);
+	await expect(cols.nth(0)).toContainText('HHI Open Division');
+	await expect(cols.nth(1)).toContainText('Netherlands HHDC');
+
+	/* Visible, not merely attached — settleReveals has already scrolled, so a
+	   card still hidden here is genuinely broken rather than merely off-screen.
+
+	   Note this does NOT currently reproduce the nested-reveal bug that shipped
+	   on 16 Aug: .rule-col is display:contents, which generates no box and so
+	   cannot hide its children whatever reveal() does to it. Verified by
+	   re-adding reveal() to the cards and watching this still pass. It is kept
+	   as a guard for the day the wrapper regains a box — the alignment
+	   assertions below are what actually carry this test. */
+	const cards = page.locator('.rule');
+	await expect(cards).toHaveCount(12);
+	await expect(cards.first()).toBeVisible();
+	await expect(cards.last()).toBeVisible();
+
+	/* Numbering restarts per column, so both read 01 at the top. */
+	await expect(cols.nth(0).locator('.rule__num').first()).toHaveText('01');
+	await expect(cols.nth(1).locator('.rule__num').first()).toHaveText('01');
+
+	/* The columns must sit SIDE BY SIDE and each rule must line up with its
+	   opposite number. One shared grid is what guarantees this: a row is as tall
+	   as its tallest cell, so a short rule is padded to match. Per-column grids
+	   drift apart as soon as the two texts differ in length, which they now do —
+	   the Open Division's first two rules are markedly shorter than the HHDC's.
+
+	   Measured rather than asserted on CSS, because the failure mode is a
+	   layout that computes plausibly and renders wrong. */
+	const rows = await page.evaluate(() => {
+		const read = (col: Element) =>
+			[...col.querySelectorAll('.rule')].map((el) => {
+				const r = el.getBoundingClientRect();
+				return { top: Math.round(r.top), bottom: Math.round(r.bottom), left: Math.round(r.left) };
+			});
+		const [a, b] = [...document.querySelectorAll('.rule-col')].map(read);
+		return a.map((l, i) => ({
+			topDelta: Math.abs(l.top - b[i].top),
+			bottomDelta: Math.abs(l.bottom - b[i].bottom),
+			sideBySide: b[i].left > l.left
+		}));
+	});
+
+	expect(rows).toHaveLength(6);
+	for (const [i, row] of rows.entries()) {
+		expect(row.sideBySide, `rule ${i + 1}: column 2 should sit beside column 1`).toBe(true);
+		// 1px of tolerance for sub-pixel rounding; anything more is real drift.
+		expect(row.topDelta, `rule ${i + 1}: tops should align across columns`).toBeLessThanOrEqual(1);
+		expect(
+			row.bottomDelta,
+			`rule ${i + 1}: bottoms should align across columns`
+		).toBeLessThanOrEqual(1);
+	}
+});
+
+test('regulations columns stack in reading order on mobile', async ({ page }) => {
+	/* Below 1000px the shared grid is unwound to plain blocks. Left as a grid,
+	   display:contents plus an explicit grid-column drops both columns into the
+	   single remaining track and INTERLEAVES them — an Open Division rule, then
+	   an HHDC rule, alternating. Each column must keep its own header with its
+	   own six rules. */
+	await page.setViewportSize({ width: 390, height: 844 });
+	await page.goto('/regulations');
+	await settleReveals(page);
+
+	const order = await page.evaluate(() =>
+		[...document.querySelectorAll('.rule-col__name, .rule h3')]
+			.map((el) => ({
+				text: el.textContent?.trim() ?? '',
+				y: el.getBoundingClientRect().top + window.scrollY,
+				heading: el.classList.contains('rule-col__name')
+			}))
+			.sort((a, b) => a.y - b.y)
+	);
+
+	// Two headings, and the second must come after all six of the first's rules.
+	const headings = order.map((o, i) => (o.heading ? i : -1)).filter((i) => i >= 0);
+	expect(headings).toEqual([0, 7]);
+
+	// Nothing may overflow sideways at this width.
+	const overflows = await page.evaluate(
+		() => document.documentElement.scrollWidth > window.innerWidth
+	);
+	expect(overflows, 'page should not scroll horizontally on mobile').toBe(false);
+});
+
 test('regulations links both rules PDFs, and they actually download', async ({ page }) => {
 	await page.goto('/regulations');
 
