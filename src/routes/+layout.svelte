@@ -10,6 +10,7 @@
 	import MobileMenu from '$lib/components/MobileMenu.svelte';
 	import Footer from '$lib/components/Footer.svelte';
 	import Cursor from '$lib/components/Cursor.svelte';
+	import ScrollTop from '$lib/components/ScrollTop.svelte';
 	import { page } from '$app/state';
 	import { EVENT_DATE_RANGE, EVENT_VENUE, SITE_URL } from '$lib/config';
 	import { loadScrollTrigger, prefersReducedMotion } from '$lib/motion.svelte';
@@ -89,3 +90,7 @@
 {@render children()}
 
 <Footer />
+
+<!-- After the footer in source order so it comes last in the tab order:
+     it is a shortcut back, not something to hit on the way down. -->
+<ScrollTop />

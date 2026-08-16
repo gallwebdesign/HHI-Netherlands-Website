@@ -205,6 +205,93 @@ test('in-page anchors still scroll to their target', async ({ page }) => {
 	expect(page.url()).toContain('#choose-your-form');
 });
 
+test('scroll-to-top button appears on scroll and returns to the top', async ({ page }) => {
+	/* Asserted by measurement rather than by reading CSS: the button is
+	   opacity/visibility driven, so a rule that computes plausibly can still
+	   leave it either permanently on screen or never reachable. Playwright's
+	   toBeVisible() covers both, since it accounts for visibility:hidden. */
+	await page.goto('/events');
+	await page.waitForLoadState('networkidle');
+
+	const btn = page.getByRole('button', { name: 'Back to top' });
+
+	// At the top of a page there is nothing to scroll back to.
+	await expect(btn, 'should be hidden before scrolling').toBeHidden();
+
+	/* Two viewports down: past the fold, but not so far that the footer is on
+	   screen, where the button deliberately stands down to keep the footer's
+	   own links clickable. */
+	await page.evaluate(() => window.scrollTo(0, window.innerHeight * 2));
+	await page.waitForTimeout(700);
+	await expect(btn, 'should appear once scrolled past a viewport').toBeVisible();
+
+	await btn.click();
+	await page.waitForTimeout(1200);
+	expect(await page.evaluate(() => window.scrollY), 'should be back at the top').toBeLessThan(5);
+
+	// And it takes itself away again once its job is done.
+	await expect(btn, 'should hide again at the top').toBeHidden();
+});
+
+test('scroll-to-top button never covers a footer link', async ({ page }) => {
+	/* Found by measuring, not by looking: at 1440px the footer wraps its links
+	   to a second row, which puts PRIVACY in the bottom-right corner under the
+	   button — document.elementFromPoint at that link's own centre returned
+	   .scroll-top__label. The full-page screenshot showed no collision because
+	   that row was below the fold when it was captured.
+	   It matters beyond tidiness: the privacy policy tells visitors to use that
+	   link to exercise their data rights. The button now stands down while the
+	   footer is on screen. */
+	await page.goto('/events');
+	await page.waitForLoadState('networkidle');
+
+	await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+	await page.waitForTimeout(800);
+
+	const covered = await page.evaluate(() => {
+		const btn = document.querySelector('.scroll-top');
+		if (!btn) return ['no button'];
+		const style = getComputedStyle(btn);
+		if (style.visibility === 'hidden' || style.opacity === '0') return [];
+		/* Ask the document what is actually painted at each link's centre. */
+		return [...document.querySelectorAll('footer a')]
+			.filter((a) => {
+				const r = a.getBoundingClientRect();
+				const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+				return hit !== a && !a.contains(hit);
+			})
+			.map((a) => (a as HTMLElement).innerText.trim());
+	});
+
+	expect(covered, 'no footer link should be sitting under the button').toEqual([]);
+});
+
+test('scroll-to-top button gets out of the way of the mobile menu', async ({ page }) => {
+	/* The menu is a full-screen panel at z-index 55 and the button sits at 65,
+	   so without the explicit hide it floats over a page you are no longer
+	   looking at. `inert` also has to take it out of the tab order, or it is
+	   reachable behind the open menu. */
+	await page.setViewportSize({ width: 390, height: 780 });
+	await page.goto('/events');
+	await page.waitForLoadState('networkidle');
+
+	/* Mid-page, not the very bottom: the button stands down once the footer
+	   is on screen, and the nav (which carries the burger) hides on scroll
+	   down and only returns on scroll up. Scrolling to the end would leave
+	   neither control reachable — both correct behaviours. */
+	await page.evaluate(() => window.scrollTo(0, window.innerHeight * 2));
+	await page.waitForTimeout(700);
+	await page.evaluate(() => window.scrollBy(0, -120));
+	await page.waitForTimeout(600);
+
+	const btn = page.getByRole('button', { name: 'Back to top' });
+	await expect(btn).toBeVisible();
+
+	await page.getByRole('button', { name: /menu/i }).click();
+	await page.waitForTimeout(600);
+	await expect(btn, 'should be hidden while the menu is open').toBeHidden();
+});
+
 test('home works with reduced motion', async ({ browser }) => {
 	/* Reduced motion takes a different path through every animated piece:
 	   no curtain, a single static three.js frame, no pin. The risk is

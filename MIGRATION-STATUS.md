@@ -1,7 +1,8 @@
 # Migration status
 
 Working notes for the static HTML → SvelteKit migration.
-Last updated **16 August 2026** — **`/regulations` was split into two
+Last updated **16 August 2026** — a **scroll-to-top button** was added to every
+route (see below). Earlier the same day, **`/regulations` was split into two
 competition columns** (Open Division and Netherlands HHDC), Iain wrote the real
 Open Division rules, and the two columns were then made to align row-for-row.
 Before that, on 15 Aug: the event day split was confirmed and carried through
@@ -19,8 +20,8 @@ clean and everything is pushed**; `main` and `origin/main` are level.
 `sveltekit-migration` merged and safe to delete.
 
 Verified on the final commit: `npm run lint` clean, `npm run check` 0 errors / 0
-warnings, `npm test` **33 passed** (was 31 until the two regulations layout
-tests were added on 16 Aug 2026).
+warnings, `npm test` **36 passed** (31 → 33 with the two regulations layout
+tests, → 36 with the three scroll-to-top tests, both on 16 Aug 2026).
 
 ## ▶ Start here on 17 August 2026
 
@@ -40,6 +41,74 @@ is left needs either the Cloud86 account or a decision:
 ~~One small chore: `src/lib/config.ts` fails `npm run lint` on line endings.~~
 ✅ **Done 15 Aug 2026** — formatted as part of the day-split work, since that
 commit had to touch `config.ts` anyway. `npm run lint` is clean.
+
+## Scroll-to-top button — 16 August 2026
+
+**[ScrollTop.svelte](src/lib/components/ScrollTop.svelte), rendered once in
+`+layout.svelte`, so it is on all ten routes.** Requested by Iain so readers do
+not have to scroll back by hand. Bottom-right, a hard-edged 60px square with the
+`--line` hairline, a drawn chevron over a Space Mono `TOP`, filling `--oranje` on
+hover; 48px and arrow-only below 560px, which still clears the 44px touch
+target.
+
+**It is deliberately plain CSS and no GSAP.** The show/hide is an
+opacity + visibility transition, so unlike the tween-driven attachments it
+cannot be stranded mid-fade by a starved ticker — there is nothing for
+`withWatchdog()` to rescue, nothing to load and nothing to kill on teardown.
+
+**When it shows: past one viewport, but not once the footer is visible.**
+Threshold is `window.scrollY > window.innerHeight` rather than a fixed pixel
+count, so a phone and a 1440px monitor behave the same; `resize` is listened to
+as well as `scroll`, because rotating a phone changes the threshold.
+
+⚠️ **The footer rule is not cosmetic — it fixes a real collision.** At 1440px
+the footer wraps its links to a second row, which puts **PRIVACY** in the
+bottom-right corner directly under the button: `document.elementFromPoint` at
+that link's own centre returned `.scroll-top__label`, i.e. the link was
+unclickable. **The full-page screenshot showed nothing wrong**, because that row
+was below the fold when it was captured — it was found by measuring hit-testing,
+which is the lesson the regulations work already recorded. It matters more than
+most links: the privacy policy tells visitors to use it to exercise their GDPR
+rights. Nudging the button up by a fixed offset would only move the collision to
+whatever width the footer wraps differently at, so it yields the corner instead,
+via an `IntersectionObserver` on the footer.
+
+**Two more things it has to get out of the way of:**
+
+- **The mobile menu.** The menu is a full-screen panel at z-index 55 and the
+  button is 65, so it would float over a page you are no longer looking at. It
+  hides *and* goes `inert` while `menu.open`, so it also leaves the tab order.
+- **The preloader.** z-index 65 sits above page content and the fixed nav (60)
+  but below the grain (70), the cursor (90) and the curtain (100) — verified
+  hidden at load on the home page.
+
+**Reduced motion needs no override.** The scroll itself jumps
+(`behavior:'auto'`, matching `smoothAnchor()`), and the blanket
+`transition-duration:.01ms` rule makes the button appear rather than fade —
+correct here, since this is a control, not decoration. The "slow it down rather
+than freeze it" rule applies to *decorative* motion; a control should just be
+there. Verified on the home page with `reducedMotion:'reduce'`: hidden at load,
+visible mid-page, click jumped 1800 → 0, no console errors.
+
+### Three tests, all verified non-vacuous
+
+`npm test` is now **36 passed**. Each was proved to fail by reintroducing the
+real bug:
+
+- **`appears on scroll and returns to the top`** — failed with *"should be
+  hidden before scrolling"* when the threshold was forced to `true`.
+- **`never covers a footer link`** — failed when the footer rule was removed.
+  It hit-tests every footer link's centre rather than comparing rectangles, so
+  it asserts what a user can actually click.
+- **`gets out of the way of the mobile menu`** — failed when the `menu.open`
+  guard was dropped.
+
+⚠️ **Two test-harness gotchas found writing these**, both correct site
+behaviour rather than bugs: the nav hides on scroll down, so **the burger is
+genuinely unreachable at the very bottom of a page** — scroll up a little first;
+and the button now hides at the footer, so a test that scrolls to
+`document.body.scrollHeight` and then expects to click it will fail. Both tests
+scroll to `innerHeight * 2` instead.
 
 ## Regulations split into two columns — 16 August 2026
 
@@ -1078,6 +1147,14 @@ Both come back as links the moment the archives get real routes.
   misleading, since it captures reveals before they fire. The two regulations
   tests added that day are the model for closing this on another page: assert
   measured positions, then **prove the test fails** by reintroducing the bug.
+- **A fixed-position control can cover a link without looking like it does.**
+  The scroll-to-top button sat exactly on the footer's PRIVACY link at 1440px,
+  and the screenshot showed nothing — the footer row was below the fold when it
+  was captured. **Hit-test with `document.elementFromPoint` at the link's own
+  centre** rather than comparing rectangles or trusting a picture; overlap of
+  boxes is not the question, what the user's click lands on is. Anything new and
+  `position:fixed` should be checked against the footer, which wraps its links
+  to a second row at desktop widths.
 - **`display:contents` grid items need both `grid-column` and `grid-row`.**
   Setting only the column leaves auto-placement to give each item its own row, so
   a second logical column stacks *below* the first instead of beside it. Used on
@@ -1128,7 +1205,7 @@ npm run check        # svelte-check — expect 0 errors, 0 warnings
 npm run lint         # prettier --check + eslint — expect both clean
 npm run format       # prettier --write
 npm run build        # prerenders all ten routes; this is what proves SSR guards
-npm test             # build + Playwright smoke test — expect 33 passed
+npm test             # build + Playwright smoke test — expect 36 passed
 npm run preview      # trustworthy again since Phase 7
 npx serve build      # second opinion on the real output
 

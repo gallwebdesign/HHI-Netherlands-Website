@@ -909,3 +909,61 @@ body.menu-open{ overflow:hidden; }
 }
 .policy__list li::before{ content:'—'; position:absolute; left:0; color:var(--oranje); }
 .policy + .notice{ margin-top:40px; }
+
+/* ============================ SCROLL TO TOP ============================
+   Fixed bottom-right, on every route. z-index 65 places it above page
+   content and the fixed nav (60) but below the grain (70), the custom
+   cursor (90) and the preloader (100) — so the curtain still covers it
+   on the home page and the cursor never disappears behind it. The mobile
+   menu is 55 and would be underneath, which is why the component hides
+   the button (and marks it inert) while the menu is open rather than
+   relying on stacking order.
+   ====================================================================== */
+.scroll-top{
+  position:fixed; z-index:65;
+  right:var(--gutter); bottom:clamp(20px,4vh,36px);
+  width:60px; height:60px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px;
+  background:rgba(16,16,25,.82); backdrop-filter:blur(12px);
+  border:1px solid var(--line); color:var(--bone);
+  cursor:pointer;
+  /* Hidden state. visibility (not display) so the transition can run, and
+     so `inert` is what actually takes it out of the a11y tree. */
+  opacity:0; visibility:hidden; transform:translateY(12px);
+  transition:opacity .35s var(--ease-out), transform .35s var(--ease-out),
+             visibility 0s linear .35s, background-color .25s, border-color .25s;
+}
+.scroll-top.is-shown{
+  opacity:1; visibility:visible; transform:translateY(0);
+  transition:opacity .35s var(--ease-out), transform .35s var(--ease-out),
+             background-color .25s, border-color .25s;
+}
+.scroll-top:hover{ background:var(--oranje); border-color:var(--oranje); color:var(--ink); }
+/* The arrow is drawn, not typed: a glyph like ▲ renders at a different
+   weight and baseline in every fallback font, and this sits next to
+   Space Mono where that mismatch is obvious. Two borders rotated 45°
+   give a chevron that inherits currentColor on hover. */
+.scroll-top__arrow{
+  width:10px; height:10px;
+  border-top:2px solid currentColor; border-left:2px solid currentColor;
+  transform:rotate(45deg); margin-top:3px;
+  transition:transform .25s var(--ease-out);
+}
+.scroll-top:hover .scroll-top__arrow{ transform:rotate(45deg) translate(2px,2px); }
+.scroll-top__label{
+  font-family:var(--font-mono); font-size:9px; letter-spacing:.16em;
+  text-transform:uppercase; line-height:1;
+}
+@media (max-width:560px){
+  /* Smaller, and the label goes: at this width the button competes with
+     the content it sits over, and 48px is still above the 44px touch
+     target minimum. */
+  .scroll-top{ width:48px; height:48px; bottom:16px; }
+  .scroll-top__label{ display:none; }
+  .scroll-top__arrow{ margin-top:0; }
+}
+/* Reduced motion: the blanket rule at the top of the reduced-motion block
+   already collapses these transitions to .01ms, so the button appears
+   instead of fading — correct here, since this is a control rather than
+   decoration. The scroll itself jumps rather than smooth-scrolling, which
+   the component handles via prefersReducedMotion(). Nothing to override. */
