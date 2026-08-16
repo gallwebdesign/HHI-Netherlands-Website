@@ -1,0 +1,142 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - link "HHI Netherlands home" [ref=e4] [cursor=pointer]:
+      - /url: ./
+      - text: HHI
+      - generic [ref=e5]: ·
+      - text: NL
+    - generic [ref=e6]:
+      - link "Tickets" [ref=e7] [cursor=pointer]:
+        - /url: https://shop.celebratix.io/?c=2mdtq
+      - button "Open menu" [ref=e8]
+  - generic [ref=e12]:
+    - paragraph [ref=e13]: "[ Events · 2027 ]"
+    - heading "The 2027 championship." [level=1] [ref=e14]:
+      - generic [ref=e15]: The 2027
+      - generic [ref=e17]: championship.
+    - paragraph [ref=e19]: Two days decide who represents the Netherlands at the World Hip Hop Dance Championship. Here’s everything you need to plan for it.
+    - generic [ref=e20]:
+      - link "Register your crew" [ref=e21] [cursor=pointer]:
+        - /url: ./registration
+      - link "Get tickets" [ref=e22] [cursor=pointer]:
+        - /url: https://shop.celebratix.io/?c=2mdtq
+  - main [ref=e23]:
+    - generic [ref=e24]:
+      - paragraph [ref=e25]: "[ Countdown ]"
+      - generic "Countdown to the championship" [ref=e26]:
+        - generic [ref=e27]:
+          - generic [ref=e28]: "00"
+          - generic [ref=e29]: Days
+        - generic [ref=e30]:
+          - generic [ref=e31]: "00"
+          - generic [ref=e32]: Hrs
+        - generic [ref=e33]:
+          - generic [ref=e34]: "00"
+          - generic [ref=e35]: Min
+        - generic [ref=e36]:
+          - generic [ref=e37]: "00"
+          - generic [ref=e38]: Sec
+      - generic [ref=e39]:
+        - generic [ref=e40]:
+          - term [ref=e41]: What
+          - definition [ref=e42]:
+            - text: Netherlands Hip Hop Dance Championship
+            - generic [ref=e43]: The official Dutch qualifier for HHI Worlds
+        - generic [ref=e44]:
+          - term [ref=e45]: When
+          - definition [ref=e46]:
+            - text: 30 & 31 January 2027
+            - generic [ref=e47]: "Two days of competition — 30 January: HHI Open Division · 31 January: Netherlands HHDC"
+        - generic [ref=e48]:
+          - term [ref=e49]: Where
+          - definition [ref=e50]:
+            - text: MECC Maastricht
+            - generic [ref=e51]: Directly opposite Maastricht Randwyck station
+        - generic [ref=e52]:
+          - term [ref=e53]: Who
+          - definition [ref=e54]:
+            - text: Crews · Judges · You
+            - generic [ref=e55]: Spectator tickets via the official ticket shop
+    - generic [ref=e56]:
+      - paragraph [ref=e57]: "[ Day schedule ]"
+      - heading "How the weekend runs." [level=2] [ref=e58]
+      - generic [ref=e59]:
+        - generic [ref=e60]:
+          - paragraph [ref=e61]: 30 January
+          - paragraph [ref=e62]: HHI Open Division
+          - generic [ref=e63]:
+            - generic [ref=e64]:
+              - generic [ref=e65]: TBA
+              - generic [ref=e66]: Doors Open · Crew Check-In
+            - generic [ref=e67]:
+              - generic [ref=e68]: TBA
+              - generic [ref=e69]: Junior
+            - generic [ref=e70]:
+              - generic [ref=e71]: TBA
+              - generic [ref=e72]: Varsity
+            - generic [ref=e73]:
+              - generic [ref=e74]: TBA
+              - generic [ref=e75]: Adult
+            - generic [ref=e76]:
+              - generic [ref=e77]: TBA
+              - generic [ref=e78]: Parents
+            - generic [ref=e79]:
+              - generic [ref=e80]: TBA
+              - generic [ref=e81]: Special Crews
+            - generic [ref=e82]:
+              - generic [ref=e83]: TBA
+              - generic [ref=e84]: Awards Ceremony
+        - generic [ref=e85]:
+          - paragraph [ref=e86]: 31 January
+          - paragraph [ref=e87]: Netherlands HHDC
+          - generic [ref=e88]:
+            - generic [ref=e89]:
+              - generic [ref=e90]: TBA
+              - generic [ref=e91]: Doors Open · Floor Testing
+            - generic [ref=e92]:
+              - generic [ref=e93]: TBA
+              - generic [ref=e94]: Junior & Varsity
+            - generic [ref=e95]:
+              - generic [ref=e96]: TBA
+              - generic [ref=e97]: Adult
+            - generic [ref=e98]:
+              - generic [ref=e99]: TBA
+              - generic [ref=e100]: JV MegaCrew
+            - generic [ref=e101]:
+              - generic [ref=e102]: TBA
+              - generic [ref=e103]: MiniCrew
+            - generic [ref=e104]:
+              - generic [ref=e105]: TBA
+              - generic [ref=e106]: MegaCrew
+            - generic [ref=e107]:
+              - generic [ref=e108]: TBA
+              - generic [ref=e109]: Awards Ceremony
+      - paragraph [ref=e110]: "* Times will be posted after registration is closed."
+    - generic [ref=e111]:
+      - heading "Be there." [level=2] [ref=e112]
+      - generic [ref=e113]:
+        - link "Get tickets" [ref=e114] [cursor=pointer]:
+          - /url: https://shop.celebratix.io/?c=2mdtq
+        - link "Read the regulations" [ref=e115] [cursor=pointer]:
+          - /url: ./regulations
+  - contentinfo [ref=e116]:
+    - paragraph [ref=e117]: © 2016–2026 Hip Hop International Netherlands
+    - navigation "Footer" [ref=e118]:
+      - link "Events" [ref=e119] [cursor=pointer]:
+        - /url: ./events
+      - link "Registration" [ref=e120] [cursor=pointer]:
+        - /url: ./registration
+      - link "Rules" [ref=e121] [cursor=pointer]:
+        - /url: ./regulations
+      - link "Results" [ref=e122] [cursor=pointer]:
+        - /url: ./results
+      - link "Sponsors" [ref=e123] [cursor=pointer]:
+        - /url: ./sponsors
+      - link "Instagram" [ref=e124] [cursor=pointer]:
+        - /url: https://www.instagram.com/hhinetherlands
+      - link "Facebook" [ref=e125] [cursor=pointer]:
+        - /url: https://www.facebook.com/hhinetherlands/
+      - link "YouTube" [ref=e126] [cursor=pointer]:
+        - /url: https://www.youtube.com/c/HipHopInternationalNetherlands
+      - link "Privacy" [ref=e127] [cursor=pointer]:
+        - /url: ./privacy

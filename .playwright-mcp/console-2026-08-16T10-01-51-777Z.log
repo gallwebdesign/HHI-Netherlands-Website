@@ -1,0 +1,20 @@
+[    2049ms] Svelte error: each_key_duplicate
+Keyed each block has duplicate key `TBA` at indexes 0 and 1
+https://svelte.dev/e/each_key_duplicate
+
+	in <unknown>
+	in +page.svelte
+	in +layout.svelte
+	in root.svelte
+	in undefined
+
+    at each_key_duplicate (http://localhost:5199/node_modules/.vite/deps/runtime-Cysu5OSU.js?v=e6606348:329:33)
+    at validate_each_keys (http://localhost:5199/node_modules/.vite/deps/index-client-CmMffmLX.js?v=e6606348:1189:4)
+    at http://localhost:5199/node_modules/.vite/deps/index-client-CmMffmLX.js?v=e6606348:937:28
+    at update_reaction (http://localhost:5199/node_modules/.vite/deps/runtime-Cysu5OSU.js?v=e6606348:4914:16)
+    at update_effect (http://localhost:5199/node_modules/.vite/deps/runtime-Cysu5OSU.js?v=e6606348:5021:18)
+    at create_effect (http://localhost:5199/node_modules/.vite/deps/runtime-Cysu5OSU.js?v=e6606348:4335:4)
+    at block (http://localhost:5199/node_modules/.vite/deps/runtime-Cysu5OSU.js?v=e6606348:4527:15)
+    at Module.each (http://localhost:5199/node_modules/.vite/deps/index-client-CmMffmLX.js?v=e6606348:892:11)
+    at http://localhost:5199/src/routes/events/+page.svelte:170:13
+    at Module.add_svelte_meta (http://localhost:5199/node_modules/.vite/deps/runtime-Cysu5OSU.js?v=e6606348:978:10)
