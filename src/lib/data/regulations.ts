@@ -17,7 +17,7 @@ export interface Rule {
 export const RULES: Rule[] = [
 	{
 		title: 'Divisions & ages',
-		body: 'Junior (7–12), Varsity (13–17), Adult (18+), JV-MegaCrew (17 and younger) plus MiniCrew and MegaCrew open to all ages. Your division is set by your dancers’ ages on competition day.'
+		body: 'Junior (7–12), Varsity (13–17), Adult (18+), JV-MegaCrew (17 and younger) plus MiniCrew and MegaCrew open to all ages. Your division is set by your dancers’ ages in the competition year.'
 	},
 	{
 		title: 'Crew size',
