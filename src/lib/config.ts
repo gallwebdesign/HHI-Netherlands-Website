@@ -140,16 +140,20 @@ export const NAV_LINKS = [
 	{ href: '/', label: 'Home' },
 	{ href: '/events', label: 'Events' },
 	{ href: '/registration', label: 'Registration' },
+	{ href: '/regulations', label: 'Regulations' },
 	{ href: '/media', label: 'Media' },
 	{ href: '/organisation', label: 'Organisation' },
-	{ href: '/sponsors', label: 'Sponsors' },
 	{ href: '/contact', label: 'Contact' }
 ] as const;
 
-/** Mobile menu carries two extra links the desktop nav omits. */
+/** Mobile menu carries the two links the desktop nav omits. The mobile menu has
+ *  vertical room the nav does not, so it stays complete while the nav is kept to
+ *  seven items — Regulations traded places with Sponsors on 16 Aug 2026, since
+ *  Sponsors is already carried by the footer. Regulations is spread in from
+ *  NAV_LINKS now; do not re-add it here or it renders twice. */
 export const MENU_LINKS = [
 	...NAV_LINKS,
-	{ href: '/regulations', label: 'Regulations' },
+	{ href: '/sponsors', label: 'Sponsors' },
 	{ href: '/results', label: 'Results' }
 ] as const;
 

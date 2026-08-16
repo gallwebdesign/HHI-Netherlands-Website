@@ -246,8 +246,10 @@ test('home tears down its animations on navigation', async ({ page }) => {
 	await page.evaluate(() => window.scrollTo(0, 0));
 	await page.waitForTimeout(600);
 
-	await page.locator('.nav__links a', { hasText: 'Sponsors' }).click();
-	await expect(page).toHaveURL(/sponsors/);
+	/* Any nav link that leaves home does; Sponsors used to, until it moved out
+	   of the desktop nav to make room for Regulations (16 Aug 2026). */
+	await page.locator('.nav__links a', { hasText: 'Regulations' }).click();
+	await expect(page).toHaveURL(/regulations/);
 	await page.waitForTimeout(800);
 
 	const leaked = await page.evaluate(() => ({
