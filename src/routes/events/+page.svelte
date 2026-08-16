@@ -76,8 +76,7 @@
 		     not. The footnote has to mark the whole schedule as provisional without
 		     reading as though which competition dances when is still open. -->
 		<p class="footnote" {@attach reveal()}>
-			* Indicative schedule — subject to change. Final times and running order are confirmed with
-			the official announcement.
+			*  Times will be posted after registration is closed.
 		</p>
 	</section>
 

@@ -75,26 +75,26 @@ export const SCHEDULE: ScheduleDay[] = [
 		date: EVENT_DAY_ONE,
 		competition: 'HHI Open Division',
 		rows: [
-			{ time: '08:00', what: 'Doors Open · Crew Check-In' },
-			{ time: '09:30', what: 'Junior' },
-			{ time: '11:00', what: 'Varsity' },
-			{ time: '15:15', what: 'Adult' },
-			{ time: '17:30', what: 'Parents' },
-			{ time: '18:30', what: 'Special Crews' },
-			{ time: '19:00', what: 'Awards Ceremony' }
+			{ time: 'TBA', what: 'Doors Open · Crew Check-In' },
+			{ time: 'TBA', what: 'Junior' },
+			{ time: 'TBA', what: 'Varsity' },
+			{ time: 'TBA', what: 'Adult' },
+			{ time: 'TBA', what: 'Parents' },
+			{ time: 'TBA', what: 'Special Crews' },
+			{ time: 'TBA', what: 'Awards Ceremony' }
 		]
 	},
 	{
 		date: EVENT_DAY_TWO,
 		competition: 'Netherlands HHDC',
 		rows: [
-			{ time: '08:00', what: 'Doors Open · Floor Testing' },
-			{ time: '14:00', what: 'Junior & Varsity' },
-			{ time: '15:15', what: 'Adult' },
-			{ time: '16:30', what: 'JV MegaCrew' },
-			{ time: '17:00', what: 'MiniCrew' },
-			{ time: '17:45', what: 'MegaCrew' },
-			{ time: '19:00', what: 'Awards Ceremony' }
+			{ time: 'TBA', what: 'Doors Open · Floor Testing' },
+			{ time: 'TBA', what: 'Junior & Varsity' },
+			{ time: 'TBA', what: 'Adult' },
+			{ time: 'TBA', what: 'JV MegaCrew' },
+			{ time: 'TBA', what: 'MiniCrew' },
+			{ time: 'TBA', what: 'MegaCrew' },
+			{ time: 'TBA', what: 'Awards Ceremony' }
 		]
 	}
 ];
