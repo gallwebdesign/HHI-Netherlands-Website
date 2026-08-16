@@ -45,31 +45,51 @@
 <main id="top">
 	<section class="hero" aria-label="Netherlands Hip Hop Dance Championship {EVENT_YEAR}">
 		<StageFloor />
-		<div class="hero__inner">
-			<p class="hero__eyebrow" {@attach heroFade(0, heroReady)}>
-				Netherlands Hip Hop Dance Championship &middot; {EVENT_YEAR}
-			</p>
-			<h1 class="hero__title">
-				<span class="row"><span {@attach heroRow(0, heroReady)}>Own the</span></span>
-				<span class="row"><span class="accent" {@attach heroRow(1, heroReady)}>floor.</span></span>
-				<span class="row row--sub"
-					><span class="hollow" {@attach heroRow(2, heroReady)}>Rep NL at Worlds.</span></span
-				>
-			</h1>
-			<div class="hero__meta">
-				<p class="hero__lede" {@attach heroFade(1, heroReady)}>
-					The official national qualifier of <strong>Hip Hop International</strong>. Crews battle
-					for the Dutch title — and the winners carry the flag to the
-					<strong>World Hip Hop Dance Championship</strong>.
+		<div class="hero__inner hero__inner--split">
+			<!-- Left column: the championship lockup. Purely decorative here —
+			     the <h1> beside it already names the event, and the section's
+			     aria-label repeats it, so alt="" keeps a screen reader from
+			     hearing the same title three times. -->
+			<div class="hero__brand" {@attach heroFade(0, heroReady)}>
+				<img
+					class="hero__mark"
+					src="{base}/img/NHHDC_Zwart-Wit-Rood_No Shadow.svg"
+					alt=""
+					width="898"
+					height="590"
+					decoding="async"
+					fetchpriority="high"
+				/>
+			</div>
+
+			<!-- Right column: everything that was in the hero before, unchanged. -->
+			<div class="hero__copy">
+				<p class="hero__eyebrow" {@attach heroFade(0, heroReady)}>
+					Netherlands Hip Hop Dance Championship &middot; {EVENT_YEAR}
 				</p>
-				<Countdown heroEntrance ready={heroReady} />
-				<div class="hero__ctas" {@attach heroFade(3, heroReady)}>
-					<a class="btn btn--solid" {@attach magnetic()} href="{base}/registration"
-						>Register your crew</a
+				<h1 class="hero__title">
+					<span class="row"><span {@attach heroRow(0, heroReady)}>Own the</span></span>
+					<span class="row"><span class="accent" {@attach heroRow(1, heroReady)}>floor.</span></span
 					>
-					<a class="btn btn--ghost" {@attach magnetic()} href="{base}/events"
-						>The {EVENT_YEAR} event</a
+					<span class="row row--sub"
+						><span class="hollow" {@attach heroRow(2, heroReady)}>Rep NL at Worlds.</span></span
 					>
+				</h1>
+				<div class="hero__meta">
+					<p class="hero__lede" {@attach heroFade(1, heroReady)}>
+						The official national qualifier of <strong>Hip Hop International</strong>. Crews battle
+						for the Dutch title — and the winners carry the flag to the
+						<strong>World Hip Hop Dance Championship</strong>.
+					</p>
+					<Countdown heroEntrance ready={heroReady} />
+					<div class="hero__ctas" {@attach heroFade(3, heroReady)}>
+						<a class="btn btn--solid" {@attach magnetic()} href="{base}/registration"
+							>Register your crew</a
+						>
+						<a class="btn btn--ghost" {@attach magnetic()} href="{base}/events"
+							>The {EVENT_YEAR} event</a
+						>
+					</div>
 				</div>
 			</div>
 		</div>

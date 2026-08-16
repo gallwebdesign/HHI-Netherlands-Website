@@ -152,6 +152,64 @@ test('home renders its ported sections', async ({ page }) => {
 	await expect(page.locator('.board__num').first()).not.toHaveText('00');
 });
 
+test('hero splits into two columns without growing taller', async ({ page }) => {
+	/* Iain's constraint when the lockup was added: keep the original hero
+	   height. It is min-height:100svh with justify-content:flex-end, so a
+	   tall left column does not stretch the hero — it pushes the countdown
+	   and CTAs off the bottom, which is what the first attempt did (978px
+	   against a 900px viewport).
+
+	   Baselines were measured on main before this change: 900px tall at
+	   1440x900 with the CTAs ending at 864px, and 780px at 390x780 ending
+	   at 749px. Both are asserted here.
+
+	   NOT asserted at 1280x620: main itself is 757px against that 620px
+	   viewport with its CTAs off-screen, so the short-landscape overflow
+	   is pre-existing and this layout is not the place to fix it. */
+	for (const size of [
+		{ width: 1440, height: 900 },
+		{ width: 390, height: 780 }
+	]) {
+		await page.setViewportSize(size);
+		await page.goto('/');
+		await page.waitForLoadState('networkidle');
+		// The curtain has to lift before the hero has its real height.
+		await page.waitForTimeout(2200);
+
+		const m = await page.evaluate(() => {
+			const q = (s: string) => document.querySelector(s)!;
+			const hero = q('.hero').getBoundingClientRect();
+			const logo = q('.hero__mark') as HTMLImageElement;
+			return {
+				heroH: hero.height,
+				viewportH: window.innerHeight,
+				logoLoaded: logo.naturalWidth > 0,
+				logoRight: logo.getBoundingClientRect().right,
+				copyLeft: q('.hero__copy').getBoundingClientRect().left,
+				ctaBottom: q('.hero__ctas').getBoundingClientRect().bottom,
+				overflowsX: document.documentElement.scrollWidth > window.innerWidth,
+				stacked: window.innerWidth <= 1000
+			};
+		});
+
+		const label = `${size.width}x${size.height}`;
+		expect(m.logoLoaded, `${label}: lockup should load`).toBe(true);
+		expect(m.heroH, `${label}: hero should not exceed one viewport`).toBeLessThanOrEqual(
+			m.viewportH + 2
+		);
+		expect(m.ctaBottom, `${label}: CTAs should stay on screen`).toBeLessThanOrEqual(
+			m.viewportH + 2
+		);
+		expect(m.overflowsX, `${label}: nothing should overflow sideways`).toBe(false);
+
+		/* Side by side above the breakpoint, stacked below it. Without the
+		   column split the logo and copy would share the same left edge. */
+		if (!m.stacked) {
+			expect(m.logoRight, `${label}: columns should not overlap`).toBeLessThanOrEqual(m.copyLeft);
+		}
+	}
+});
+
 test('navigating from deep in a page lands at the top of the next one', async ({ page }) => {
 	/* Regression, reported 14 Aug 2026: leave /events with the footer on
 	   screen, arrive at the next page still looking at the footer.
