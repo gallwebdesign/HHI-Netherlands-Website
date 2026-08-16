@@ -627,25 +627,50 @@ body.menu-open{ overflow:hidden; }
 /* rules (regulations)
    Two competition columns side by side on desktop, stacked on mobile —
    the same shape as .sched-days above, and headed the same way, so the
-   two pages read as one system. Each card is now half-width, so the
-   number gutter, the display sizes and the body measure all step down
-   from what they were when .rules ran the full width of the section. */
+   two pages read as one system. Each card is half-width, so the number
+   gutter, the display sizes and the body measure all step down from what
+   they were when the rules ran the full width of the section.
+
+   ONE grid spans both columns so that rule N lines up with rule N across
+   them: an implicit row is as tall as its tallest cell, which pads the
+   shorter of the two cards instead of letting the columns drift. Hence
+   the explicit placement below — .rule-col is display:contents, so its
+   children are the real grid items and must be told which track they are
+   in. See the markup comment in the regulations route. */
 .rule-cols{
-  display:grid; grid-template-columns:repeat(2,1fr); gap:56px; align-items:start;
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  /* Column gap only. Rows are separated by the card borders, not by a
+     gap — a row gap here would break the shared 1px rule between cards. */
+  column-gap:56px;
+  align-items:stretch;
 }
+.rule-col{ display:contents; }
+/* Every child of a display:contents column is placed by hand: --col is
+   set once per column, --row per item (header 1, rule N is N+1). BOTH
+   are required. With only grid-column, auto-placement gives each item a
+   new row of its own, so the second column starts below the first
+   instead of beside it — which is the whole bug this layout fixes. */
+.rule-col > *{ grid-column:var(--col); grid-row:var(--row); }
+.rule-col__head{ margin-bottom:20px; }
 .rule-col__name{
   font-family:var(--font-display); font-weight:400; text-transform:uppercase;
   font-size:clamp(24px,2.6vw,34px); line-height:1.05; color:var(--bone);
 }
 .rule-col__note{
-  margin-top:6px; margin-bottom:20px; font-family:var(--font-mono); font-size:11px;
+  margin-top:6px; font-family:var(--font-mono); font-size:11px;
   letter-spacing:.14em; text-transform:uppercase; color:var(--oranje);
 }
-.rules{ display:grid; gap:1px; background:var(--line); border:1px solid var(--line); }
+/* The cards used to be separated by a 1px grid gap over a --line
+   background. As direct children of the shared grid they cannot use that
+   trick, so each card draws its own hairline and the first in each column
+   draws the top one too. */
 .rule{
   background:var(--panel-2); padding:24px 22px;
+  border:1px solid var(--line); border-top:0;
   display:grid; grid-template-columns:52px 1fr; gap:18px; align-items:start;
 }
+.rule--first{ border-top:1px solid var(--line); }
 .rule__num{
   font-family:var(--font-display); font-size:clamp(26px,2.2vw,36px); line-height:1;
   color:transparent; -webkit-text-stroke:1.2px var(--oranje);
@@ -806,7 +831,15 @@ body.menu-open{ overflow:hidden; }
   /* Stacked, the cards get the full width back, so the tightened desktop
      measure would leave the text hugging the left of a wide card. */
   .rule p{ max-width:70ch; }
-  .rule-cols{ grid-template-columns:1fr; gap:44px; }
+  /* Stacked, there is nothing to align across, so the shared grid is
+     undone entirely: the columns become blocks again and each one flows
+     its own header and cards. Leaving display:contents with an explicit
+     grid-column would drop both columns into the single remaining track
+     and interleave them. */
+  .rule-cols{ display:block; }
+  .rule-col{ display:block; }
+  .rule-col > *{ grid-column:auto; grid-row:auto; }
+  .rule-col + .rule-col{ margin-top:44px; }
   .sched-days{ grid-template-columns:1fr; gap:44px; }
   .sched__row{ grid-template-columns:78px 1fr; }
   .rtable{ display:block; overflow-x:auto; }
