@@ -567,29 +567,49 @@ body.menu-open{ overflow:hidden; }
   .nav__links{ display:none; }
   .burger{ display:flex; }
   .hero__meta{ grid-template-columns:1fr; }
-  /* Below 1000px the two columns stack, logo above the copy — there is
-     not enough width for a headline beside a logo. The lockup takes far
-     less height here so the hero still fits one screen. */
-  .hero__inner--split{ grid-template-columns:1fr; gap:clamp(8px,1.4vh,18px); }
-  .hero__brand{ justify-content:flex-start; }
-  /* The eyebrow's 18px bottom margin and the meta row's top margin are
-     both tuned for a hero with no logo in it. Trimmed here rather than
-     shrinking the title further — it is already down to ~51px, and type
-     is the thing worth protecting. */
-  .hero__inner--split .hero__eyebrow{ margin-bottom:10px; }
-  .hero__inner--split .hero__meta{ margin-top:clamp(14px,2.2vh,24px); padding-top:16px; }
-  /* ⚠️ Stacked, the logo's height comes straight off the hero's budget,
-     and main already uses all of it (measured: hero exactly 780px at
-     390x780, CTAs ending at 749px). At 22vh/180px this pushed the hero to
-     917px and the buttons off the bottom. The title gives back the rest
-     below. */
-  .hero__mark{ max-height:min(10vh, 78px); max-width:min(100%, 210px); }
-  /* Stacked, the copy column is full width again so the sizing is
-     viewport-based as on main — but slightly reduced, because the logo
-     above now occupies height that main gave entirely to type. The vh
-     term is what actually holds the hero to one screen on a short phone. */
-  .hero__inner--split .hero__title{ font-size:clamp(48px, min(13vw, 13vh), 200px); }
-  .hero__inner--split .hero__title .row--sub{ font-size:clamp(22px, min(5vw, 5vh), 80px); }
+  /* ---- mobile hero: one centred column ----------------------------
+     Below 1000px the two columns stack and everything centres — logo,
+     eyebrow, title, lede, countdown and two full-width buttons.
+
+     ⚠️ The hero deliberately stops being height-constrained here.
+     Everywhere else on this page the rule is "must fit one viewport";
+     on mobile Iain chose the screenshot's proportions instead (16 Aug
+     2026), so the lockup gets real size and the CTAs may fall below the
+     fold. min-height goes to auto rather than being left at 100svh —
+     left alone, justify-content:flex-end would bottom-anchor a block
+     that is now taller than the screen and push the top of it up under
+     the nav. */
+  .hero{ min-height:auto; justify-content:flex-start; }
+  .hero__inner--split{
+    grid-template-columns:1fr;
+    gap:clamp(14px,3vh,26px);
+    text-align:center;
+    justify-items:center;
+  }
+  .hero__brand{ justify-content:center; width:100%; }
+  .hero__copy{ width:100%; }
+  /* The eyebrow is a flex row with a 42px rule drawn by ::before, so it
+     needs centring as a flex container, not just as text. */
+  .hero__inner--split .hero__eyebrow{ justify-content:center; margin-bottom:12px; }
+  /* Sized off width now, not height: the viewport cap existed to protect
+     a height budget this breakpoint no longer has. */
+  .hero__mark{ max-height:none; max-width:min(100%, 340px); }
+  .hero__inner--split .hero__title{ font-size:clamp(48px, 14vw, 200px); }
+  .hero__inner--split .hero__title .row--sub{ font-size:clamp(22px, 6.4vw, 80px); }
+  /* The lede is max-width:46ch and left-aligned by default; centred here
+     it needs the auto margins to actually sit in the middle. */
+  .hero__inner--split .hero__lede{ margin-inline:auto; text-align:center; }
+  /* Countdown and buttons both go full width, matching the screenshot.
+     .board is a flex row, so its cells share the width equally. */
+  .hero__inner--split .hero__meta{ justify-items:stretch; }
+  /* The meta grid's justify-items:stretch already gives .board the full
+     column width — no width:100% needed, verified by removing it. What is
+     load-bearing is flex:1 on the cells: they carry min-width:74px and no
+     flex-grow, so without this they bunch at the left of a stretched row
+     instead of spreading across it. */
+  .hero__inner--split .board__cell{ flex:1; min-width:0; }
+  .hero__inner--split .hero__ctas{ flex-direction:column; align-items:stretch; }
+  .hero__inner--split .hero__ctas .btn{ justify-content:center; }
   .about{ grid-template-columns:1fr; gap:40px; }
   .event{ grid-template-columns:1fr; gap:40px; }
   .media__row{ grid-template-columns:repeat(2,1fr); }

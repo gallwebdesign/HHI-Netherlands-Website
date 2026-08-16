@@ -192,6 +192,19 @@ test('hero splits into two columns without growing taller', async ({ page }) => 
 				ctaBottom: q('.hero__ctas').getBoundingClientRect().bottom,
 				metaWidth: q('.hero__meta').getBoundingClientRect().width,
 				innerWidth: q('.hero__inner').getBoundingClientRect().width,
+				/* How far the lockup's centre sits from the column's centre. */
+				logoCentreOffset: (() => {
+					const l = logo.getBoundingClientRect();
+					const i = q('.hero__inner').getBoundingClientRect();
+					return l.left + l.width / 2 - (i.left + i.width / 2);
+				})(),
+				boardWidth: q('.board').getBoundingClientRect().width,
+				/* The BUTTONS, not their container: the container is a grid item
+				   and is stretched to the column either way, so measuring it
+				   cannot detect whether the buttons themselves went full width. */
+				btnWidths: [...document.querySelectorAll('.hero__ctas .btn')].map(
+					(b) => b.getBoundingClientRect().width
+				),
 				overflowsX: document.documentElement.scrollWidth > window.innerWidth,
 				stacked: window.innerWidth <= 1000
 			};
@@ -199,13 +212,21 @@ test('hero splits into two columns without growing taller', async ({ page }) => 
 
 		const label = `${size.width}x${size.height}`;
 		expect(m.logoLoaded, `${label}: lockup should load`).toBe(true);
-		expect(m.heroH, `${label}: hero should not exceed one viewport`).toBeLessThanOrEqual(
-			m.viewportH + 2
-		);
-		expect(m.ctaBottom, `${label}: CTAs should stay on screen`).toBeLessThanOrEqual(
-			m.viewportH + 2
-		);
 		expect(m.overflowsX, `${label}: nothing should overflow sideways`).toBe(false);
+
+		/* The one-viewport rule is desktop-only. On mobile Iain chose the
+		   screenshot's proportions over fitting the fold (16 Aug 2026): the
+		   lockup gets real size and the CTAs may sit below it, so the hero
+		   is allowed to grow and the page scrolls. Asserting the height
+		   there would be asserting the opposite of what was asked for. */
+		if (!m.stacked) {
+			expect(m.heroH, `${label}: hero should not exceed one viewport`).toBeLessThanOrEqual(
+				m.viewportH + 2
+			);
+			expect(m.ctaBottom, `${label}: CTAs should stay on screen`).toBeLessThanOrEqual(
+				m.viewportH + 2
+			);
+		}
 
 		/* Only the lockup and the title share the two columns. The lede,
 		   countdown and CTAs span the full width beneath them, as on main —
@@ -220,6 +241,23 @@ test('hero splits into two columns without growing taller', async ({ page }) => 
 		   column split the logo and copy would share the same left edge. */
 		if (!m.stacked) {
 			expect(m.logoRight, `${label}: columns should not overlap`).toBeLessThanOrEqual(m.copyLeft);
+		} else {
+			/* Stacked and centred: the lockup sits in the middle of the column
+			   rather than against the left gutter, and the countdown and both
+			   buttons stretch to the same full width as each other. Measured,
+			   because "centred" in CSS is several separate properties here —
+			   text-align does not centre the eyebrow's flex row, and widening
+			   .board does not spread cells that have no flex-grow. */
+			expect(
+				Math.abs(m.logoCentreOffset),
+				`${label}: lockup should be centred in the column`
+			).toBeLessThanOrEqual(2);
+			for (const [i, w] of m.btnWidths.entries()) {
+				expect(
+					Math.abs(w - m.boardWidth),
+					`${label}: CTA ${i + 1} should be as wide as the countdown`
+				).toBeLessThanOrEqual(2);
+			}
 		}
 	}
 });
