@@ -624,21 +624,37 @@ body.menu-open{ overflow:hidden; }
   letter-spacing:.12em; color:var(--muted); text-transform:uppercase;
 }
 
-/* rules (regulations) */
+/* rules (regulations)
+   Two competition columns side by side on desktop, stacked on mobile —
+   the same shape as .sched-days above, and headed the same way, so the
+   two pages read as one system. Each card is now half-width, so the
+   number gutter, the display sizes and the body measure all step down
+   from what they were when .rules ran the full width of the section. */
+.rule-cols{
+  display:grid; grid-template-columns:repeat(2,1fr); gap:56px; align-items:start;
+}
+.rule-col__name{
+  font-family:var(--font-display); font-weight:400; text-transform:uppercase;
+  font-size:clamp(24px,2.6vw,34px); line-height:1.05; color:var(--bone);
+}
+.rule-col__note{
+  margin-top:6px; margin-bottom:20px; font-family:var(--font-mono); font-size:11px;
+  letter-spacing:.14em; text-transform:uppercase; color:var(--oranje);
+}
 .rules{ display:grid; gap:1px; background:var(--line); border:1px solid var(--line); }
 .rule{
-  background:var(--panel-2); padding:28px 26px;
-  display:grid; grid-template-columns:70px 1fr; gap:22px; align-items:start;
+  background:var(--panel-2); padding:24px 22px;
+  display:grid; grid-template-columns:52px 1fr; gap:18px; align-items:start;
 }
 .rule__num{
-  font-family:var(--font-display); font-size:clamp(28px,3vw,44px); line-height:1;
+  font-family:var(--font-display); font-size:clamp(26px,2.2vw,36px); line-height:1;
   color:transparent; -webkit-text-stroke:1.2px var(--oranje);
 }
 .rule h3{
   font-family:var(--font-display); font-weight:400; text-transform:uppercase;
-  font-size:clamp(20px,2.2vw,28px); margin-bottom:8px;
+  font-size:clamp(18px,1.6vw,24px); margin-bottom:8px;
 }
-.rule p{ color:var(--muted); font-size:15px; max-width:70ch; }
+.rule p{ color:var(--muted); font-size:15px; max-width:52ch; }
 .notice{
   border:1px solid var(--oranje); padding:20px 24px; margin-top:34px;
   display:flex; gap:16px; align-items:baseline; flex-wrap:wrap;
@@ -787,6 +803,10 @@ body.menu-open{ overflow:hidden; }
   .contact-grid{ grid-template-columns:1fr; gap:40px; }
   .gallery{ grid-template-columns:repeat(2,1fr); }
   .rule{ grid-template-columns:48px 1fr; gap:14px; }
+  /* Stacked, the cards get the full width back, so the tightened desktop
+     measure would leave the text hugging the left of a wide card. */
+  .rule p{ max-width:70ch; }
+  .rule-cols{ grid-template-columns:1fr; gap:44px; }
   .sched-days{ grid-template-columns:1fr; gap:44px; }
   .sched__row{ grid-template-columns:78px 1fr; }
   .rtable{ display:block; overflow-x:auto; }
