@@ -232,8 +232,8 @@ html.has-cursor .cursor-ring{ display:block; }
   width:100%; height:auto;
   /* Two caps, whichever bites first: never taller than the viewport
      allows, never wider than reads well beside the type. */
-  max-height:min(46vh, 420px);
-  max-width:520px;
+  max-height:min(46vh, 460px);
+  max-width:700px;
   object-fit:contain;
 }
 /* ⚠️ The title switches from vw to cqw. At 15.5vw it is sized off the
@@ -617,9 +617,9 @@ body.menu-open{ overflow:hidden; }
   .hero__inner--split .hero__eyebrow{ justify-content:center; margin-bottom:12px; }
   /* Sized off width now, not height: the viewport cap existed to protect
      a height budget this breakpoint no longer has. */
-  .hero__mark{ max-height:none; max-width:min(100%, 340px); }
-  .hero__inner--split .hero__title{ font-size:clamp(48px, 14vw, 200px); }
-  .hero__inner--split .hero__title .row--sub{ font-size:clamp(22px, 6.4vw, 80px); }
+  .hero__mark{ max-height:none; max-width:min(90%, 340px); }
+  .hero__inner--split .hero__title{ font-size:clamp(48px, 18vw, 200px); }
+  .hero__inner--split .hero__title .row--sub{ font-size:clamp(22px, 8vw, 80px); }
   /* The lede is max-width:46ch and left-aligned by default; centred here
      it needs the auto margins to actually sit in the middle. */
   .hero__inner--split .hero__lede{ margin-inline:auto; text-align:center; }
