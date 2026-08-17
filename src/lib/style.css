@@ -168,11 +168,15 @@ html.has-cursor .cursor-ring{ display:block; }
    straight through the logo and burger on any viewport too short to hold
    the content — reported on a Samsung S24+, where browser chrome leaves
    ~640px and the eyebrow landed 43px inside the logo. The extra clamp is
-   breathing room so the eyebrow never sits tight under the nav. */
+   breathing room so the eyebrow never sits tight under the nav.
+   ⚠️ Only the breathing room is negotiable. Trimmed 25% (52/4vh/56 to
+   39/3vh/42) on 17 Aug 2026 to close the black band under the nav; the
+   --nav-h term is the reservation itself and shrinking it reopens the
+   print-through bug above. Both breakpoints read this one declaration. */
 .hero{
   position:relative; min-height:100svh;
   display:flex; flex-direction:column; justify-content:flex-end;
-  padding:calc(var(--nav-h) + clamp(52px,4vh,56px)) var(--gutter) clamp(24px,4vh,48px);
+  padding:calc(var(--nav-h) + clamp(39px,3vh,42px)) var(--gutter) clamp(24px,4vh,48px);
   overflow:hidden;
 }
 #stage-floor{ position:absolute; inset:0; z-index:0; }
