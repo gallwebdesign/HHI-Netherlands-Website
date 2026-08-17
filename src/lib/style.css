@@ -219,6 +219,22 @@ html.has-cursor .cursor-ring{ display:block; }
    mobile had spare height. */
 @media (min-width:1001px){
   .hero:has(.hero__inner--split){ justify-content:center; }
+
+  /* Centre between the NAV and the TICKER, not within the raw viewport.
+     (17 Aug 2026) The padding-top already reserves the fixed nav, so the
+     top edge was honest; the bottom was not. With the strip pinned it
+     covers the last --ticker-h pixels, but the hero still centred as
+     though that band were free, seating the block half a strip too low —
+     measured 100.8px of clear space above the content against 26.8px
+     below it at 1440x900.
+
+     Reserving the strip the same way the nav is reserved makes the two
+     ends symmetrical, and centring then splits what is genuinely free.
+     Only while pinned: once the strip unpins on the first scroll it is
+     part of the flow again and reserving its height would leave a gap. */
+  .hero:has(~ .ticker-slot.is-pinned){
+    padding-bottom:calc(clamp(24px,4vh,48px) + var(--hero-ticker-h, 0px));
+  }
 }
 .hero__inner--split{
   display:grid;
@@ -330,6 +346,29 @@ html.has-cursor .cursor-ring{ display:block; }
 }
 .ticker__item::after{ content:"★"; margin:0 26px; font-size:.7em; }
 @keyframes ticker{ to{ transform:translateX(-50%); } }
+
+/* ---- pinned to the bottom of the first screen (desktop only) ----------
+   (17 Aug 2026) The strip is visible on load without scrolling, then
+   unpins for good on the first scroll. Whether it pins at all is decided
+   in +page.svelte, which measures the real gap below the countdown —
+   there is no viewport height at which this is safe to assume.
+
+   ⚠️ Scoped to min-width rather than written bare. .ticker.is-pinned is
+   (0,2,0) and sits later in the file than the mobile block's rules, so
+   unscoped it would win at every width — the same trap the hero's
+   justify-content override documents further up. Mobile never sets the
+   class, but the guard costs nothing and survives someone doing so. */
+@media (min-width:1001px){
+  .ticker.is-pinned{
+    position:fixed; left:0; right:0; bottom:0; z-index:50;
+  }
+  /* Holds the gap the fixed strip leaves behind. The height comes from
+     --ticker-h, measured off the live element in +page.svelte rather than
+     rebuilt from padding and borders here: .ticker__item's font-size is a
+     clamp() on viewport width, so any arithmetic in this file would drift
+     out of agreement with the real box at some window size. */
+  .ticker-slot.is-pinned{ height:var(--ticker-h, 74px); }
+}
 
 /* ============================ SECTIONS ============================ */
 .section{ padding:clamp(80px,12vh,150px) var(--gutter); position:relative; }

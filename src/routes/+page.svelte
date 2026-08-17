@@ -30,6 +30,105 @@
 		broken.add(src);
 		broken = new Set(broken);
 	}
+
+	/* ---- ticker pinned to the bottom of the first screen (desktop) -------
+	   (17 Aug 2026) On load the strip sits against the bottom edge of the
+	   viewport so it is visible without scrolling. The moment the reader
+	   scrolls it unpins for good and behaves exactly as it did before,
+	   scrolling up and away under the content below.
+
+	   Three guards, and each one is load-bearing:
+
+	   1. Desktop only, matching the 1000px breakpoint the pinned road
+	      section and the two-column hero already use. Mobile keeps the
+	      in-flow strip — the hero there is deliberately taller than the
+	      screen, so there is no "bottom of the first screen" to pin to.
+
+	   2. Only when it FITS. The hero fills the viewport and the countdown
+	      sits at the bottom of it, so a blind pin covers the thing the
+	      reader most needs. Measured at 1280x700: 42.9px of clear space
+	      against a 74px strip, i.e. it would have covered the CTAs and the
+	      countdown's lower edge. At 1440x900 there is 100.8px and it fits
+	      with room to spare. The check is therefore made against the real
+	      boxes at runtime, not against a viewport-height guess.
+
+	   3. Unpin on the first scroll, not on a threshold. The brief is that
+	      it scrolls "as it does now" once you start, so any movement at all
+	      ends the pinned state permanently — no re-pinning when you return
+	      to the top, which would make the strip jump around under you. */
+	let tickerPinned = $state(false);
+
+	$effect(() => {
+		/* ⚠️ Wait for the curtain. Measured before the preloader lifts, the
+		   hero has not laid out and .hero__meta reads far lower than it ends
+		   up: at 1280x700 the gap measured 42.9px against a settled 162.9px,
+		   so the strip refused to pin on a viewport where it fits easily.
+		   heroReady is the same signal the hero entrance waits on, and
+		   reading it here is what re-runs this effect once it flips. */
+		if (!heroReady) return;
+
+		const ticker = document.querySelector<HTMLElement>('.ticker');
+		const slot = document.querySelector<HTMLElement>('.ticker-slot');
+		const meta = document.querySelector<HTMLElement>('.hero__meta');
+		if (!ticker || !slot || !meta) return;
+
+		/* Already scrolled on arrival — a reload part-way down the page, or a
+		   restored scroll position. Never pin in that case. */
+		if (window.scrollY > 0) return;
+
+		const fits = () => {
+			if (!window.matchMedia('(min-width:1001px)').matches) return false;
+			/* Measure the strip unpinned, so its own height is the real one
+			   rather than whatever the fixed position gives it. Publishing it
+			   as --ticker-h lets the placeholder reserve exactly this height;
+			   the item's font-size is a clamp() on vw, so the box is only
+			   knowable at runtime. */
+			const h = ticker.offsetHeight;
+			/* Published on <main>, the common ancestor: the slot reads it to
+			   reserve the strip's space, and the hero reads it to reserve the
+			   same band at its bottom edge so it centres between the nav and
+			   the strip rather than within the raw viewport. Setting it on
+			   the slot would put it out of the hero's reach — custom
+			   properties inherit down the tree, and the hero is a sibling. */
+			if (h) {
+				slot.style.setProperty('--ticker-h', `${h}px`);
+				document.querySelector('main')?.style.setProperty('--hero-ticker-h', `${h}px`);
+			}
+			const room = window.innerHeight - meta.getBoundingClientRect().bottom;
+			return room >= h;
+		};
+
+		/* One frame past heroReady: the curtain has lifted but the entrance
+		   tween is still settling the meta row into place on that first tick,
+		   and this reads its final box rather than its starting one. */
+		const raf = requestAnimationFrame(() => {
+			tickerPinned = fits();
+		});
+
+		/* Once unpinned, stay unpinned: listeners are torn down on the first
+		   scroll so nothing keeps measuring for the rest of the visit. */
+		const unpin = () => {
+			if (window.scrollY <= 0) return;
+			tickerPinned = false;
+			window.removeEventListener('scroll', unpin);
+			window.removeEventListener('resize', onResize);
+		};
+
+		/* Resizing while still at the top re-tests the fit — dragging a window
+		   shorter is exactly how the countdown would get covered. */
+		const onResize = () => {
+			if (window.scrollY > 0) return;
+			tickerPinned = fits();
+		};
+
+		window.addEventListener('scroll', unpin, { passive: true });
+		window.addEventListener('resize', onResize, { passive: true });
+		return () => {
+			cancelAnimationFrame(raf);
+			window.removeEventListener('scroll', unpin);
+			window.removeEventListener('resize', onResize);
+		};
+	});
 </script>
 
 <svelte:head>
@@ -102,13 +201,19 @@
 		<p class="hero__scroll" aria-hidden="true">Scroll</p>
 	</section>
 
-	<!-- Items are duplicated so the strip can loop seamlessly. The legacy
-	     script did this by appending innerHTML at runtime. -->
-	<div class="ticker" aria-hidden="true">
-		<div class="ticker__track">
-			{#each [...TICKER_ITEMS, ...TICKER_ITEMS] as item, i (i)}
-				<span class="ticker__item">{item}</span>
-			{/each}
+	<!-- The placeholder reserves the strip's height while it is pinned, so
+	     unpinning on the first scroll does not yank the rest of the page up
+	     by 74px. It collapses to nothing the moment the strip rejoins the
+	     flow, and never exists at all on mobile. -->
+	<div class="ticker-slot" class:is-pinned={tickerPinned}>
+		<!-- Items are duplicated so the strip can loop seamlessly. The legacy
+		     script did this by appending innerHTML at runtime. -->
+		<div class="ticker" class:is-pinned={tickerPinned} aria-hidden="true">
+			<div class="ticker__track">
+				{#each [...TICKER_ITEMS, ...TICKER_ITEMS] as item, i (i)}
+					<span class="ticker__item">{item}</span>
+				{/each}
+			</div>
 		</div>
 	</div>
 
