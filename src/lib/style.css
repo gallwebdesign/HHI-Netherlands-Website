@@ -711,7 +711,6 @@ body.menu-open{ overflow:hidden; }
      which is the same failure the stage floor and ticker both had. Must
      stay after the blanket `animation-duration` rule above to win. */
   .envelope__body,
-  .envelope__flap,
   .envelope__fold{ stroke-dashoffset:0 !important; animation:none !important; }
   .envelope__letter{ opacity:1 !important; transform:none !important; animation:none !important; }
 }
@@ -1004,14 +1003,10 @@ body.menu-open{ overflow:hidden; }
 /* Bone rather than --line: these stand in for text, and --line is a
    14%-alpha hairline that vanishes at this size. */
 .envelope__rule{ stroke:var(--bone); stroke-width:3; stroke-linecap:round; opacity:.35; }
-/* The flap, folded back behind the envelope. Dimmed: it is behind the body
-   in space, and drawing it at full strength flattens the depth the paint
-   order just created. */
-.envelope__flap{ stroke:currentColor; stroke-width:2.5; fill:var(--ink); opacity:.5; stroke-linejoin:round; }
-/* Opaque back wall, so the flap's lower ends vanish behind it. --panel
-   rather than --ink so the envelope's interior reads as very slightly
-   lifted off the page ground. */
-.envelope__back{ fill:var(--panel); }
+/* Back wall. Only a thin band either side of the letter is ever visible,
+   but it closes the silhouette behind the sheet. Stroked as well as filled
+   so that band reads as the envelope's own edge rather than a shadow. */
+.envelope__back{ fill:var(--panel); stroke:currentColor; stroke-width:2.5; opacity:.55; }
 /* Opaque, and deliberately the page ground rather than --panel: this shape's
    whole job is to hide the part of the letter that is inside the envelope.
    With fill:none the sheet's bottom edge shows straight through the front
@@ -1035,17 +1030,15 @@ body.menu-open{ overflow:hidden; }
    on the SVG, so these are real user units. If a path's geometry changes,
    its dasharray has to change with it or the line will either stop short or
    start already-visible. */
-.envelope--animate .envelope__body{ stroke-dasharray:640; stroke-dashoffset:640; }
-.envelope--animate .envelope__flap{ stroke-dasharray:250; stroke-dashoffset:250; }
-.envelope--animate .envelope__fold{ stroke-dasharray:250; stroke-dashoffset:250; }
+.envelope--animate .envelope__body{ stroke-dasharray:580; stroke-dashoffset:580; }
+.envelope--animate .envelope__fold{ stroke-dasharray:270; stroke-dashoffset:270; }
 .envelope--animate .envelope__letter{ opacity:0; }
 
 .envelope--animate.envelope--drawn .envelope__body{ animation:envelope-draw 1.1s ease forwards .1s; }
-.envelope--animate.envelope--drawn .envelope__flap{ animation:envelope-draw .7s ease forwards .45s; }
-/* The letter slides in after the envelope exists to receive it, and the
-   front crease lands last so it reads as closing over the sheet. */
-.envelope--animate.envelope--drawn .envelope__letter{ animation:envelope-rise .7s ease forwards .7s; }
-.envelope--animate.envelope--drawn .envelope__fold{ animation:envelope-draw .7s ease forwards .95s; }
+/* The letter drops in once the envelope exists to receive it, and the V
+   lands last so it reads as folding up over the sheet. */
+.envelope--animate.envelope--drawn .envelope__letter{ animation:envelope-rise .7s ease forwards .55s; }
+.envelope--animate.envelope--drawn .envelope__fold{ animation:envelope-draw .7s ease forwards .85s; }
 
 @keyframes envelope-draw{ to{ stroke-dashoffset:0; } }
 /* Downward, not up: the letter is being inserted, so it travels INTO the

@@ -178,22 +178,34 @@ through `currentColor`, so it follows the palette automatically.
 Decorative and marked as such: `aria-hidden`, no title, no role. It says nothing
 the page does not already say in text.
 
-⚠️ **PAINT ORDER IS THE WHOLE DRAWING, and it was wrong on the first two
-attempts.** SVG has no z-index: later elements paint over earlier ones, and both
-"is it open?" and "is the letter going in?" are answered by the sequence alone.
-Back to front, the only correct order is:
+⚠️ **THREE VERSIONS OF THIS DRAWING WERE VISIBLY WRONG, and every one of them
+passed a fully green suite.** Iain rejected each in turn. What went wrong, in
+order, because the pattern is the lesson:
 
-1. **Open flap**, an inverted V *behind* everything — this is what says open.
-2. **Back wall**, opaque, hiding where the flap joins.
-3. **Letter**, above the back wall and below the front — mid-insertion.
-4. **Front panel**, opaque, hiding the letter's lower half.
+1. **A downward V drawn in front** — that is a *sealed* envelope seen from
+   outside, with the letter stuck behind everything.
+2. **An inverted V drawn behind**, as a flap folded back. Closer, but still an
+   invention: the reference has no flap standing up at all.
+3. **Correct paint order but the letter too narrow**, which left the drawing
+   reading as an envelope with a small card floating over it.
 
-**The version shipped on 20 Aug at 20:13 got this wrong** and Iain caught it: the
-flap was drawn as a downward V *in front*, which is a sealed envelope seen from
-outside, and the letter sat behind the whole thing rather than inside it. A test
-now asserts the child order and the front panel's opaque fill, because nothing
-about this is visible to an ordinary assertion — the first version passed a
-fully green suite.
+**The reference has no flap.** The envelope is a wide rounded rectangle whose top
+edge crosses the letter, with the V descending from that top edge; "open" is
+conveyed by the letter sitting *inside*, and nothing else. Back to front:
+
+1. **Back wall** — only a thin band either side of the letter is ever seen.
+2. **Letter**, large and centred, dominating the upper two-thirds.
+3. **Front panel**, opaque, hiding the letter's lower half.
+
+A test asserts that child order, the front panel's opaque fill, **and that no
+`envelope__flap` element exists** — that last one specifically so the flap
+cannot be reinvented a third time.
+
+⚠️ **The general lesson, worth more than the drawing.** Three wrong versions
+shipped past a green suite because "does this look like the reference" is not a
+property any assertion here can check. When the deliverable is a picture,
+**the screenshot is the test** — and a structural assertion is only ever a guard
+against regressing a shape that a human already confirmed.
 
 ⚠️ **Three further rules, each of which produced a visibly wrong drawing:**
 
@@ -201,18 +213,17 @@ fully green suite.
   overlap is the entire illusion of a sheet sitting *inside* an envelope. With
   no fill, the letter's bottom edge shows straight through and the drawing goes
   flat.
-- **The letter must be narrow enough to leave the flap's peak visible.** At 132
-  units wide it covered the flap's whole V (which spans x=20–220, y=16–84) and
-  the envelope read as closed *again*, despite correct paint order. It is 108
-  wide so both shoulders of the flap show. It must also still overlap the front
-  panel's top edge (y=112) or a gap opens between sheet and envelope — hence it
-  ends at y=110. Those two constraints pull against each other; measure both.
+- **The letter must be large.** It is 136×140 and dominates the upper
+  two-thirds, as in the reference. Earlier versions shrank it to solve other
+  problems and it stopped reading as a letter *in* an envelope — it looked like
+  a small card floating over one. It must extend below the front's top edge
+  (y=96) or a gap opens between sheet and envelope; it ends at y=150.
 - **`--panel` fills and `--line` strokes are too dim at this size.** The letter
   first rendered as a grey ghost and the address tile as muddy brown
   (`currentColor` at .28 over `--ink`). The paper carries its own `#1c1c28` with
   a bright edge, the tile is full-strength orange, and the text rules are
-  `--bone` at .35. The flap is dimmed to .5 — it is behind the body in space,
-  and full strength flattens the depth the paint order just created.
+  `--bone` at .35. The back wall is dimmed to .55 — it is behind the sheet in
+  space, and full strength flattens the depth the paint order just created.
 
 ⚠️ **The draw-in has to be gated on visibility, and the reason is not obvious.**
 A CSS animation starts at page load, but the wrapper is held at

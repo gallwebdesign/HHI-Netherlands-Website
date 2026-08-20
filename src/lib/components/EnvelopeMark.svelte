@@ -71,61 +71,55 @@
 	{@attach startWhenSeen}
 >
 	<!-- ⚠️ PAINT ORDER IS THE WHOLE DRAWING. SVG has no z-index: later
-	     elements paint over earlier ones, and every "is it open?" / "is the
-	     letter inside?" question is answered by this sequence alone. Back to
-	     front: open flap → back wall → letter → front panel. Reordering any
-	     two of these breaks the illusion rather than merely moving a line. -->
+	     elements paint over earlier ones. Back to front:
+	       envelope back wall → letter → envelope front (with its V).
+	     Reordering any two breaks the illusion rather than moving a line.
 
-	<!-- 1. The open flap, folded back BEHIND the envelope. This is what makes
-	        it read as open rather than sealed: an inverted V rising above the
-	        body's top edge, drawn first so the back wall covers where it
-	        joins. A flap drawn in FRONT as a downward V is a closed
-	        envelope — that was the previous version's mistake. -->
-	<path d="M20 84 L120 16 L220 84" class="envelope__flap" />
+	     ⚠️ THERE IS NO FLAP STICKING UP. Two earlier versions invented one —
+	     first a downward V in front (a sealed envelope), then an inverted V
+	     behind (a flap folded back). Neither is the reference. In the
+	     reference the envelope is simply a wide rounded rectangle whose top
+	     edge crosses the letter, with the V descending from that top edge;
+	     "open" is conveyed by the letter sitting inside it, nothing else.
+	     Do not add a flap back. -->
 
-	<!-- 2. Back wall. Opaque, so the flap's lower ends disappear behind it
-	        and the fold reads as a crease rather than a line crossing the
-	        body. -->
-	<rect x="12" y="80" width="216" height="102" rx="8" class="envelope__back" />
+	<!-- 1. Back wall. Only the part above the front's V is ever visible —
+	        a thin band either side of the letter — but it is what closes the
+	        silhouette behind the sheet. -->
+	<rect x="16" y="74" width="208" height="104" rx="10" class="envelope__back" />
 
-	<!-- 3. The letter, part-way into the envelope. It sits ABOVE the back
-	        wall and BELOW the front panel, which is exactly what "being
-	        inserted" looks like: the top half clear of the mouth, the bottom
-	        half already swallowed.
-
-	        ⚠️ Two constraints pull in opposite directions here, and both were
-	        measured rather than guessed:
-	        - It must overlap the front panel's top edge (y=112) or a gap
-	          opens between sheet and envelope — hence it ends at y=110.
-	        - It must be NARROW enough to leave the flap's peak visible. At
-	          132 wide it covered the flap's whole V (flap spans x=20–220,
-	          y=16–84) and the envelope read as closed again. 108 wide leaves
-	          both shoulders of the flap showing, which is what says "open". -->
+	<!-- 2. The letter. Large and centred, dominating the upper two-thirds
+	        exactly as in the reference: its top sits well clear of the
+	        envelope and its bottom disappears behind the front panel.
+	        ⚠️ It must extend BELOW the front's top edge (y=96) or a gap opens
+	        between sheet and envelope; it ends at y=150, comfortably inside. -->
 	<g class="envelope__letter">
-		<rect x="66" y="26" width="108" height="84" rx="5" class="envelope__paper" />
+		<rect x="52" y="10" width="136" height="140" rx="8" class="envelope__paper" />
 
-		<!-- Address block: one filled tile and three rules, matching the
-		     reference's letterhead without pretending to be real text. -->
-		<rect x="78" y="38" width="26" height="18" rx="3" class="envelope__tile" />
-		<path d="M112 41h50M112 49h50M112 57h34" class="envelope__rule" />
+		<!-- Letterhead: one filled tile beside three short rules, matching the
+		     reference's header block without pretending to be real text. -->
+		<rect x="68" y="26" width="34" height="24" rx="4" class="envelope__tile" />
+		<path d="M112 30h60M112 39h60M112 48h42" class="envelope__rule" />
 
-		<!-- Body copy. The short last line is what makes a block of rules
-		     read as a paragraph rather than a grid. -->
-		<path d="M78 72h84M78 83h84M78 94h54" class="envelope__rule" />
+		<!-- Body copy. The short last line is what makes a block of rules read
+		     as a paragraph rather than a grid. -->
+		<path d="M68 68h104M68 80h104M68 92h104M68 104h68" class="envelope__rule" />
 	</g>
 
-	<!-- 4. Front panel, painted last so it hides the letter's lower half.
-	        Opaque --ink fill: with fill:none the letter shows straight
-	        through and the drawing goes flat. Its top edge is the envelope
-	        mouth, and the two diagonals running up to the corners are the
-	        side creases of the front face. -->
+	<!-- 3. Envelope front, painted last so it hides the letter's lower half.
+	        Opaque --ink fill: with fill:none the letter shows straight through
+	        and the drawing goes flat. The top edge is the envelope mouth and
+	        the V descends from its two top corners. -->
 	<path
-		d="M12 112 L120 172 L228 112 V174 a8 8 0 0 1 -8 8 H20 a8 8 0 0 1 -8 -8 Z"
+		d="M16 96 L120 172 L224 96 V168 a10 10 0 0 1 -10 10 H26 a10 10 0 0 1 -10 -10 Z"
 		class="envelope__front"
 	/>
-	<path d="M12 112 L120 172 L228 112" class="envelope__fold" />
 
-	<!-- Outer body last of all, so its stroke sits cleanly over every fill
-	     and gives the whole shape one unbroken outline. -->
-	<rect x="12" y="80" width="216" height="102" rx="8" class="envelope__body" />
+	<!-- The V itself, and the two short creases running from the mouth's
+	     corners down to the bottom corners — both visible in the reference. -->
+	<path d="M16 96 L120 172 L224 96" class="envelope__fold" />
+
+	<!-- Outer body last of all, so its stroke sits cleanly over every fill and
+	     gives the whole envelope one unbroken rounded outline. -->
+	<rect x="16" y="96" width="208" height="82" rx="10" class="envelope__body" />
 </svg>

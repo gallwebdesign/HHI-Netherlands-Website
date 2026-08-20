@@ -1199,26 +1199,24 @@ test('contact page fills its left column with the envelope, and the form is capp
 	const box = await envelope.boundingBox();
 	expect(box!.height).toBeGreaterThan(150);
 
-	/* ⚠️ The envelope must read as OPEN, with the letter going INTO it. Both
-	   facts live entirely in SVG paint order, which has no visual assertion —
-	   so they are checked structurally instead. The first version of this
-	   drawing was a closed envelope with the letter stuck behind it, and
-	   nothing in the suite would have caught that.
-
-	   Back to front: flap (folded back, behind) → back wall → letter →
-	   front panel (hides the letter's lower half). Swapping any two of these
-	   breaks the illusion, so the order itself is what gets asserted. */
+	/* ⚠️ The letter must sit INSIDE the envelope, which lives entirely in SVG
+	   paint order and has no visual assertion — so it is checked structurally.
+	   Three versions of this drawing were visibly wrong (a sealed envelope, a
+	   letter stuck behind it, an invented flap), and every one of them passed
+	   a fully green suite. Back to front: back wall → letter → front panel. */
 	const order = await envelope.evaluate((svg) =>
 		[...svg.children].map((child) => child.getAttribute('class') ?? child.tagName)
 	);
 	const indexOf = (name: string) => order.findIndex((c) => c.includes(name));
 
-	expect(indexOf('envelope__flap')).toBeGreaterThanOrEqual(0);
-	// Flap behind the back wall — that is what makes it read as folded open.
-	expect(indexOf('envelope__flap')).toBeLessThan(indexOf('envelope__back'));
-	// Letter above the back wall but below the front: mid-insertion.
+	// Letter above the back wall but below the front: it is inside the envelope.
+	expect(indexOf('envelope__back')).toBeGreaterThanOrEqual(0);
 	expect(indexOf('envelope__back')).toBeLessThan(indexOf('envelope__letter'));
 	expect(indexOf('envelope__letter')).toBeLessThan(indexOf('envelope__front'));
+
+	/* No flap element. Two earlier versions invented one and both read wrong;
+	   the reference has none, and "open" comes from the letter being inside. */
+	expect(indexOf('envelope__flap')).toBe(-1);
 
 	/* The front panel must be opaque, or the letter's lower half shows
 	   through it and the drawing goes flat. */
