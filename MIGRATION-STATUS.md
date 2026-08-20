@@ -84,12 +84,9 @@ is deliberate rather than incidental** — a `mailto:` in the HTML is harvested 
 the same crawlers the endpoint's spam defences exist to stop, so printing it
 would undo part of what was just built.
 
-⚠️ **The visible consequence: the left column is now mostly empty.** One
-`Organisation` fact (178px) sits beside a 578px form at 1440px, leaving ~400px
-of dead space. It reads as deliberate whitespace rather than as broken, so it
-was left alone — but it is the obvious thing to notice, and if it should be
-filled, that is a design decision rather than a bug to fix. Mobile is unaffected
-(the grid stacks below 1000px).
+~~⚠️ **The visible consequence: the left column is now mostly empty.**~~
+✅ **Filled 20 Aug 2026** — see *The envelope* below. The left column went from
+178px to 460px against a 578px form.
 
 ### The endpoint — `static/api/contact.php`
 
@@ -145,7 +142,8 @@ trim them.
 
 ### How it was verified
 
-- **`npm test` → 42 passed** (37 before, plus five new contact tests).
+- **`npm test` → 45 passed** (37 before, plus five contact-form tests and three
+  for the envelope and the form width).
 - ⚠️ **The Playwright tests stub the endpoint and prove nothing about the PHP.**
   The harness serves `build/` as static files, so the PHP never executes;
   `page.route()` stands in for it. They prove the *client* handles each response
@@ -163,7 +161,65 @@ trim them.
 `reveal()`, which holds it at `visibility:hidden` until its ScrollTrigger fires.
 Below the fold it is *attached but unfillable*, so `page.fill()` times out
 against a perfectly working form. `fillContactForm()` scrolls first, which is
-what a real visitor does. Three tests failed this way before it was added.
+what a real visitor does. Three tests failed this way before it was added, and
+a fourth did later — the envelope test, the same afternoon, the same cause.
+
+### The envelope — 20 August 2026
+
+**Fills the space the two removed facts left**, built from a reference Iain
+supplied: an open envelope with a letter rising out of it, redrawn in the site's
+palette. Lives in [EnvelopeMark.svelte](src/lib/components/EnvelopeMark.svelte)
+and is **the first inline SVG in the repo** — drawn rather than shipped as an
+asset because it is nine paths of flat geometry, and a file in `static/` would
+be a request plus a second place to keep the colours in sync. It reads `--oranje`
+through `currentColor`, so it follows the palette automatically.
+
+Decorative and marked as such: `aria-hidden`, no title, no role. It says nothing
+the page does not already say in text.
+
+⚠️ **Three geometry and layering rules, each of which produced a visibly wrong
+drawing before it was fixed:**
+
+- **The front panel needs an opaque `--ink` fill, not `fill:none`.** That
+  overlap is the entire illusion of a sheet sitting *inside* an envelope. With
+  no fill, the letter's bottom edge shows straight through and the drawing goes
+  flat.
+- **The letter's bottom edge must stay above the fold's fall at the letter's own
+  left edge.** The front occludes along the diagonal (12,78)→(120,140), which at
+  x=52 is already down at y≈101 — a letter reaching lower shows its bottom
+  corners *below* the envelope. It is 82 units tall for that reason; do not
+  lengthen it without re-checking.
+- **`--panel` fills and `--line` strokes are too dim at this size.** The letter
+  first rendered as a grey ghost and the address tile as muddy brown
+  (`currentColor` at .28 over `--ink`). The paper carries its own `#1c1c28` with
+  a bright edge, the tile is full-strength orange, and the text rules are
+  `--bone` at .35.
+
+⚠️ **The draw-in has to be gated on visibility, and the reason is not obvious.**
+A CSS animation starts at page load, but the wrapper is held at
+`visibility:hidden` by `reveal()` until its ScrollTrigger fires — so an ungated
+draw *finishes unseen* and the envelope simply fades in already-complete. That
+was measured here at dashoffset 0 before the section had ever been scrolled to,
+not guessed. An IntersectionObserver in the component adds `.envelope--drawn`,
+and the animation hangs off `.envelope--animate.envelope--drawn`; `--animate`
+alone only sets the undrawn start state. A test asserts the whole sequence.
+
+Under reduced motion it is forced complete, **without waiting for the
+observer** — the undrawn state lives on `--animate` alone, so a rule keyed to
+`--drawn` would leave a blank frame. Same principle as the stage floor and the
+ticker: less motion, never a missing drawing.
+
+On mobile it is `display:none`. Stacked, it would sit between the Organisation
+fact and the form and push the form below the fold for the sake of a decoration.
+
+### The form width
+
+⚠️ **The cap on `.form` is what narrows the form — the grid is not.** Evening
+`.contact-grid` from 5fr:6fr to 1:1 was expected to trim the form and **did the
+opposite**: measured 625px, up from 610px, because the columns had slack the
+form was already absorbing. `max-width:540px` on `.form` (and on `.form-sent`,
+so the column does not jump on submit) is the only reliable control. A test
+asserts the rendered width, so a future grid change cannot silently widen it.
 
 ## Home hero finished — 17 August 2026
 

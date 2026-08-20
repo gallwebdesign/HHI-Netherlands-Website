@@ -1164,3 +1164,89 @@ test('contact form carries a hidden honeypot no real visitor can reach', async (
 		expect(focused).not.toBe('company');
 	}
 });
+
+test('contact page fills its left column with the envelope, and the form is capped', async ({
+	page
+}) => {
+	/* Both landed 20 Aug 2026: the envelope fills the space the Socials and
+	   E-mail facts left, and the form was capped because it was too wide.
+
+	   ⚠️ The form's width comes from the max-width on .form, NOT from the
+	   grid. Evening .contact-grid to 1:1 was expected to trim it and did the
+	   opposite — measured 625px, up from 610px, because the columns had slack
+	   the form was already absorbing. Asserted on the rendered width so a
+	   future grid change cannot silently widen it again. */
+	await page.setViewportSize({ width: 1440, height: 900 });
+	await page.goto('/contact');
+
+	const form = page.locator('form.form');
+	const width = await form.evaluate((el) => Math.round(el.getBoundingClientRect().width));
+	expect(width).toBeLessThanOrEqual(540);
+
+	/* Decorative: it must be hidden from assistive tech, since it says nothing
+	   the page does not already say in text. */
+	const envelope = page.locator('.envelope');
+	await expect(envelope).toHaveAttribute('aria-hidden', 'true');
+
+	/* Scroll before asserting visibility — the wrapper is behind reveal(),
+	   which holds it at visibility:hidden until its ScrollTrigger fires. The
+	   same trap that broke three contact-form tests; see fillContactForm(). */
+	await envelope.scrollIntoViewIfNeeded();
+	await expect(envelope).toBeVisible();
+
+	/* The illustration exists to fill dead space, so it has to have real
+	   height — a collapsed SVG would pass a mere attachment check. */
+	const box = await envelope.boundingBox();
+	expect(box!.height).toBeGreaterThan(150);
+});
+
+test('the envelope draws itself in only once it is on screen', async ({ page }) => {
+	/* ⚠️ This is the bug this test exists for. A CSS animation starts at page
+	   load, but the wrapper is held at visibility:hidden by reveal() until its
+	   ScrollTrigger fires — so an ungated draw finishes unseen and the
+	   envelope just fades in already-complete. Measured at dashoffset 0 before
+	   the section had ever been scrolled to. An IntersectionObserver in the
+	   component adds .envelope--drawn, which is what starts it. */
+	await page.setViewportSize({ width: 1440, height: 900 });
+	await page.goto('/contact');
+
+	const envelope = page.locator('.envelope');
+
+	// At load, before scrolling: undrawn and un-started.
+	await expect(envelope).not.toHaveClass(/envelope--drawn/);
+	const offsetAtLoad = await page
+		.locator('.envelope__body')
+		.evaluate((el) => getComputedStyle(el).strokeDashoffset);
+	expect(offsetAtLoad).not.toBe('0px');
+
+	// Scrolled into view: the class arrives and the stroke completes.
+	await envelope.scrollIntoViewIfNeeded();
+	await expect(envelope).toHaveClass(/envelope--drawn/);
+	await expect
+		.poll(
+			async () =>
+				page.locator('.envelope__body').evaluate((el) => getComputedStyle(el).strokeDashoffset),
+			{ timeout: 4000 }
+		)
+		.toBe('0px');
+});
+
+test('the envelope is dropped on mobile rather than pushing the form down', async ({ page }) => {
+	/* Stacked, the illustration would sit between the Organisation fact and
+	   the form, pushing the form below the fold for the sake of a decoration.
+	   The form is the reason the page exists. */
+	await page.setViewportSize({ width: 390, height: 844 });
+	await page.goto('/contact');
+
+	/* Asserted on display, not on toBeHidden(): reveal() also reports hidden
+	   before its trigger fires, so a bare visibility check would pass here
+	   even if the mobile rule were deleted. display:none is the actual
+	   mechanism, so that is what gets checked. */
+	const display = await page.locator('.envelope').evaluate((el) => getComputedStyle(el).display);
+	expect(display).toBe('none');
+	await expect(page.locator('form.form')).toBeAttached();
+
+	// The off-canvas honeypot must not widen the page at this width either.
+	const overflows = await page.evaluate(() => document.body.scrollWidth > window.innerWidth);
+	expect(overflows).toBe(false);
+});

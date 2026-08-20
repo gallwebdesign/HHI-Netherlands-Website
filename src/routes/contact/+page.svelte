@@ -1,5 +1,6 @@
 <script lang="ts">
 	import PageHero from '$lib/components/PageHero.svelte';
+	import EnvelopeMark from '$lib/components/EnvelopeMark.svelte';
 	import { base } from '$app/paths';
 	import { magnetic, reveal } from '$lib/attachments.svelte';
 
@@ -118,6 +119,15 @@
 					     harvested by the same crawlers this endpoint exists to defend
 					     against. The privacy policy sends people here to exercise their
 					     data rights, and the form is now that route. -->
+				</div>
+
+				<!-- Fills the space those two facts left. Decorative only — it is
+				     aria-hidden inside the component, and carries no information
+				     the page does not already state in text. Wrapped in reveal()
+				     so the draw-in fires when the section scrolls into view
+				     rather than running unseen on load. -->
+				<div {@attach reveal()}>
+					<EnvelopeMark />
 				</div>
 			</div>
 
