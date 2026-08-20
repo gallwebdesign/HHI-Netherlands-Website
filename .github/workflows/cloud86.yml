@@ -25,7 +25,7 @@ jobs:
 
       - name: Build
         env:
-          BASE_PATH: ""
+          BASE_PATH: ''
         run: npm run build
 
       - name: Deploy to Cloud86 via FTP
@@ -36,4 +36,14 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./build/ # Keep the trailing slash
           server-dir: /httpdocs/ # Adjust this to your target folder on Cloud86
-          
+          # The action mirrors build/ onto the server and DELETES what it does
+          # not find there. api/contact.secret.php holds the contact form's SMTP
+          # credentials, exists only on the server and is gitignored, so without
+          # this exclusion the next deploy would wipe it and mail would silently
+          # fall back to mail(). The default excludes are replaced wholesale
+          # when this key is set, so the git/node ones are repeated here.
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            **/api/contact.secret.php

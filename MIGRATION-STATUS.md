@@ -51,12 +51,119 @@ left needs either the Cloud86 account or a decision:
    switch-off date is set, but it is the only irreversible deadline left.
 3. **Cutover day** (needs the account): delete the Pages workflow, stop setting
    `BASE_PATH`, verify the `.htaccess` redirects on the real host.
-4. **Phase 8** (needs the mailbox): `CONTACT_EMAIL` becomes real, and the
-   contact form becomes a working PHP form.
+4. ~~**Phase 8** (needs the mailbox): `CONTACT_EMAIL` becomes real, and the
+   contact form becomes a working PHP form.~~ ✅ **Built 20 Aug 2026** on
+   `contact-form-php` — see *The contact form* below. **One step is still
+   Iain's: create the `info@hhi-netherlands.com` mailbox in the Cloud86
+   panel.** Until it exists the form accepts submissions and delivers
+   nothing, which is the one failure mode that looks like success.
 
 ~~One small chore: `src/lib/config.ts` fails `npm run lint` on line endings.~~
 ✅ **Done 15 Aug 2026** — formatted as part of the day-split work, since that
 commit had to touch `config.ts` anyway. `npm run lint` is clean.
+
+## The contact form — Phase 8, built 20 August 2026
+
+**Branch `contact-form-php`.** The form stopped being a `mailto:` compose and
+became a real submission: it posts JSON to a PHP endpoint on Cloud86, which
+validates it, filters spam and mails `info@hhi-netherlands.com`.
+
+⚠️ **IT DOES NOT DELIVER YET, AND IT FAILS SILENTLY.** The mailbox
+`info@hhi-netherlands.com` had not been created on Cloud86 as of 20 Aug 2026.
+Until it exists, `mail()` accepts the message, returns success, and the mail
+goes nowhere — the visitor sees "We got it." and nothing arrives. **Create the
+mailbox in the Cloud86 panel, then send a test through the live form before
+trusting the page.** This is the only outstanding step, and it is not repo work.
+
+### What was removed, and the one consequence
+
+Two of the three "Reach us" facts are gone at Iain's request: **Socials** and
+**E-mail**. The socials survive in the footer on every page, so nothing was lost
+sitewide. **The e-mail address is now absent from the markup entirely, and that
+is deliberate rather than incidental** — a `mailto:` in the HTML is harvested by
+the same crawlers the endpoint's spam defences exist to stop, so printing it
+would undo part of what was just built.
+
+⚠️ **The visible consequence: the left column is now mostly empty.** One
+`Organisation` fact (178px) sits beside a 578px form at 1440px, leaving ~400px
+of dead space. It reads as deliberate whitespace rather than as broken, so it
+was left alone — but it is the obvious thing to notice, and if it should be
+filled, that is a design decision rather than a bug to fix. Mobile is unaffected
+(the grid stacks below 1000px).
+
+### The endpoint — `static/api/contact.php`
+
+Lives in `static/`, so Vite copies it verbatim into `build/api/contact.php` and
+the existing FTP action pushes it to `/httpdocs/api/contact.php`. **No workflow
+step was added for it**; the only workflow change was an `exclude` (see below).
+
+Six layers, cheapest first. The ordering is the point: an instant-submit bot is
+rejected before any string work happens.
+
+| Layer | Catches | Answer |
+|---|---|---|
+| Method + content type + `Origin` | cross-site and drive-by posts | 405 / 415 / 403 |
+| Honeypot (`company`) | anything that fills every input | **200, silently dropped** |
+| Timing trap (<3s, >6h) | scripted instant submits, replays | **200, silently dropped** |
+| Rate limit (3/15min, 10/day per IP) | flooding | 429, honestly |
+| Field validation | malformed input | 422 + per-field messages |
+| **CRLF / header tokens** | **mail-header injection** | 400 |
+| Link and markup heuristics | bot spam payloads | **200, silently dropped** |
+
+Three things about that table are load-bearing:
+
+- **The silent drops answer 200 on purpose.** A bot told "rejected" retries with
+  a variation; a bot told "sent" goes away. The rate limit is the exception — it
+  can hit a real person who sent one message and thought of something to add, so
+  it says what happened.
+- **CRLF is rejected, never stripped.** This is the only layer defending against
+  a real security bug rather than a nuisance: a newline in a value that reaches a
+  header lets an attacker append `Bcc:` and turn the form into an open relay,
+  which gets the domain blacklisted. A name containing a CRLF is not a name that
+  needed cleaning — quietly repairing it into a delivered mail hides the attack.
+- **The heuristics layer is deliberately the weakest.** A false positive there
+  silently discards a real message from a real crew, which is worse than a spam
+  mail someone deletes in two seconds. One or two links pass; four do not.
+
+The IP is **hashed, never stored in the clear**, in the rate-limit files under
+`sys_get_temp_dir()` — that file is a log of who contacted the championship, and
+the policy at `/privacy` does not promise to keep one.
+
+### SMTP, if mail() ever proves unreliable
+
+`mail()` is what ships, because it needs no secret. If mail starts landing in
+spam, create `/httpdocs/api/contact.secret.php` **on the server by hand**
+returning `['host', 'port', 'user', 'pass']`, and `contact.php` picks it up
+automatically — no code change. It is gitignored, **and the FTP action now
+carries an `exclude` for it**, because the action mirrors `build/` and deletes
+what it does not find there; without that exclusion the next deploy would wipe
+the credentials and silently fall back to `mail()`.
+
+⚠️ Setting `exclude` **replaces the action's default excludes wholesale**, so
+the `.git*` and `node_modules` patterns are repeated in the workflow. Do not
+trim them.
+
+### How it was verified
+
+- **`npm test` → 42 passed** (37 before, plus five new contact tests).
+- ⚠️ **The Playwright tests stub the endpoint and prove nothing about the PHP.**
+  The harness serves `build/` as static files, so the PHP never executes;
+  `page.route()` stands in for it. They prove the *client* handles each response
+  shape. **Do not read a green suite as "the form works".**
+- **The PHP was verified separately against `php -S`** — 18 of 20 cases passing,
+  with the two "failures" traced to the bash harness mangling multi-byte
+  characters, not the endpoint. Re-tested with PHP-generated JSON: em dashes,
+  curly quotes, apostrophes, emoji and Dutch accents all pass. Header
+  construction was checked separately (RFC 2047 encoding, 7-bit-clean headers,
+  SMTP dot-stuffing).
+- **Looked at, not just measured** — desktop and mobile, plus the confirmation
+  and error states, per the standing rule in CLAUDE.md.
+
+⚠️ **A trap for the next person writing a contact test.** The form sits behind
+`reveal()`, which holds it at `visibility:hidden` until its ScrollTrigger fires.
+Below the fold it is *attached but unfillable*, so `page.fill()` times out
+against a perfectly working form. `fillContactForm()` scrolls first, which is
+what a real visitor does. Three tests failed this way before it was added.
 
 ## Home hero finished — 17 August 2026
 
@@ -693,11 +800,12 @@ it could not see.
 
 - **The controller named in the policy is Marion Gall-Wierts.** Carried over
   as-is (confirmed 15 Aug), but worth re-checking it is still current.
-- **The policy tells people to use "het contact formulier" to exercise their
-  rights.** That was `contact.php`. The page links to `/contact` instead, whose
-  form is still the Phase 8 placeholder — so the route a visitor is told to use
-  for a GDPR request is not yet functional. **This is the strongest argument for
-  Phase 8 being real work, not polish.**
+- ~~**The policy tells people to use "het contact formulier" to exercise their
+  rights.**~~ ✅ **Resolved 20 Aug 2026.** The form is a real submission now, so
+  the route a visitor is told to use for a GDPR request works — **once the
+  mailbox exists.** That last condition is the whole of what is left: a GDPR
+  request that silently goes nowhere is worse than one that bounces, so
+  creating the mailbox is not an optional finishing touch.
 
 ## The reduced-motion freeze — ✅ fixed 15 August 2026
 
@@ -824,7 +932,7 @@ account or a decision from Iain:
   carries the only irreversible deadline on the project. See the section below.
 - Cutover day: delete the Pages workflow, stop setting `BASE_PATH`, verify the
   redirects on the real host.
-- Phase 8: `CONTACT_EMAIL` and a real contact form, both needing the mailbox.
+- Phase 8: ✅ **built 20 Aug 2026.** Only the mailbox itself is outstanding.
 
 **Explicitly NOT before the account exists, and why** — agreed with Iain 13 Aug,
 and still true:
@@ -837,8 +945,9 @@ and still true:
   are already no-ops when `BASE_PATH` is unset. The cutover is "stop setting the
   env var and delete the workflow", *not* a code change. These two items are one
   task, and it belongs to cutover day.
-- **Contact form and `CONTACT_EMAIL`** — both need the real mailbox to exist.
-  Phase 8.
+- ~~**Contact form and `CONTACT_EMAIL`**~~ — ✅ **built 20 Aug 2026.** The form
+  and its PHP endpoint are done and testable; only *delivery* waits on the
+  mailbox, and that is a panel click rather than repo work.
 
 ## Where we stopped
 
@@ -862,7 +971,7 @@ remains needs the Cloud86 account or the mailbox.
 | 5 · Remaining sub-pages | ✅ all six ported, smoke test green |
 | 6 · index.html | ✅ hero, stage floor, preloader, road pin, all sections |
 | 7 · Delete old site | 🟨 items 2–5 done; `.htaccess` written — **only the cutover itself is left, and it needs the account** |
-| 8 · Finish "fully functional" | 🟨 registration hub, favicon + social preview done; contact form and `CONTACT_EMAIL` still need the mailbox |
+| 8 · Finish "fully functional" | 🟨 registration hub, favicon + social preview, **contact form (20 Aug)** done; only the mailbox itself is left |
 
 ## Hosting — decided: Cloud86 (13 Aug 2026)
 
@@ -950,8 +1059,8 @@ not entirely — the split is what drives the running order at the top of this f
 | `regulations` → local PDF | ⚠️ partly — the dependency can be removed, but only once the PDF exists |
 | Delete the Pages workflow | ❌ hold — it is the only staging environment; deleting it early leaves no preview at all |
 | Stop setting `BASE_PATH` | ❌ hold — same task as the workflow. The two are in tension: the workflow *sets* `BASE_PATH` because Pages serves from a sub-path, so removing base handling early breaks the preview |
-| `CONTACT_EMAIL` becomes real | ❌ needs the mailbox to exist |
-| Real contact form (PHP) | ❌ needs somewhere to run — Phase 8 |
+| `CONTACT_EMAIL` becomes real | 🟨 **confirmed as the address 20 Aug**; the mailbox still has to be created |
+| Real contact form (PHP) | ✅ **built 20 Aug 2026** — `static/api/contact.php`, deployed by the existing FTP action |
 
 ## Phase 7 — items 2–5, done 13 August 2026
 
@@ -1275,9 +1384,12 @@ Both come back as links the moment the archives get real routes.
 
 1. ~~**Hosting**~~ — **settled 13 Aug 2026: Cloud86.** See the hosting section above.
    Two purchase-time details still to confirm there (Git integration, cheaper tier).
-2. **Contact address** — `CONTACT_EMAIL` in [config.ts](src/lib/config.ts) is still
-   a guess, but **stops being one at Cloud86**: the mailbox gets created by hand, so
-   `info@hhi-netherlands.com` becomes true by construction. Confirm on setup.
+2. **Contact address** — ✅ **confirmed 20 Aug 2026** as
+   `info@hhi-netherlands.com`, and now written in two places: `CONTACT_EMAIL` in
+   [config.ts](src/lib/config.ts) as the record, and `MAIL_TO` in
+   [static/api/contact.php](static/api/contact.php) as the copy that actually
+   routes mail. **The mailbox itself still has to be created in the Cloud86
+   panel** — see *The contact form* below.
 3. ~~**Favicon and social preview**~~ — ✅ **settled 14 Aug 2026.** Iain supplied
    the official logo as a true vector. See *Brand assets* below.
 4. ~~**Division split across the two event days**~~ — ✅ **settled 15 Aug 2026:

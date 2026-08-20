@@ -24,6 +24,12 @@ Thumbs.db
 !.env.example
 !.env.test
 
+# Contact form SMTP credentials. Written by hand on the server at
+# /httpdocs/api/contact.secret.php if mail() ever needs upgrading to
+# authenticated SMTP; contact.php includes it only if present. The FTP
+# deploy excludes it too, so a deploy cannot erase it.
+static/api/contact.secret.php
+
 # Vite
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*

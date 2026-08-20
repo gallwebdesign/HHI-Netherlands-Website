@@ -992,3 +992,175 @@ test('every "register" CTA points at the hub, not a form', async ({ page }) => {
 		await expect(page.locator('a[href*="form.jotform.com"]')).toHaveCount(0);
 	}
 });
+
+/* ============================================================
+   CONTACT FORM — Phase 8
+   The form stopped being a mailto: compose on 20 Aug 2026 and became a
+   real POST to /api/contact.php.
+
+   ⚠️ THESE TESTS STUB THE ENDPOINT. The harness serves build/ as static
+   files, so the PHP never executes — page.route() stands in for it. That
+   means these prove the *client* handles each response shape correctly,
+   and prove nothing whatsoever about the validation, the rate limit or
+   the mail. The PHP is verified separately against `php -S`; see
+   MIGRATION-STATUS.md. Do not read a green run here as "the form works".
+   ============================================================ */
+
+/** Fill the four real fields with something that passes client validation.
+ *
+ *  Scrolls first, and that is not incidental: the form sits behind reveal(),
+ *  which holds it at visibility:hidden until its ScrollTrigger fires. Below
+ *  the fold it is attached but unfillable, so a test that goes straight to
+ *  page.fill() times out against a perfectly working form. Scrolling is what
+ *  a real visitor does to reach it. */
+async function fillContactForm(page: import('@playwright/test').Page) {
+	await page.locator('form.form').scrollIntoViewIfNeeded();
+	await expect(page.locator('input[name="name"]')).toBeVisible();
+	await page.fill('input[name="name"]', 'Kim de Vries');
+	await page.fill('input[name="email"]', 'kim@example.com');
+	await page.fill('input[name="subject"]', 'Registration question');
+	await page.fill('textarea[name="message"]', 'Can a crew enter both competitions in one weekend?');
+}
+
+test('contact page no longer prints the socials or the e-mail address', async ({ page }) => {
+	/* Removed 20 Aug 2026 when the form became a real submission. The address
+	   is deliberately absent from the markup: a mailto: in the HTML is
+	   harvested by exactly the crawlers the endpoint defends against. The
+	   socials still live in the footer, which is why this scopes to main. */
+	await page.goto('/contact');
+
+	await expect(page.locator('main a[href^="mailto:"]')).toHaveCount(0);
+	await expect(page.locator('main')).not.toContainText('info@hhi-netherlands.com');
+
+	// The Organisation fact stays; it was the only one of the three that kept its purpose.
+	await expect(page.locator('main .event__fact')).toHaveCount(1);
+	await expect(page.locator('main .event__fact dt')).toHaveText('Organisation');
+
+	// Socials survive in the footer, so nothing was lost sitewide.
+	await expect(page.locator('.footer a', { hasText: /^Instagram$/ })).toHaveCount(1);
+});
+
+test('contact form posts JSON to the PHP endpoint and confirms in place', async ({ page }) => {
+	let posted: Record<string, unknown> | null = null;
+
+	await page.route('**/api/contact.php', async (route) => {
+		posted = JSON.parse(route.request().postData() ?? '{}');
+		await route.fulfill({
+			status: 200,
+			contentType: 'application/json',
+			body: JSON.stringify({ ok: true, message: 'Message sent.' })
+		});
+	});
+
+	await page.goto('/contact');
+	await fillContactForm(page);
+
+	/* The endpoint rejects anything submitted within 3s of page load, and the
+	   client posts the timestamp that drives it. Waiting here is not padding —
+	   it is the test honouring the same trap a real visitor does. */
+	await page.waitForTimeout(3200);
+	await page.click('button[type="submit"]');
+
+	/* Confirmation replaces the form; no navigation. Attached rather than
+	   visible — the confirmation is behind reveal() too, and it mounts where
+	   the form was rather than at the current scroll position. */
+	await expect(page.locator('.form-sent')).toBeAttached();
+	await expect(page.locator('form.form')).toHaveCount(0);
+	expect(page.url()).toContain('/contact');
+
+	expect(posted).toMatchObject({
+		name: 'Kim de Vries',
+		email: 'kim@example.com',
+		subject: 'Registration question'
+	});
+	// The honeypot must go over empty, and the timing token must be real.
+	expect(posted!.company).toBe('');
+	expect(typeof posted!.loadedAt).toBe('number');
+	expect(posted!.loadedAt as number).toBeGreaterThan(0);
+
+	// "Send another" restores the form without a reload.
+	await page.locator('.form-sent button').scrollIntoViewIfNeeded();
+	await page.click('.form-sent button');
+	await expect(page.locator('form.form')).toBeAttached();
+});
+
+test("contact form renders the endpoint's per-field errors inline", async ({ page }) => {
+	/* The server is the only validator that counts, so the client has to be
+	   able to display what it sends back rather than assuming its own checks
+	   already caught everything. */
+	await page.route('**/api/contact.php', (route) =>
+		route.fulfill({
+			status: 422,
+			contentType: 'application/json',
+			body: JSON.stringify({
+				ok: false,
+				message: 'Please check the fields marked below.',
+				fields: { email: 'That does not look like an e-mail address.' }
+			})
+		})
+	);
+
+	await page.goto('/contact');
+	await fillContactForm(page);
+	await page.waitForTimeout(3200);
+	await page.click('button[type="submit"]');
+
+	await expect(
+		page.locator('.form__error', { hasText: /does not look like an e-mail/ })
+	).toBeVisible();
+	await expect(page.locator('input[name="email"]')).toHaveAttribute('aria-invalid', 'true');
+
+	// The form survives, so nothing typed is lost.
+	await expect(page.locator('form.form')).toBeAttached();
+	await expect(page.locator('input[name="name"]')).toHaveValue('Kim de Vries');
+});
+
+test('contact form reports a failed delivery rather than claiming success', async ({ page }) => {
+	/* A form that says "sent" when nothing was sent is worse than one that
+	   errors: the visitor walks away believing they made contact. */
+	await page.route('**/api/contact.php', (route) =>
+		route.fulfill({
+			status: 502,
+			contentType: 'application/json',
+			body: JSON.stringify({
+				ok: false,
+				message: 'We could not send your message just now. Please try again shortly.'
+			})
+		})
+	);
+
+	await page.goto('/contact');
+	await fillContactForm(page);
+	await page.waitForTimeout(3200);
+	await page.click('button[type="submit"]');
+
+	await expect(page.locator('.form__error--block')).toContainText(/could not send/i);
+	await expect(page.locator('.form-sent')).toHaveCount(0);
+});
+
+test('contact form carries a hidden honeypot no real visitor can reach', async ({ page }) => {
+	/* The trap only works if it is invisible to people and present for bots.
+	   Asserted on all three mechanisms, because dropping any one of them
+	   either exposes the field to a visitor or hides it from the DOM readers
+	   it is meant to catch. */
+	await page.goto('/contact');
+
+	const honeypot = page.locator('input[name="company"]');
+	await expect(honeypot).toHaveCount(1);
+	await expect(honeypot).toBeHidden();
+	await expect(honeypot).toHaveAttribute('tabindex', '-1');
+	await expect(page.locator('.form__hp')).toHaveAttribute('aria-hidden', 'true');
+
+	/* display:none would let some form-fillers skip it, which defeats the
+	   trap — it must be positioned away instead. */
+	const display = await honeypot.evaluate((el) => getComputedStyle(el).display);
+	expect(display).not.toBe('none');
+
+	// Tabbing through the form must never land on it.
+	await page.focus('input[name="name"]');
+	for (let i = 0; i < 6; i++) {
+		await page.keyboard.press('Tab');
+		const focused = await page.evaluate(() => document.activeElement?.getAttribute('name'));
+		expect(focused).not.toBe('company');
+	}
+});

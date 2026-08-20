@@ -978,7 +978,48 @@ body.menu-open{ overflow:hidden; }
 }
 .form input:focus, .form textarea:focus{ outline:none; border-color:var(--oranje); }
 .form textarea{ min-height:150px; resize:vertical; }
-.form__hint{ font-family:var(--font-mono); font-size:11px; letter-spacing:.1em; color:var(--muted); }
+.form__hint{ font-family:var(--font-mono); font-size:11px; letter-spacing:.1em; color:var(--muted); line-height:1.7; }
+.form__hint a{ color:var(--oranje); }
+
+/* A field the endpoint rejected. Border only — the message below carries
+   the meaning, and colour is never the sole signal. */
+.form input[aria-invalid="true"], .form textarea[aria-invalid="true"]{ border-color:var(--oranje); }
+
+/* Inline field errors. Not uppercase/tracked like the labels above them:
+   an error is prose to read, not a heading to scan. */
+.form__error{
+  font-family:var(--font-body); font-style:normal; font-size:13px;
+  letter-spacing:0; text-transform:none; color:var(--oranje-2); line-height:1.5;
+}
+/* The form-level error (delivery failed, rate limited) sits between the
+   fields and the button, so it needs the space a field error does not. */
+.form__error--block{
+  border-left:2px solid var(--oranje); padding:12px 0 12px 14px; margin:0;
+}
+
+/* Honeypot. Must be genuinely reachable to a bot that reads the DOM and
+   genuinely absent for everyone else, which rules out display:none — some
+   form-fillers skip hidden inputs, and skipping it is the one outcome that
+   defeats the trap. Positioned off-canvas instead, with aria-hidden and
+   tabindex=-1 on the markup keeping it out of the a11y tree and tab order. */
+.form__hp{
+  position:absolute; left:-9999px; width:1px; height:1px;
+  overflow:hidden; opacity:0; pointer-events:none;
+}
+
+.btn[disabled]{ opacity:.55; cursor:not-allowed; }
+/* The button's hover wipe is a ::before that slides in; leaving it live on a
+   disabled button makes a dead control look interactive. */
+.btn[disabled]::before{ display:none; }
+
+/* Confirmation, replacing the form in place. Sized to sit in the same
+   column without the grid collapsing around a short block. */
+.form-sent{
+  display:grid; gap:18px; justify-items:start; align-content:start;
+  border:1px solid var(--line); background:var(--panel); padding:38px 34px;
+}
+.form-sent h2{ font-family:var(--font-display); font-size:38px; line-height:1; }
+.form-sent p{ color:var(--muted); line-height:1.7; max-width:46ch; }
 
 @media (max-width:1000px){
   .contact-grid{ grid-template-columns:1fr; gap:40px; }
