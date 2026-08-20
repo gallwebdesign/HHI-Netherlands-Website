@@ -167,8 +167,9 @@ a fourth did later — the envelope test, the same afternoon, the same cause.
 ### The envelope — 20 August 2026
 
 **Fills the space the two removed facts left**, built from a reference Iain
-supplied: an open envelope with a letter rising out of it, redrawn in the site's
-palette. Lives in [EnvelopeMark.svelte](src/lib/components/EnvelopeMark.svelte)
+supplied: an **open** envelope with a letter **being inserted into** it, redrawn
+in the site's palette. Both of those words are load-bearing — see the paint-order
+warning below. Lives in [EnvelopeMark.svelte](src/lib/components/EnvelopeMark.svelte)
 and is **the first inline SVG in the repo** — drawn rather than shipped as an
 asset because it is nine paths of flat geometry, and a file in `static/` would
 be a request plus a second place to keep the colours in sync. It reads `--oranje`
@@ -177,23 +178,41 @@ through `currentColor`, so it follows the palette automatically.
 Decorative and marked as such: `aria-hidden`, no title, no role. It says nothing
 the page does not already say in text.
 
-⚠️ **Three geometry and layering rules, each of which produced a visibly wrong
-drawing before it was fixed:**
+⚠️ **PAINT ORDER IS THE WHOLE DRAWING, and it was wrong on the first two
+attempts.** SVG has no z-index: later elements paint over earlier ones, and both
+"is it open?" and "is the letter going in?" are answered by the sequence alone.
+Back to front, the only correct order is:
+
+1. **Open flap**, an inverted V *behind* everything — this is what says open.
+2. **Back wall**, opaque, hiding where the flap joins.
+3. **Letter**, above the back wall and below the front — mid-insertion.
+4. **Front panel**, opaque, hiding the letter's lower half.
+
+**The version shipped on 20 Aug at 20:13 got this wrong** and Iain caught it: the
+flap was drawn as a downward V *in front*, which is a sealed envelope seen from
+outside, and the letter sat behind the whole thing rather than inside it. A test
+now asserts the child order and the front panel's opaque fill, because nothing
+about this is visible to an ordinary assertion — the first version passed a
+fully green suite.
+
+⚠️ **Three further rules, each of which produced a visibly wrong drawing:**
 
 - **The front panel needs an opaque `--ink` fill, not `fill:none`.** That
   overlap is the entire illusion of a sheet sitting *inside* an envelope. With
   no fill, the letter's bottom edge shows straight through and the drawing goes
   flat.
-- **The letter's bottom edge must stay above the fold's fall at the letter's own
-  left edge.** The front occludes along the diagonal (12,78)→(120,140), which at
-  x=52 is already down at y≈101 — a letter reaching lower shows its bottom
-  corners *below* the envelope. It is 82 units tall for that reason; do not
-  lengthen it without re-checking.
+- **The letter must be narrow enough to leave the flap's peak visible.** At 132
+  units wide it covered the flap's whole V (which spans x=20–220, y=16–84) and
+  the envelope read as closed *again*, despite correct paint order. It is 108
+  wide so both shoulders of the flap show. It must also still overlap the front
+  panel's top edge (y=112) or a gap opens between sheet and envelope — hence it
+  ends at y=110. Those two constraints pull against each other; measure both.
 - **`--panel` fills and `--line` strokes are too dim at this size.** The letter
   first rendered as a grey ghost and the address tile as muddy brown
   (`currentColor` at .28 over `--ink`). The paper carries its own `#1c1c28` with
   a bright edge, the tile is full-strength orange, and the text rules are
-  `--bone` at .35.
+  `--bone` at .35. The flap is dimmed to .5 — it is behind the body in space,
+  and full strength flattens the depth the paint order just created.
 
 ⚠️ **The draw-in has to be gated on visibility, and the reason is not obvious.**
 A CSS animation starts at page load, but the wrapper is held at

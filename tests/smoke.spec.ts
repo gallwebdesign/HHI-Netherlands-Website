@@ -1198,6 +1198,34 @@ test('contact page fills its left column with the envelope, and the form is capp
 	   height — a collapsed SVG would pass a mere attachment check. */
 	const box = await envelope.boundingBox();
 	expect(box!.height).toBeGreaterThan(150);
+
+	/* ⚠️ The envelope must read as OPEN, with the letter going INTO it. Both
+	   facts live entirely in SVG paint order, which has no visual assertion —
+	   so they are checked structurally instead. The first version of this
+	   drawing was a closed envelope with the letter stuck behind it, and
+	   nothing in the suite would have caught that.
+
+	   Back to front: flap (folded back, behind) → back wall → letter →
+	   front panel (hides the letter's lower half). Swapping any two of these
+	   breaks the illusion, so the order itself is what gets asserted. */
+	const order = await envelope.evaluate((svg) =>
+		[...svg.children].map((child) => child.getAttribute('class') ?? child.tagName)
+	);
+	const indexOf = (name: string) => order.findIndex((c) => c.includes(name));
+
+	expect(indexOf('envelope__flap')).toBeGreaterThanOrEqual(0);
+	// Flap behind the back wall — that is what makes it read as folded open.
+	expect(indexOf('envelope__flap')).toBeLessThan(indexOf('envelope__back'));
+	// Letter above the back wall but below the front: mid-insertion.
+	expect(indexOf('envelope__back')).toBeLessThan(indexOf('envelope__letter'));
+	expect(indexOf('envelope__letter')).toBeLessThan(indexOf('envelope__front'));
+
+	/* The front panel must be opaque, or the letter's lower half shows
+	   through it and the drawing goes flat. */
+	const frontFill = await page
+		.locator('.envelope__front')
+		.evaluate((el) => getComputedStyle(el).fill);
+	expect(frontFill).not.toBe('none');
 });
 
 test('the envelope draws itself in only once it is on screen', async ({ page }) => {
