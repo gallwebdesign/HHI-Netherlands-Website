@@ -37,26 +37,54 @@ Verified on `main` at the end of 17 Aug: `npm run lint` clean, `npm run check`
 regulations layout tests, → 36 with the three scroll-to-top tests on 16 Aug,
 → 37 with the hero layout test, which arrived with the hero merge).
 
-## ▶ Start here on 18 August 2026
+## ▶ Start here on 21 August 2026
 
-**Nothing on `main` is half-finished.** Every pre-purchase task is done. What is
-left needs either the Cloud86 account or a decision:
+**Work stopped mid-task on 20 Aug: the envelope illustration is not right and
+Iain called it there.** Everything else from that day is finished and verified.
+Read *The envelope* below before touching it — three attempts failed and the
+fourth should not be a fourth guess.
 
-0. **`git push`.** One unpushed commit: `af789e8`, the Dutch full rules manual.
-   Everything else from 17 Aug is already on `origin/main`.
+### Where the code is
+
+**Branch `contact-form-php`, four commits, NONE PUSHED.** `main` is untouched
+and level with `origin/main`. The working tree is clean.
+
+| Commit | What | State |
+|---|---|---|
+| `1e47a6f` | Phase 8 — the real contact form + PHP endpoint | ✅ finished |
+| `0edec31` | Envelope v1 + form width cap | ⚠️ the width cap is good; the envelope is superseded |
+| `db35dce` | Envelope v2 — "open with a flap" | ❌ rejected |
+| `b452d9c` | Envelope v3 — no flap | ❌ rejected, current state |
+
+`npm test` **45 passed**, `npm run lint` clean, `npm run check` 0 errors /
+0 warnings, as of the last commit.
+
+### The decision waiting for you
+
+**The envelope is the only unfinished thing.** Three hand-drawn SVG attempts did
+not match Iain's reference image. Do not start a fourth by drawing again — the
+options that have NOT been tried are in *The envelope* below, and Iain's own
+words were "if it is not possible, then we can think of another solution." That
+is a decision to take with him, not to guess at.
+
+⚠️ **The rest of the branch does not depend on the envelope.** If the
+illustration is abandoned, the contact form itself is complete and mergeable —
+removing `<EnvelopeMark />` from the page and the three envelope assertions from
+the suite is a ten-minute job. Do not let a stuck decoration hold up a working
+form.
+
+### Then, unchanged from before
+
 1. **Buy the Cloud86 plan.** Two details to confirm at purchase: what "Git
    integratie" actually does, and whether a cheaper tier keeps mail + SSH +
-   `.htaccess`. This unblocks everything below.
-2. **The photo archive — ~8,163 images, ≈7.8 GB.** Iain's own FTP pull. No
+   `.htaccess`.
+2. **Create the `info@hhi-netherlands.com` mailbox** — see *The contact form*.
+   **Until it exists the form accepts submissions and delivers nothing**, which
+   is the one failure mode that looks like success.
+3. **The photo archive — ~8,163 images, ≈7.8 GB.** Iain's own FTP pull. No
    switch-off date is set, but it is the only irreversible deadline left.
-3. **Cutover day** (needs the account): delete the Pages workflow, stop setting
+4. **Cutover day** (needs the account): delete the Pages workflow, stop setting
    `BASE_PATH`, verify the `.htaccess` redirects on the real host.
-4. ~~**Phase 8** (needs the mailbox): `CONTACT_EMAIL` becomes real, and the
-   contact form becomes a working PHP form.~~ ✅ **Built 20 Aug 2026** on
-   `contact-form-php` — see *The contact form* below. **One step is still
-   Iain's: create the `info@hhi-netherlands.com` mailbox in the Cloud86
-   panel.** Until it exists the form accepts submissions and delivers
-   nothing, which is the one failure mode that looks like success.
 
 ~~One small chore: `src/lib/config.ts` fails `npm run lint` on line endings.~~
 ✅ **Done 15 Aug 2026** — formatted as part of the day-split work, since that
@@ -164,50 +192,80 @@ against a perfectly working form. `fillContactForm()` scrolls first, which is
 what a real visitor does. Three tests failed this way before it was added, and
 a fourth did later — the envelope test, the same afternoon, the same cause.
 
-### The envelope — 20 August 2026
+### ⚠️ The envelope — UNRESOLVED, stopped 20 August 2026
 
-**Fills the space the two removed facts left**, built from a reference Iain
-supplied: an **open** envelope with a letter **being inserted into** it, redrawn
-in the site's palette. Both of those words are load-bearing — see the paint-order
-warning below. Lives in [EnvelopeMark.svelte](src/lib/components/EnvelopeMark.svelte)
-and is **the first inline SVG in the repo** — drawn rather than shipped as an
-asset because it is nine paths of flat geometry, and a file in `static/` would
-be a request plus a second place to keep the colours in sync. It reads `--oranje`
-through `currentColor`, so it follows the palette automatically.
+**STATUS: three attempts, all rejected by Iain. Work stopped here.** The current
+committed state (`b452d9c`) is the third attempt and it is *not* accepted. It
+renders, it is tested, and it still does not look like the reference.
 
-Decorative and marked as such: `aria-hidden`, no title, no role. It says nothing
-the page does not already say in text.
+**Do not start a fourth attempt by drawing again.** That is what the last three
+did. Iain's own words on stopping were *"If it is not possible, then we can
+think of another solution"* — so the next move is a conversation about approach,
+not another hand-drawn SVG.
 
-⚠️ **THREE VERSIONS OF THIS DRAWING WERE VISIBLY WRONG, and every one of them
-passed a fully green suite.** Iain rejected each in turn. What went wrong, in
-order, because the pattern is the lesson:
+It fills the space the removed Socials and E-mail facts left, from a reference
+image Iain supplied: an open envelope with a letter going into it. It lives in
+[EnvelopeMark.svelte](src/lib/components/EnvelopeMark.svelte) and is **the first
+inline SVG in the repo**. Decorative and marked as such: `aria-hidden`, no title,
+no role — it says nothing the page does not already say in text.
 
-1. **A downward V drawn in front** — that is a *sealed* envelope seen from
-   outside, with the letter stuck behind everything.
-2. **An inverted V drawn behind**, as a flap folded back. Closer, but still an
-   invention: the reference has no flap standing up at all.
-3. **Correct paint order but the letter too narrow**, which left the drawing
-   reading as an envelope with a small card floating over it.
+**Untried options, for that conversation:**
 
-**The reference has no flap.** The envelope is a wide rounded rectangle whose top
-edge crosses the letter, with the V descending from that top edge; "open" is
-conveyed by the letter sitting *inside*, and nothing else. Back to front:
+- **Trace the reference to exact paths.** The PNG Iain supplied could be traced
+  (Inkscape, `potrace`, or an online tracer) to an SVG that matches by
+  construction rather than by eye, then recoloured with the site tokens. The
+  most likely to actually work, and the least creative latitude — which is the
+  point.
+- **Ship the reference image as an asset** in `static/img/` and recolour it with
+  CSS filters or `mask-image`. Loses the crisp line art and adds a request, but
+  it is guaranteed to look like the reference because it *is* the reference.
+  ⚠️ Check its licence first — provenance unknown.
+- **Ask Iain for the source file.** If the reference came from an icon set, the
+  original SVG may be available and everything above is moot.
+- **Drop the illustration.** The left column had ~400px of dead space, which is
+  what started this. Something simpler (a large quiet quote, the HHI plates
+  mark, the championship dates) would fill it without a pixel-matching problem.
+  **This is a real option, not a failure** — the form works without it.
 
-1. **Back wall** — only a thin band either side of the letter is ever seen.
-2. **Letter**, large and centred, dominating the upper two-thirds.
-3. **Front panel**, opaque, hiding the letter's lower half.
+⚠️ **If the envelope is abandoned, removing it is small and self-contained:**
+delete `<EnvelopeMark />` and its wrapper from
+[+page.svelte](src/routes/contact/+page.svelte), the `.envelope*` block and the
+reduced-motion override from [style.css](src/lib/style.css), the component file,
+and the three envelope assertions in the smoke test (the form-width test also
+covers the envelope — keep the width half). The contact form does not depend on
+any of it.
 
-A test asserts that child order, the front panel's opaque fill, **and that no
-`envelope__flap` element exists** — that last one specifically so the flap
-cannot be reinvented a third time.
+**What was tried, and what Iain said about each.** Recorded so a fourth attempt
+does not repeat one of them:
+
+| # | Commit | What was drawn | Rejected because |
+|---|---|---|---|
+| 1 | `0edec31` | Downward V in front of the body | "It looks closed when it should be open"; "the letter looks to be behind the envelope" |
+| 2 | `db35dce` | Inverted V behind, as a flap folded back | "The envelope is still wrong" |
+| 3 | `b452d9c` | No flap; wide body, large letter, V from the mouth | "No its not working" |
+
+⚠️ **Do not treat any structural claim below as confirmed by Iain.** "The
+reference has no flap", "the letter must be large" and the paint order were all
+*my* readings of the reference image, and the version built on them was rejected
+too. They are recorded as what was tried, not as requirements. The only
+confirmed facts are Iain's three sentences in the table above.
+
+The current committed structure, back to front, is: **back wall → letter →
+front panel**, with a test asserting that order, the front panel's opaque fill,
+and the absence of an `envelope__flap`. ⚠️ **Those assertions encode attempt 3,
+which was rejected** — a different approach should expect to delete them rather
+than satisfy them.
 
 ⚠️ **The general lesson, worth more than the drawing.** Three wrong versions
 shipped past a green suite because "does this look like the reference" is not a
 property any assertion here can check. When the deliverable is a picture,
 **the screenshot is the test** — and a structural assertion is only ever a guard
-against regressing a shape that a human already confirmed.
+against regressing a shape that a human already confirmed. Nobody has confirmed
+this shape.
 
-⚠️ **Three further rules, each of which produced a visibly wrong drawing:**
+**Rendering facts that survive whatever gets drawn.** Unlike the composition
+above, these were measured and hold for any envelope-shaped SVG on this page —
+worth keeping even if the drawing is replaced wholesale:
 
 - **The front panel needs an opaque `--ink` fill, not `fill:none`.** That
   overlap is the entire illusion of a sheet sitting *inside* an envelope. With
