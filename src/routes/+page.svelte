@@ -132,7 +132,7 @@
 </script>
 
 <svelte:head>
-	<title>HHI Netherlands &middot; Netherlands Hip Hop Dance Championship {EVENT_YEAR}</title>
+	<title>HHI Netherlands Netherlands Hip Hop Dance Championship {EVENT_YEAR}</title>
 	<meta
 		name="description"
 		content="The Netherlands Hip Hop Dance Championship. Win here, dance at Worlds. Register your crew."

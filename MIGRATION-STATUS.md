@@ -1,46 +1,49 @@
 # Migration status
 
 Working notes for the static HTML → SvelteKit migration.
-Last updated **16 August 2026** — the home hero was **rebuilt as two columns**
-with the NHHDC lockup, on the unmerged branch `hero-two-column` (see below); it
-is awaiting Iain's verdict and is **not on `main`**. Earlier the same day, a
-**scroll-to-top button** was added to every
-route (see below), and **`/regulations` was split into two
-competition columns** (Open Division and Netherlands HHDC), Iain wrote the real
-Open Division rules, and the two columns were then made to align row-for-row.
-Before that, on 15 Aug: the event day split was confirmed and carried through
-the site (events schedule now splits by day; registration notice states the
-mapping), the **privacy policy was migrated to `/privacy`**, which was the last
-legacy page still serving real content, and **the reduced-motion freeze on the
-hero was found and fixed** (reported as a static stage floor on a Galaxy S22; it
-was Android's reduce-animations setting, not performance). On 14 Aug: media
-photos rescued, registration hub built, favicon and social preview shipped, two
-layout/navigation bugs fixed.
+Last updated **17 August 2026** — **`hero-two-column` landed on `main`**,
+settling the one unresolved piece of work in the repo. On top of it, three
+pieces of home-hero polish landed the same day: the **black band under the nav
+was trimmed 25%**, the **ticker now pins to the bottom of the viewport on load**
+at desktop widths and unpins on the first scroll, and the **hero block was
+re-centred between the nav and that pinned strip** rather than within the raw
+viewport. Iain also added the **Dutch translations of both rules PDFs**, which
+nothing links yet. On 16 Aug the hero was rebuilt as two columns with the NHHDC
+lockup, a **scroll-to-top button** was added to every route, and
+**`/regulations` was split into two competition columns** (Open Division and
+Netherlands HHDC), with Iain writing the real Open Division rules. Before that,
+on 15 Aug: the event day split was confirmed and carried through the site, the
+**privacy policy was migrated to `/privacy`**, and **the reduced-motion freeze
+on the hero was found and fixed** (Android's reduce-animations setting, not
+performance). On 14 Aug: media photos rescued, registration hub built, favicon
+and social preview shipped, two layout/navigation bugs fixed.
 
 Plan: <https://claude.ai/code/artifact/b42e8908-c534-4c72-8ef2-7a465a78ad28>
-Branch: **`main`** — the migration was merged there in PR #2. **`main` is clean
-and pushed**, level with `origin/main`, and ends at the scroll-to-top button
-(`b6e895b`). `sveltekit-migration` merged and safe to delete.
+Branch: **`main`** — the migration was merged there in PR #2.
+`sveltekit-migration` merged and safe to delete.
 
-⚠️ **`hero-two-column` is unmerged and unpushed** — four commits of home-hero
-work awaiting Iain's verdict. Nothing on `main` depends on it. See *The hero
-experiments* below, which also records the two rejected attempts so they are
-not tried again.
+⚠️ **One commit is unpushed** as of the end of 17 Aug: `af789e8`, the Dutch full
+rules manual. Everything else is level with `origin/main`. Nothing is
+half-finished — see *Start here* below.
 
-Verified on `main`: `npm run lint` clean, `npm run check` 0 errors / 0
-warnings, `npm test` **36 passed** (31 → 33 with the two regulations layout
-tests, → 36 with the three scroll-to-top tests, both on 16 Aug 2026).
-On `hero-two-column`: **37 passed**, the extra one being the hero layout test.
+**The commit before the hero work is tagged `pre-hero-merge` (`b6e895b`).**
+`git reset --hard pre-hero-merge` undoes all of 17 August. ⚠️ **The `revert -m 1`
+escape hatch does not apply here** — the branch was fast-forwarded, so there is
+no merge commit to revert; undoing selectively means reverting the individual
+commits listed in *Home hero finished* below.
 
-## ▶ Start here on 17 August 2026
+Verified on `main` at the end of 17 Aug: `npm run lint` clean, `npm run check`
+0 errors / 0 warnings, `npm test` **37 passed** (31 → 33 with the two
+regulations layout tests, → 36 with the three scroll-to-top tests on 16 Aug,
+→ 37 with the hero layout test, which arrived with the hero merge).
 
-**Nothing on `main` is half-finished.** Every pre-purchase task is done and
-pushed. What is left needs either the Cloud86 account or a decision:
+## ▶ Start here on 18 August 2026
 
-0. **Decide on `hero-two-column`.** Four commits, local only, `npm test` green.
-   Either merge it or delete the branch — it is the only unresolved piece of
-   work in the repo, and it will rot if it sits. `git checkout hero-two-column`
-   then `npm run dev` to look at it.
+**Nothing on `main` is half-finished.** Every pre-purchase task is done. What is
+left needs either the Cloud86 account or a decision:
+
+0. **`git push`.** One unpushed commit: `af789e8`, the Dutch full rules manual.
+   Everything else from 17 Aug is already on `origin/main`.
 1. **Buy the Cloud86 plan.** Two details to confirm at purchase: what "Git
    integratie" actually does, and whether a cheaper tier keeps mail + SSH +
    `.htaccess`. This unblocks everything below.
@@ -55,7 +58,120 @@ pushed. What is left needs either the Cloud86 account or a decision:
 ✅ **Done 15 Aug 2026** — formatted as part of the day-split work, since that
 commit had to touch `config.ts` anyway. `npm run lint` is clean.
 
-## The hero experiments — 16 August 2026, branch `hero-two-column`
+## Home hero finished — 17 August 2026
+
+**`hero-two-column` went to `main`**, and three pieces of polish followed on top
+of it. All of it is desktop-facing; mobile was verified unchanged at each step.
+The commits:
+
+| Commit | What |
+|---|---|
+| `bfba52b` | Desktop lockup enlarged, mobile type rebalanced |
+| `f778bf3` | Black band under the nav trimmed 25% |
+| `52a1981` | Ticker pinned to the bottom on load **and** hero re-centred against it |
+
+⚠️ **It was a fast-forward, not a merge — there is no merge commit**, so
+`git revert -m 1` has nothing to act on and `git log --merges` will not show
+this work. `bfba52b` sits directly on top of 16 Aug's `d92fca8`. To undo the
+whole day, reset to the `pre-hero-merge` tag (`b6e895b`).
+
+⚠️ **The `hero-two-column` branch still exists** and now points into `main`'s
+own history, so it is a stale label rather than unmerged work. Deleting it is
+safe; `git branch -d hero-two-column` will confirm that by succeeding.
+
+⚠️ **`52a1981`'s message understates it.** "Pinned Ticker to bootm of viewport
+when loaded for first time" also carries the hero re-centring, a separate
+mechanism with its own traps — the same kind of understated message as
+`6796ebc` further down this file. There is no separate centring commit to find.
+
+### The lockup sizing — `bfba52b`
+
+Desktop had room the lockup was not using: the width cap went **520 → 700px**
+and the height cap **420 → 460px**. Mobile pulled the other way — the lockup
+dropped to **90%** width to keep it off the screen edges, and the title stepped
+up **14vw → 18vw** (sub-row 6.4 → 8vw) to fill the space that freed. The
+hero-height smoke test still passes, so the taller cap stays inside the budget.
+
+### The black band under the nav — `f778bf3`
+
+`.hero`'s top padding is `calc(var(--nav-h) + clamp(…))`. **Only the clamp is
+negotiable** — it went `52/4vh/56` → `39/3vh/42`, a 25% trim. The `--nav-h` term
+is the fixed nav's own reservation, and shrinking it reopens the S24+
+print-through bug from 14 Aug. Verified at 412×640 that the lockup still clears
+the logo and burger by 49px.
+
+⚠️ **Desktop and mobile respond differently to that one declaration, and the
+difference is not a bug.** Mobile is `justify-content:flex-start`, so the
+padding sets the gap directly: 44 → 31px, the full 25%. Desktop is
+`justify-content:center`, so the block is centred in leftover height and gives
+most of the cut straight back: 126.2 → 100.2px, about 21%. **Padding is the
+wrong lever for the desktop gap** — see the centring section below, which is
+what actually moved it.
+
+### The pinned ticker — `52a1981`
+
+**Iain's brief: the ticker is visible on load without scrolling, and once you
+start scrolling it behaves exactly as it did before.** So the pin is a
+*load-time* state, not a scroll-triggered one — the opposite of how the
+scroll-to-top button works, and worth reading twice before changing it.
+
+Three guards in [+page.svelte](src/routes/+page.svelte), each load-bearing:
+
+- **Desktop only** (≥1001px), matching the breakpoint the road pin and the
+  two-column hero already use. Mobile's hero is deliberately taller than the
+  screen, so there is no "bottom of the first screen" to pin to.
+- **Only when it fits.** ⚠️ **The countdown sits at the bottom of the hero, so a
+  blind pin covers the one thing a visitor most needs.** Measured at 1280×700:
+  42.9px of clear space against a 74px strip — it would have covered the CTAs.
+  At 1440×900 there is 100.8px and it fits with room to spare. The check is made
+  against the real boxes at runtime, never against a viewport-height guess.
+- **Unpin on the first scroll, permanently.** No re-pinning on a return to the
+  top, which would make the strip jump around under the reader.
+
+⚠️ **The fit check must wait for the preloader.** Measured before the curtain
+lifts, the hero has not laid out and `.hero__meta` reads far lower than it ends
+up — at 1280×700 the gap measured 42.9px against a settled 162.9px, so the strip
+refused to pin on a viewport where it fits easily. It is gated on `heroReady`
+plus one `requestAnimationFrame`. **This was written wrong first and caught by
+measuring**, not by looking: the screenshot of the unpinned strip looks entirely
+reasonable.
+
+**`.ticker-slot` reserves the height while pinned**, so unpinning does not yank
+the page up by 74px — measured shift is **0px**. Its height comes from a
+`--ticker-h` custom property measured off the live element, because
+`.ticker__item`'s font-size is a `clamp()` on viewport width; arithmetic in the
+stylesheet would drift out of agreement with the real box at some window size.
+
+### Centring between the nav and the ticker — also in `52a1981`
+
+**Iain's observation: the hero block sat too low.** The cause is worth
+remembering because the stylesheet looks correct either way — **the hero
+reserved the nav but not the ticker.** `padding-top` accounts for the fixed nav,
+so the top edge was honest; with the strip pinned it covers the bottom 74px, but
+the hero still centred as though that band were free, seating the block half a
+strip low.
+
+`.hero:has(~ .ticker-slot.is-pinned)` adds a matching `padding-bottom`, so
+centring splits what is genuinely visible. Measured at 1440×900, gap above the
+content vs. below it: **100.8/26.8 → 63.2/63.8px**, an imbalance of 0.6px.
+
+⚠️ **Two traps here, both hit during the work:**
+
+- **`--ticker-h` had to move to `<main>`.** It was first set on `.ticker-slot`,
+  which the hero can never read — custom properties inherit *down* the tree and
+  the hero is a **sibling**, not a descendant. It would have silently fallen
+  back to `0px` and looked as though the rule did nothing.
+- **There is a genuine feedback loop.** The padding moves the countdown up,
+  which increases the room, which feeds the fit check that decides whether to
+  pin at all. It settles rather than flapping — the loop only ever reinforces
+  "pins" — but this was verified by hammering the resize handler, not assumed.
+
+**No test covers the pinned ticker.** The scroll-to-top button has three; this
+has none. That is the known coverage gap at the end of 17 Aug — the geometry is
+exactly the kind that computes plausibly and renders wrong, which is the lesson
+the regulations and scroll-to-top work both recorded.
+
+## The hero experiments — 16 August 2026, branch `hero-two-column` (now merged)
 
 **Iain wanted the championship logo in the home hero.** Three designs were built
 before one was accepted; the two rejected ones are recorded here because the
@@ -98,7 +214,8 @@ taught applies to every `--modifier` override in this stylesheet.
 
 ### ✅ Attempt 3 — two columns, lockup left, title right
 
-**This is what `hero-two-column` holds.** Four commits:
+**Accepted, and now on `main`** (17 Aug — see *Home hero finished* above, which
+also records the polish applied on top of it). Four commits:
 
 | Commit | What |
 |---|---|
@@ -147,8 +264,10 @@ screen; with the shorter two-column block all the slack collected above it —
 (898 × 590, true vector, no embedded raster). ⚠️ **It was sitting untracked in
 `static/img/` and was nearly lost** when an experiment branch was deleted — the
 build caught it (`Error: 404 …`) and it was recovered from the dangling commit.
-It is committed on `hero-two-column` only; **if that branch is deleted, commit
-this file to `main` first.**
+✅ **Now on `main`** (17 Aug), so that particular risk is closed — but the lesson
+stands for anything new in `static/`: check `git status` there before deleting a
+branch. Two more untracked files appeared in `static/download/` the same day and
+were committed for exactly this reason.
 
 ## Scroll-to-top button — 16 August 2026
 
@@ -1172,14 +1291,30 @@ Both come back as links the moment the archives get real routes.
 
 ## Things to remember
 
-- **`static/download/` holds the two official rules PDFs** (added by Iain,
-  15 Aug 2026): the simplified rules and the full manual. They are what
-  `/regulations` links to, and what the legacy `regulations.php` served. Note the
-  manual is named for the **2025–2026** season while the event is 2027 — that is
-  HHI's own filename; do not rename it to look current. Replace both when HHI
-  publishes the next edition, keeping the paths in `RULES_PDFS` in step. The
-  page's own rule summaries are now **per competition** — see *Regulations split
-  into two columns* above; the HHDC column is still the pre-split generic text.
+- **`static/download/` holds four official rules PDFs** — the simplified rules
+  and the full manual (added by Iain 15 Aug 2026), plus **Dutch translations of
+  both**, `…-Simplified-NL.pdf` and `…-RULES-MANUAL-NL.pdf` (added 17 Aug).
+  ⚠️ **Nothing links the two Dutch files yet.** `RULES_PDFS` in
+  [config.ts](src/lib/config.ts) still offers only the English pair, so
+  `/regulations` serves English only; they were added "for later use". Wiring
+  them up is a content decision — most likely alongside the return of the NL/EN
+  toggle removed in Phase 2, since a Dutch PDF beside English page copy is a
+  half-measure.
+  ⚠️ **The Dutch PDFs are re-typeset translations, and only the finished files
+  are committed.** Every build script that produced them (HTML sources, the
+  Playwright render pass, the PyMuPDF assembly) lived in a session scratchpad
+  under `AppData/Local/Temp/` and is gone. **A correction means rebuilding the
+  PDF from scratch — there is nothing in the repo to edit.** If that happens,
+  check numeric fidelity by comparing deduction values and time codes against
+  the English original; the counts must match exactly. Note the manual is named for the **2025–2026** season
+  while the event is 2027 — that is HHI's own filename; do not rename it to look
+  current. Replace all four when HHI publishes the next edition, keeping
+  `RULES_PDFS` in step. ⚠️ **The smoke test hard-asserts
+  `toHaveCount(2)`** on `.notice a[href$=".pdf"]`, so adding the Dutch links to
+  the page fails `regulations links both rules PDFs` until that count is
+  updated — a deliberate tripwire, not a bug. The page's own rule summaries are
+  **per competition** — see *Regulations split into two columns* above; the HHDC
+  column is still the pre-split generic text.
 - **`static/img/` is irreplaceable.** The photography and the logo SVG there are
   the only copies in the repo. Never "clean" that directory, and never treat it
   as build output. **Updated 15 Aug 2026:** the eight rescued
