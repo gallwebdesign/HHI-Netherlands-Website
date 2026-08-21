@@ -256,9 +256,8 @@ Iain adding photos is not a test failure.
 
 ### Where the code is
 
-**Merged to `main` as `31a784d`** (`--no-ff`, so the branch history survives).
-The working tree is clean. ⚠️ **Not pushed** — `main` is 7 commits ahead of
-`origin/main`.
+**Merged to `main` as `31a784d`** (`--no-ff`, so the branch history survives)
+**and pushed.** The working tree is clean and `origin/main` is level.
 
 | Commit | What | State |
 |---|---|---|
