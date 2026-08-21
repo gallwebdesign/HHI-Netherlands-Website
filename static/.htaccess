@@ -106,7 +106,58 @@ RewriteRule ^ https://%1%{REQUEST_URI} [R=301,L]
 # of shared hosts — each one is browsable, publishing the whole
 # file inventory including ~950 gallery photos nobody linked.
 # The files are public; the exhaustive list of them need not be.
-Options -Indexes
+#
+# ⚠️ -MultiViews is deliberate and must stay, even though it may
+# look redundant next to the extensionless rewrite below. The two
+# are not doing the same job:
+#
+# MultiViews is mod_negotiation's content guessing — asked for
+# /media it hunts for a file whose name starts "media" and serves
+# whatever it likes the look of. That sounds like exactly what we
+# want, but it picks by its own negotiation rules, not ours: with
+# both media.html and a hypothetical media.php present it may
+# choose either, and it answers 200 for near-misses that should be
+# a clean 404. Leaving it ON would mask whether the explicit rule
+# below actually works, so a later edit could break the rule and
+# nothing would show it until MultiViews was also switched off.
+#
+# Turning it off makes the rewrite the single, readable reason any
+# extensionless URL resolves. Both options are named on one line
+# because a bare `Options -Indexes` REPLACES the inherited set
+# rather than subtracting from it on some configurations, which is
+# how MultiViews silently flipped state here in the first place.
+Options -Indexes -MultiViews
+
+# --- Extensionless page URLs ------------------------------------
+# THE FIX for the 404-on-refresh reported 21 Aug 2026, verified
+# against the live host: curl -sI https://hhi-netherlands.com/media
+# returned 404 while clicking through to the same page worked.
+#
+# Why it happens: adapter-static is called with no options in
+# vite.config.ts, so the build writes FLAT files — build/media.html,
+# not build/media/index.html. Every canonical tag, every sitemap
+# <loc> and every internal href is the extensionless /media, so
+# in-site navigation never asks the server anything (SvelteKit's
+# client router handles it in JS) but a refresh, a bookmark, a
+# pasted link or a crawler asks Apache for a file literally named
+# "media" — which does not exist.
+#
+# An INTERNAL rewrite, not a redirect. /media must keep answering
+# 200 at /media: a 301 to /media.html would contradict the
+# canonical tag, the og:url and all ten sitemap entries, and would
+# publish the .html form as the real URL — the exact shape the
+# legacy-redirect block below exists to retire.
+#
+# Placed BEFORE the legacy .php/.html redirect map on purpose. The
+# guards below mean this rule only fires for a request that has a
+# real .html twin, and no legacy URL does, so the two cannot fight
+# — but keeping the silent internal rewrite ahead of the noisy
+# 301s also keeps the reading order "resolve real pages, then
+# forward dead ones".
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{DOCUMENT_ROOT}/$1.html -f
+RewriteRule ^(.+?)/?$ /$1.html [L]
 
 # --- Response headers -------------------------------------------
 # Wrapped in IfModule so the file still parses if mod_headers is

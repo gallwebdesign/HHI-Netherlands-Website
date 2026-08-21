@@ -14,11 +14,18 @@
    site with exactly one dynamic endpoint has exactly one thing to
    audit.
 
-   ⚠️ THE MAILBOX MUST EXIST. As of 20 Aug 2026 info@hhi-netherlands.com
-   had not been created on Cloud86. Until it is, mail() here will
-   accept the submission and deliver nothing. Create the mailbox in
-   the Cloud86 panel, then send yourself a test through the live form
-   before trusting this page with anything that matters.
+   ✅ DELIVERY VERIFIED 21 Aug 2026. The info@hhi-netherlands.com mailbox
+   was created on Cloud86, DNS was pointed at the new host, and a test
+   submitted through the live form ARRIVED in the inbox. That was this
+   file's first real execution — the Playwright suite stubs the endpoint,
+   so a green suite still says nothing about the code below. Verify PHP
+   changes against `php -S` separately; see MIGRATION-STATUS.md.
+
+   ⚠️ What is verified is the HAPPY PATH only. The rejection paths — the
+   honeypot, the rate limiter, the field bounds — have never run on the
+   live host. They fail CLOSED, so a false positive silently drops a real
+   enquiry rather than announcing itself. If the form ever "works for me
+   but not for them", suspect those before suspecting delivery.
 
    THREAT MODEL — what this defends against, in order of how often
    it actually happens to a small marketing site:

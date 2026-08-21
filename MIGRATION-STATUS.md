@@ -293,9 +293,11 @@ below. This is the largest untested surface in the repo.
 1. **Buy the Cloud86 plan.** Two details to confirm at purchase: what "Git
    integratie" actually does, and whether a cheaper tier keeps mail + SSH +
    `.htaccess`.
-2. **Create the `info@hhi-netherlands.com` mailbox** — see *The contact form*.
-   **Until it exists the form accepts submissions and delivers nothing**, which
-   is the one failure mode that looks like success.
+2. ✅ **Create the `info@hhi-netherlands.com` mailbox** — done 21 Aug 2026,
+   **and the live delivery test passed the same day**: a message sent through
+   the real form arrived in the inbox. See *The contact form*. This step is
+   closed; the endpoint has now executed for real rather than only under a
+   stub.
 3. **The photo archive — ~8,163 images, ≈7.8 GB.** Iain's own FTP pull. No
    switch-off date is set, but it is the only irreversible deadline left.
 4. **Cutover day** (needs the account): delete the Pages workflow, stop setting
@@ -312,12 +314,28 @@ form stopped being a `mailto:` compose and became a real submission: it posts
 JSON to a PHP endpoint on Cloud86, which validates it, filters spam and mails
 `info@hhi-netherlands.com`.
 
-⚠️ **IT DOES NOT DELIVER YET, AND IT FAILS SILENTLY.** The mailbox
-`info@hhi-netherlands.com` had not been created on Cloud86 as of 20 Aug 2026.
-Until it exists, `mail()` accepts the message, returns success, and the mail
-goes nowhere — the visitor sees "We got it." and nothing arrives. **Create the
-mailbox in the Cloud86 panel, then send a test through the live form before
-trusting the page.** This is the only outstanding step, and it is not repo work.
+✅ **DELIVERY IS VERIFIED END TO END — 21 Aug 2026.** The mailbox
+`info@hhi-netherlands.com` was created on Cloud86, the nameservers were pointed
+at the new host, and Iain then submitted a test through the live form and
+**confirmed it arrived in the inbox**. That single test closes the largest
+untested surface in the repo, because it is the first time the whole chain ran
+for real: DNS → Apache → `static/api/contact.php` → `mail()` → delivery.
+
+Worth being precise about what it proves, because the Playwright suite proves
+none of it — the suite stubs the endpoint, so a green run says nothing about
+the PHP. Until this test, `static/api/contact.php` had **never executed at
+all**. It now has: the file parses under the host's PHP 8.4, the validation and
+spam filters let a legitimate message through rather than eating it, and
+`mail()` did not merely return true but actually delivered. That last
+distinction was the whole worry — `mail()` returning true means the host
+*accepted* the message, so the old failure mode was a visitor seeing "We got
+it." while nothing landed. An arrived message rules it out.
+
+What this test does **not** cover, and is worth a look when convenient: the
+rejection paths. A message that trips the honeypot, the rate limit or a field
+bound has still never run on the live host. Those fail closed — a false
+positive silently drops a real enquiry — so if the form ever "works for me but
+not for them", start there rather than at delivery.
 
 ### What was removed, and the one consequence
 
@@ -1147,11 +1165,11 @@ it could not see.
 - **The controller named in the policy is Marion Gall-Wierts.** Carried over
   as-is (confirmed 15 Aug), but worth re-checking it is still current.
 - ~~**The policy tells people to use "het contact formulier" to exercise their
-  rights.**~~ ✅ **Resolved 20 Aug 2026.** The form is a real submission now, so
-  the route a visitor is told to use for a GDPR request works — **once the
-  mailbox exists.** That last condition is the whole of what is left: a GDPR
-  request that silently goes nowhere is worse than one that bounces, so
-  creating the mailbox is not an optional finishing touch.
+  rights.**~~ ✅ **Resolved 20 Aug 2026**, and fully closed 21 Aug: the mailbox
+  exists and a live test message was confirmed received, so the route a visitor
+  is told to use for a GDPR request demonstrably works. This mattered more than
+  an ordinary contact form — a GDPR request that silently goes nowhere is worse
+  than one that bounces, and the policy names this route specifically.
 
 ## The reduced-motion freeze — ✅ fixed 15 August 2026
 
@@ -1278,7 +1296,8 @@ account or a decision from Iain:
   carries the only irreversible deadline on the project. See the section below.
 - Cutover day: delete the Pages workflow, stop setting `BASE_PATH`, verify the
   redirects on the real host.
-- Phase 8: ✅ **built 20 Aug 2026.** Only the mailbox itself is outstanding.
+- Phase 8: ✅ **built 20 Aug 2026**; mailbox created and the live delivery test
+  passed 21 Aug. Nothing outstanding.
 
 **Explicitly NOT before the account exists, and why** — agreed with Iain 13 Aug,
 and still true:
@@ -1291,9 +1310,9 @@ and still true:
   are already no-ops when `BASE_PATH` is unset. The cutover is "stop setting the
   env var and delete the workflow", *not* a code change. These two items are one
   task, and it belongs to cutover day.
-- ~~**Contact form and `CONTACT_EMAIL`**~~ — ✅ **built 20 Aug 2026.** The form
-  and its PHP endpoint are done and testable; only *delivery* waits on the
-  mailbox, and that is a panel click rather than repo work.
+- ~~**Contact form and `CONTACT_EMAIL`**~~ — ✅ **built 20 Aug 2026**, mailbox
+  created 21 Aug. The form and its PHP endpoint are done; what is left is
+  *confirming delivery* with a live test, which is not repo work.
 
 ## Where we stopped
 
@@ -1305,7 +1324,8 @@ cutover (item 1), which is no longer blocked — **hosting is settled: Cloud86**
 Since then, on 14 Aug: the media photos are rescued, the registration hub is
 built, the favicon and social preview have shipped, `static/.htaccess` is
 written, and two bugs are fixed. **Every pre-purchase task is complete** — what
-remains needs the Cloud86 account or the mailbox.
+remains needs the Cloud86 account, or a live test of the contact form now that
+the mailbox exists (21 Aug).
 
 | Phase | State |
 |---|---|
@@ -1317,7 +1337,7 @@ remains needs the Cloud86 account or the mailbox.
 | 5 · Remaining sub-pages | ✅ all six ported, smoke test green |
 | 6 · index.html | ✅ hero, stage floor, preloader, road pin, all sections |
 | 7 · Delete old site | 🟨 items 2–5 done; `.htaccess` written — **only the cutover itself is left, and it needs the account** |
-| 8 · Finish "fully functional" | 🟨 registration hub, favicon + social preview, **contact form (20 Aug)** done; only the mailbox itself is left |
+| 8 · Finish "fully functional" | 🟨 registration hub, favicon + social preview, **contact form (20 Aug)** done; mailbox created 21 Aug — only the live delivery test is left |
 
 ## Hosting — decided: Cloud86 (13 Aug 2026)
 
