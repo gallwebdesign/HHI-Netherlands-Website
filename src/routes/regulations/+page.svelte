@@ -1,7 +1,7 @@
 <script lang="ts">
 	import PageHero from '$lib/components/PageHero.svelte';
 	import { RULE_COLUMNS } from '$lib/data/regulations';
-	import { RULES_PDFS } from '$lib/config';
+	import { RULES_PDFS, RULES_PDFS_NL } from '$lib/config';
 	import { magnetic, reveal } from '$lib/attachments.svelte';
 
 	/* Rule numbers derive from array position — 01, 02, … — so adding
@@ -71,14 +71,39 @@
 				</div>
 			{/each}
 		</div>
-		<!-- Two PDFs, not one link. The legacy regulations.php was only a wrapper
-		     around these same two files; they now live in static/download/, so
-		     the page links them directly rather than bouncing through a host
-		     that is being switched off. -->
-		<div class="notice" {@attach reveal()}>
+		<!-- Two PDFs per language, not one link. The legacy regulations.php was
+		     only a wrapper around the English pair; they now live in
+		     static/download/ alongside their Dutch translations, so the page
+		     links all four directly rather than bouncing through a host that is
+		     being switched off. -->
+		<div class="notice notice--rules-en" {@attach reveal()}>
 			<b>Heads up</b>
 			<span>This is a summary. The full, binding rules are the official HHI PDFs.</span>
 			{#each RULES_PDFS as pdf (pdf.href)}
+				<a
+					class="btn btn--sm"
+					{@attach magnetic()}
+					href={pdf.href}
+					target="_blank"
+					rel="noopener"
+					title={pdf.note}>{pdf.label}</a
+				>
+			{/each}
+		</div>
+		<!-- The same two rulebooks in Dutch. A second .notice rather than two more
+		     buttons in the first: the pairs are the same documents in different
+		     languages, and a flat row of four gives a Dutch reader no way to tell
+		     which two are theirs. Same styles throughout — only the modifier class
+		     differs, and it carries no styling of its own, it exists so the smoke
+		     test can count each language's links separately.
+
+		     ⚠ The label text is Dutch on purpose. Someone scanning for their own
+		     language finds this block by reading Dutch in it; an English caption
+		     over Dutch files is the one thing that would hide it from them. -->
+		<div class="notice notice--rules-nl" lang="nl" {@attach reveal()}>
+			<b>Nederlands</b>
+			<span>De offici&euml;le HHI-regels zijn ook in het Nederlands beschikbaar.</span>
+			{#each RULES_PDFS_NL as pdf (pdf.href)}
 				<a
 					class="btn btn--sm"
 					{@attach magnetic()}

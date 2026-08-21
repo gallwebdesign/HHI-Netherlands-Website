@@ -150,6 +150,30 @@ export const RULES_PDFS = [
 	}
 ] as const;
 
+/** The same two rulebooks in Dutch, translated from the English originals
+ *  above and shipped alongside them since 21 Aug 2026.
+ *
+ *  ⚠️ Deliberately a SEPARATE export rather than four entries in RULES_PDFS.
+ *  The regulations page renders each array into its own .notice block with its
+ *  own heading, and the smoke test counts the links per block — flattening the
+ *  two into one array silently merges the English and Dutch groups.
+ *
+ *  Labels stay in Dutch: the block they sit in is the Dutch one, and a reader
+ *  scanning for their own language finds it by the language, not by a
+ *  translated-into-English caption. */
+export const RULES_PDFS_NL = [
+	{
+		label: 'Vereenvoudigde regels',
+		note: 'De korte versie — divisies, crewgroottes en de essentie.',
+		href: withBase('/download/HHI-Official-Rules-Regulations-Simplified-NL.pdf')
+	},
+	{
+		label: 'Volledig reglement',
+		note: 'Het volledige HHI 2025–2026 reglement.',
+		href: withBase('/download/HHI2025-2026-RULES-MANUAL-NL.pdf')
+	}
+] as const;
+
 /** Primary nav — order matters, it is the visible desktop nav.
  *
  *  ⚠️ Eight items is the ceiling, and the labels are load-bearing. At the 1001px

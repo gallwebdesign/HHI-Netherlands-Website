@@ -13,6 +13,14 @@ lightbox. Iain has filled all eleven divisions — **~950 photos** — but they 
 and the FTP deploy is configured not to delete them. See *2026 media gallery*
 below, and read the deploy warning there before touching the workflow.
 
+Also on **21 August 2026** — **`/regulations` now offers the Dutch rules PDFs.**
+The two Dutch translations Iain added on 17 Aug had been sitting in
+`static/download/` unlinked; they are now published in a second `.notice` block
+below the English one, styled identically, under a Dutch heading. This is Dutch
+*documents* only — the page copy stays English, and the NL/EN toggle removed in
+Phase 2 is still outstanding. See *Things to remember* below for why the two
+pairs are separate config exports rather than one array of four.
+
 Before that, on **21 August 2026** — **`contact-form-php` landed on `main`**
 (merge `31a784d`), bringing the real contact form, its PHP endpoint, and the
 envelope illustration, which was finally resolved by tracing a source SVG Iain
@@ -23,8 +31,8 @@ pieces of home-hero polish landed the same day: the **black band under the nav
 was trimmed 25%**, the **ticker now pins to the bottom of the viewport on load**
 at desktop widths and unpins on the first scroll, and the **hero block was
 re-centred between the nav and that pinned strip** rather than within the raw
-viewport. Iain also added the **Dutch translations of both rules PDFs**, which
-nothing links yet. On 16 Aug the hero was rebuilt as two columns with the NHHDC
+viewport. Iain also added the **Dutch translations of both rules PDFs**
+(linked from `/regulations` on 21 Aug 2026). On 16 Aug the hero was rebuilt as two columns with the NHHDC
 lockup, a **scroll-to-top button** was added to every route, and
 **`/regulations` was split into two competition columns** (Open Division and
 Netherlands HHDC), with Iain writing the real Open Division rules. Before that,
@@ -1744,12 +1752,18 @@ Both come back as links the moment the archives get real routes.
 - **`static/download/` holds four official rules PDFs** — the simplified rules
   and the full manual (added by Iain 15 Aug 2026), plus **Dutch translations of
   both**, `…-Simplified-NL.pdf` and `…-RULES-MANUAL-NL.pdf` (added 17 Aug).
-  ⚠️ **Nothing links the two Dutch files yet.** `RULES_PDFS` in
-  [config.ts](src/lib/config.ts) still offers only the English pair, so
-  `/regulations` serves English only; they were added "for later use". Wiring
-  them up is a content decision — most likely alongside the return of the NL/EN
-  toggle removed in Phase 2, since a Dutch PDF beside English page copy is a
-  half-measure.
+  **Updated 21 Aug 2026: `/regulations` now links all four.** The Dutch pair
+  lives in `RULES_PDFS_NL` beside the English `RULES_PDFS` in
+  [config.ts](src/lib/config.ts), and the page renders each array into its own
+  `.notice` block — `.notice--rules-en` and `.notice--rules-nl`, same styles,
+  the modifier carrying no CSS of its own. ⚠️ **Keep them two exports.** The
+  pairs are the same documents in different languages; a flat array of four
+  renders one undifferentiated row of buttons that gives a Dutch reader no way
+  to tell which two are theirs. The Dutch block carries `lang="nl"` and Dutch
+  labels deliberately — an English caption over Dutch files hides them from the
+  people looking for them. Note the page copy around them is still English:
+  this is Dutch *documents*, not the NL/EN toggle removed in Phase 2, which is
+  still outstanding.
   ⚠️ **The Dutch PDFs are re-typeset translations, and only the finished files
   are committed.** Every build script that produced them (HTML sources, the
   Playwright render pass, the PyMuPDF assembly) lived in a session scratchpad
@@ -1759,10 +1773,11 @@ Both come back as links the moment the archives get real routes.
   the English original; the counts must match exactly. Note the manual is named for the **2025–2026** season
   while the event is 2027 — that is HHI's own filename; do not rename it to look
   current. Replace all four when HHI publishes the next edition, keeping
-  `RULES_PDFS` in step. ⚠️ **The smoke test hard-asserts
-  `toHaveCount(2)`** on `.notice a[href$=".pdf"]`, so adding the Dutch links to
-  the page fails `regulations links both rules PDFs` until that count is
-  updated — a deliberate tripwire, not a bug. The page's own rule summaries are
+  `RULES_PDFS` and `RULES_PDFS_NL` in step. The smoke test's old
+  `toHaveCount(2)` tripwire on `.notice a[href$=".pdf"]` fired as designed when
+  the Dutch links landed; it now counts **per block** (2 English, 2 Dutch) and
+  asserts all four hrefs are distinct — a bare `toHaveCount(4)` would still pass
+  if the English pair were accidentally rendered twice. The page's own rule summaries are
   **per competition** — see *Regulations split into two columns* above; the HHDC
   column is still the pre-split generic text.
 - **`static/img/` is irreplaceable.** The photography and the logo SVG there are

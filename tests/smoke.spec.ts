@@ -1128,21 +1128,34 @@ test('regulations columns stack in reading order on mobile', async ({ page }) =>
 	expect(overflows, 'page should not scroll horizontally on mobile').toBe(false);
 });
 
-test('regulations links both rules PDFs, and they actually download', async ({ page }) => {
+test('regulations links all four rules PDFs, and they actually download', async ({ page }) => {
 	await page.goto('/regulations');
 
-	/* The legacy regulations.php was only a wrapper around these two PDFs. They
-	   are now in static/download/, so the page links them directly instead of
-	   bouncing through a host that is being switched off. */
-	const pdfs = page.locator('.notice a[href$=".pdf"]');
-	await expect(pdfs).toHaveCount(2);
+	/* The legacy regulations.php was only a wrapper around the English pair.
+	   They are now in static/download/ alongside their Dutch translations, so
+	   the page links them directly instead of bouncing through a host that is
+	   being switched off.
+
+	   ⚠ Counted PER BLOCK, not as one flat `.notice a[href$=".pdf"]` total.
+	   A bare four would still pass if both Dutch links were dropped and the
+	   English pair rendered twice — which is exactly the shape of the mistake
+	   a copy-pasted second block invites. */
+	const en = page.locator('.notice--rules-en a[href$=".pdf"]');
+	const nl = page.locator('.notice--rules-nl a[href$=".pdf"]');
+	await expect(en).toHaveCount(2);
+	await expect(nl).toHaveCount(2);
+
+	// The Dutch block is Dutch to a screen reader and to browser translation.
+	await expect(page.locator('.notice--rules-nl')).toHaveAttribute('lang', 'nl');
 
 	/* Fetched, not just asserted on the href. A link to a PDF that 404s looks
 	   perfectly correct in the markup, and this is the binding rulebook — the
 	   one document on the site a crew is told to go and read. */
-	for (const href of await pdfs.evaluateAll((links) =>
-		links.map((a) => a.getAttribute('href') ?? '')
-	)) {
+	const pdfs = page.locator('.notice a[href$=".pdf"]');
+	const hrefs = await pdfs.evaluateAll((links) => links.map((a) => a.getAttribute('href') ?? ''));
+	expect(new Set(hrefs).size, 'each PDF link should be a distinct file').toBe(4);
+
+	for (const href of hrefs) {
 		const res = await page.request.get(href);
 		expect(res.status(), `${href} should serve`).toBe(200);
 		expect(res.headers()['content-type']).toContain('pdf');
