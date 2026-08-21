@@ -7,19 +7,23 @@ node_modules
 .wrangler
 /.svelte-kit
 /build
-#Gallery images
-/img/gallery/2026/hhi-open-division/junior/*.jpg
-/img/gallery/2026/hhi-open-division/varsity/*.jpg
-/img/gallery/2026/hhi-open-division/adult/*.jpg
-/img/gallery/2026/hhi-open-division/parents/*.jpg
-/img/gallery/2026/hhi-open-division/special-crews/*.jpg
-
-/img/gallery/2026/hhi-open-division/junior/*.jpg
-/img/gallery/2026/hhi-open-division/varsity/*.jpg
-/img/gallery/2026/hhi-open-division/adult/*.jpg
-/img/gallery/2026/hhi-open-division/jv-megacrew/*.jpg
-/img/gallery/2026/hhi-open-division/minicrew/*.jpg
-/img/gallery/2026/hhi-open-division/megacrew/*.jpg
+# Gallery photos — uploaded to the server by FTP by hand, deliberately NOT
+# in the repo: ~950 files and climbing, and git is the wrong place for them.
+#
+# The .gitkeep files ARE tracked (negated below), because git cannot store an
+# empty directory — without them a fresh clone has no gallery folders at all
+# and the build produces an empty gallery with no hint that anything is
+# missing. Keeping the tree means the folder names stay documented in the
+# repo, which is the only part of this worth versioning.
+#
+# ⚠️ The earlier version of this block matched "/img/gallery/…", which is
+# anchored to the repo root and therefore matched nothing — the photos live
+# under static/. Any pattern here must start with static/ or be unanchored.
+static/img/gallery/**/*.jpg
+static/img/gallery/**/*.jpeg
+static/img/gallery/**/*.png
+static/img/gallery/**/*.webp
+!static/img/gallery/**/.gitkeep
 
 # Playwright
 /test-results

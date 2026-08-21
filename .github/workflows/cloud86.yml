@@ -42,8 +42,19 @@ jobs:
           # this exclusion the next deploy would wipe it and mail would silently
           # fall back to mail(). The default excludes are replaced wholesale
           # when this key is set, so the git/node ones are repeated here.
+          #
+          # ⚠️ img/gallery/** is the same kind of exclusion and matters just as
+          # much. The ~950 gallery photos are uploaded to the server by FTP by
+          # hand and are deliberately NOT in the repo, so a CI checkout builds
+          # an EMPTY gallery — and without this line the mirror would delete
+          # every uploaded photo on the next push to main. The build succeeds
+          # in that state rather than failing, which is what makes it
+          # dangerous: nothing would flag the loss until someone looked at
+          # /media. Do not remove this without first putting the photos in the
+          # repo or into the build another way.
           exclude: |
             **/.git*
             **/.git*/**
             **/node_modules/**
             **/api/contact.secret.php
+            **/img/gallery/**
