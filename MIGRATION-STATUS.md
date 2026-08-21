@@ -1,7 +1,14 @@
 # Migration status
 
 Working notes for the static HTML → SvelteKit migration.
-Last updated **21 August 2026** — **`contact-form-php` landed on `main`**
+Last updated **21 August 2026** — **`media-gallery-2026` is open and complete**,
+replacing the flat eight-photo grid on `/media` with a folder-driven 2026
+gallery: competition tabs over division tabs, plus a lightbox. It ships an
+empty state, because **the 2026 photography does not exist in the repo yet** —
+the whole point of the branch is that Iain can drop photos into
+`static/img/gallery/2026/<competition>/<division>/` and they appear with no
+code edit. See *2026 media gallery* below. Before that, on **21 August 2026** —
+**`contact-form-php` landed on `main`**
 (merge `31a784d`), bringing the real contact form, its PHP endpoint, and the
 envelope illustration, which was finally resolved by tracing a source SVG Iain
 supplied rather than drawing from a description. See *Start here* below.
@@ -46,8 +53,63 @@ regulations layout tests, → 36 with the three scroll-to-top tests on 16 Aug,
 
 **Nothing is half-finished in the repo.** `contact-form-php` was merged to
 `main` on 21 Aug and the branch's one open question — the envelope — is
-resolved. The remaining work is all *off* the repo: the Cloud86 account, the
-mailbox, and the photo archive.
+resolved. `media-gallery-2026` is open, complete and verified, but **not
+merged and not pushed** — it is waiting on one decision from Iain, below. The
+remaining work is all *off* the repo: the Cloud86 account, the mailbox, and
+the photo archive.
+
+## 2026 media gallery — `media-gallery-2026`
+
+Branched off `main` on 21 Aug. Replaces the flat eight-photo grid on `/media`
+with a filtered gallery of the January 2026 competition. The Videos section is
+untouched.
+
+**What it does.** Two stacked tablists — competition (`HHI Open Division` /
+`Netherlands HHDC`) over division (`All` plus that competition's own
+divisions, 5 and 6 respectively) — over the existing `.gallery` grid, with a
+lightbox on click (arrow keys, Escape, focus returned to the opening tile).
+
+⚠️ **It ships an empty state, because there are no 2026 photos.** `static/img/`
+holds only the eight generic archive shots, with no year, competition or
+division metadata. Iain chose to build the shell now rather than wait, so
+`/media` visibly goes **from eight photos to zero** until real photography
+lands. **That is the one decision outstanding: whether this is acceptable
+live, or whether the branch waits.** Everything else is finished.
+
+**How photos get in.** Drop them in
+`static/img/gallery/2026/<competition-slug>/<division-slug>/`, rebuild, done —
+no code edit. A Vite plugin in `vite.config.ts` walks the tree at build time
+and hands it to `src/lib/data/gallery.ts` via `virtual:gallery-manifest`. The
+full set of traps is documented in CLAUDE.md under the gallery bullet; the two
+worth repeating here:
+
+- **All `fs` work lives in the plugin's `load` hook** because `eslint.config.js`
+  imports `vite.config.ts`, so `npm run lint` runs it. This is not obvious from
+  the failure message.
+- **The slug lists exist twice** — `GALLERY_TREE` (vite.config.ts) and
+  `COMPETITIONS` (gallery.ts). Change both or a division silently shows nothing.
+
+**Verified.** `npm run check` 0/0, `npm run lint` clean, `npm run build`
+prerenders with an empty manifest, `npm test` **49 passed, 1 skipped**. The
+skip is the lightbox test, which cannot run without photos and un-skips itself
+when they arrive — it was proved to pass by building against five throwaway
+JPEGs, which were then deleted. The plugin was likewise proved end to end:
+numeric filename ordering (`IMG_2` before `IMG_10`), `Thumbs.db` filtered, and
+a mistyped `juniour-typo-test/` folder warned about and skipped.
+
+**One bug found and fixed by looking rather than measuring.** The competition
+tablist overflowed 390px — `.tabs` is `width:max-content`, which cannot shrink
+— pushing the whole page into horizontal scroll with "Netherlands HHDC" cut
+off at the screen edge. The division row, which is longer, wrapped perfectly
+and measured clean; a screenshot is what caught it. There is now a test
+(`media gallery tabs wrap on a phone…`) that was confirmed to fail before the
+fix and pass after it. The tabs and empty state also take the `--gutter` back
+that `.media` zeroes for the full-bleed grid.
+
+**Five new tests**, all scoping `getByRole('tab')` by tablist `aria-label` —
+unscoped it matches both lists and asserts nothing. The empty-state test
+asserts *exactly one of* photos-or-empty-state rather than a hard count, so
+Iain adding photos is not a test failure.
 
 ### Where the code is
 

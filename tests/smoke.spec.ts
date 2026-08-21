@@ -105,6 +105,139 @@ test('results tabs switch panels', async ({ page }) => {
 	await expect(tabs.nth(2)).toHaveAttribute('aria-selected', 'true');
 });
 
+/* ==== 2026 MEDIA GALLERY ====
+   Two nested tablists — competition, then division — so every locator below
+   is scoped by aria-label. An unscoped getByRole('tab') matches both lists at
+   once and quietly asserts nothing. */
+const competitionTabs = (page: import('@playwright/test').Page) =>
+	page.getByRole('tablist', { name: 'Competition' }).getByRole('tab');
+const divisionTabs = (page: import('@playwright/test').Page) =>
+	page.getByRole('tablist', { name: 'Division' }).getByRole('tab');
+
+test('media gallery switches competitions and shows the right divisions', async ({ page }) => {
+	await page.goto('/media');
+	await settleReveals(page);
+
+	const comps = competitionTabs(page);
+	await expect(comps).toHaveCount(2);
+	await expect(comps.first()).toHaveAttribute('aria-selected', 'true');
+
+	/* The two competitions genuinely differ in their divisions — that is the
+	   whole point of the second row reacting to the first. Open Division has
+	   Parents and Special Crews; HHDC has the MegaCrews instead. */
+	await expect(divisionTabs(page)).toHaveCount(6); // All + 5
+	await expect(divisionTabs(page).filter({ hasText: 'Special Crews' })).toHaveCount(1);
+
+	await comps.nth(1).click();
+	await expect(divisionTabs(page)).toHaveCount(7); // All + 6
+	await expect(divisionTabs(page).filter({ hasText: 'MegaCrew' }).first()).toBeAttached();
+	await expect(divisionTabs(page).filter({ hasText: 'Parents' })).toHaveCount(0);
+});
+
+test('media gallery resets the division when the competition changes', async ({ page }) => {
+	await page.goto('/media');
+	await settleReveals(page);
+
+	/* Parents exists only under the Open Division. If the reset is missing,
+	   switching competitions leaves a slug selected that the new competition
+	   has no tab for — the filter then matches nothing and an empty state
+	   appears for a competition that may well have photos. */
+	const parents = divisionTabs(page).filter({ hasText: 'Parents' });
+	await parents.click();
+	await expect(parents).toHaveAttribute('aria-selected', 'true');
+
+	await competitionTabs(page).nth(1).click();
+	await expect(divisionTabs(page).first()).toHaveAttribute('aria-selected', 'true');
+	await expect(divisionTabs(page).filter({ hasText: 'Parents' })).toHaveCount(0);
+
+	/* Again by keyboard. The reset lives in a helper that both handlers call,
+	   and wiring it into onclick alone is the easy way to get this wrong —
+	   which no amount of clicking would ever catch. */
+	await competitionTabs(page).nth(1).press('ArrowRight');
+	await expect(competitionTabs(page).first()).toHaveAttribute('aria-selected', 'true');
+	await divisionTabs(page).filter({ hasText: 'Parents' }).click();
+	await competitionTabs(page).first().press('ArrowRight');
+	await expect(divisionTabs(page).first()).toHaveAttribute('aria-selected', 'true');
+});
+
+test('media gallery shows photos or an honest empty state', async ({ page }) => {
+	await page.goto('/media');
+	await settleReveals(page);
+
+	/* Deliberately not "expect 0 tiles". The 2026 photography had not been
+	   handed over when this was written, so the page ships an empty state —
+	   but the day Iain drops a folder in, that is a legitimate content change
+	   and must not turn this red. What is actually invariant is that exactly
+	   one of the two states renders, never both and never neither. */
+	const tiles = await page.locator('.gallery__tile').count();
+	const empty = await page.locator('.gallery-empty').count();
+
+	if (tiles > 0) {
+		expect(empty, 'photos present, so no empty state').toBe(0);
+	} else {
+		expect(empty, 'no photos, so exactly one empty state').toBe(1);
+	}
+});
+
+test('media gallery tabs wrap on a phone instead of scrolling the page', async ({ page }) => {
+	await page.setViewportSize({ width: 390, height: 844 });
+	await page.goto('/media');
+	await settleReveals(page);
+	await page.locator('.gallery-shell').scrollIntoViewIfNeeded();
+
+	/* .tabs is width:max-content and cannot shrink below its content, so an
+	   unwrapped row pushes the whole document sideways. Both rows are long
+	   enough to do it: the competition row is only two buttons, but they read
+	   "HHI Open Division" and "Netherlands HHDC" and overflow 390px on their
+	   own — which is how this shipped once already, with the division row
+	   measuring perfectly fine next to it. */
+	for (const name of ['Competition', 'Division']) {
+		const tabs = page.getByRole('tablist', { name });
+		const fits = await tabs.evaluate((el) => el.scrollWidth <= el.clientWidth);
+		expect(fits, `${name} tablist should wrap, not overflow`).toBe(true);
+	}
+
+	const overflow = await page.evaluate(() => document.body.scrollWidth - document.body.clientWidth);
+	expect(overflow, 'page should not scroll horizontally').toBeLessThanOrEqual(0);
+});
+
+test('media lightbox opens, arrows navigate, and Escape closes', async ({ page }) => {
+	await page.goto('/media');
+	await settleReveals(page);
+
+	/* Cannot be exercised without photos, and committing placeholder
+	   photography to prove a test would put fake images on a real gallery.
+	   This un-skips itself the day the 2026 folders are populated. */
+	const tiles = page.locator('.gallery__tile');
+	const count = await tiles.count();
+	test.skip(count === 0, 'no 2026 photos in static/img/gallery yet');
+
+	await tiles.first().click();
+	const dialog = page.getByRole('dialog', { name: 'Photo viewer' });
+	await expect(dialog).toBeVisible();
+	await expect(dialog).toHaveAttribute('aria-modal', 'true');
+	await expect(page.locator('body.lightbox-open')).toHaveCount(1);
+
+	/* Arrows walk the filtered list. Only meaningful with more than one photo
+	   in the open division; with exactly one the wrap lands back on itself. */
+	if (count > 1) {
+		const first = await dialog.locator('.lightbox__img').getAttribute('src');
+		await page.keyboard.press('ArrowRight');
+		await expect(dialog.locator('.lightbox__img')).not.toHaveAttribute('src', first ?? '');
+	}
+
+	await page.keyboard.press('Escape');
+	await expect(dialog).toHaveCount(0);
+	await expect(page.locator('body.lightbox-open')).toHaveCount(0);
+
+	/* Focus goes back to the tile that opened it, rather than being dumped on
+	   <body> where the next Tab starts from the top of the page. */
+	const focusedIsTile = await page.evaluate(() =>
+		document.activeElement?.classList.contains('gallery__tile')
+	);
+	expect(focusedIsTile, 'focus returns to the opening tile').toBe(true);
+});
+
 test('home preloader lifts and reveals the hero', async ({ page }) => {
 	await page.goto('/');
 

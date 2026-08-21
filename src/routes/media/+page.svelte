@@ -1,23 +1,17 @@
 <script lang="ts">
 	import PageHero from '$lib/components/PageHero.svelte';
-	import { PHOTOS, VIDEOS } from '$lib/data/media';
+	import Gallery from '$lib/components/Gallery.svelte';
+	import { VIDEOS } from '$lib/data/media';
+	import { GALLERY_YEAR } from '$lib/data/gallery';
 	import { EXTERNAL } from '$lib/config';
 	import { magnetic, reveal } from '$lib/attachments.svelte';
 
-	/* The photos live on the legacy host, so any one of them can 404.
-	   The legacy page used onerror="this.remove()", which dropped the
-	   <img> but left its <figure> behind as an empty cell in the grid.
-	   Tracking failures here instead lets the whole figure go.
-
-	   Note the markup still renders every figure: the prerendered HTML
-	   has to contain them all, and this only narrows the list once a
-	   real load error fires in the browser. */
-	let broken = $state(new Set<string>());
-
-	function onError(src: string) {
-		broken.add(src);
-		broken = new Set(broken);
-	}
+	/* The eight-photo grid this page used to show (PHOTOS in data/media.ts)
+	   was replaced by the 2026 gallery on 21 Aug 2026. Its broken-image guard
+	   went with it: every src in the gallery is generated from a file the
+	   build just read off disk, so the typo the guard existed to survive
+	   cannot happen, and a genuine 404 already fails the smoke test outright.
+	   The guard stays where filenames are still hand-written — home.ts. */
 </script>
 
 <svelte:head>
@@ -33,7 +27,7 @@
 	titleTop="Loud, in"
 	titleBottom="pictures."
 	treatment="hollow"
-	lede="Highlights from past editions of the Netherlands Hip Hop Dance Championship."
+	lede="The 2026 championship floor, division by division."
 />
 
 <main>
@@ -44,22 +38,9 @@
 		     FTP and has not been republished. A button that 404s on cutover day
 		     is worse than no button. Restore it if the archive gets real routes. -->
 		<div class="media__head">
-			<p class="tag" {@attach reveal()}>Photos</p>
+			<p class="tag" {@attach reveal()}>Photos &mdash; {GALLERY_YEAR}</p>
 		</div>
-		<div class="gallery">
-			{#each PHOTOS as photo (photo.src)}
-				{#if !broken.has(photo.src)}
-					<figure class="media__cell" {@attach reveal()}>
-						<img
-							src={photo.src}
-							alt={photo.alt}
-							loading="lazy"
-							onerror={() => onError(photo.src)}
-						/>
-					</figure>
-				{/if}
-			{/each}
-		</div>
+		<Gallery />
 	</section>
 
 	<section class="section">

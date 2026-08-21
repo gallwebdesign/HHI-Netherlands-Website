@@ -22,7 +22,18 @@ export interface Photo {
 	alt: string;
 }
 
-/* Eight photos, image01…image08, replacing the eight legacy slideshow-vN
+/* ⚠️ /media no longer renders PHOTOS. The 2026 gallery in data/gallery.ts
+   replaced the flat eight-photo grid on 21 Aug 2026, so TEASER_PHOTOS in
+   home.ts — which uses image01…image04 — is now the only live consumer of
+   these files.
+
+   PHOTOS is kept rather than deleted because image05…image08 stay on disk and
+   nothing else names them: drop this and those four become files no reader
+   can account for, on a site where static/img/ is the only copy of the
+   photography that exists. Delete it only together with the files, and only
+   deliberately.
+
+   Eight photos, image01…image08, replacing the eight legacy slideshow-vN
    banners on 15 Aug 2026. Eight because the grid is four across: two full
    rows on desktop, four rows of two on mobile, no ragged final row. Change
    the count in fours or the last row goes short.
