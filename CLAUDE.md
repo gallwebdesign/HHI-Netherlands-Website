@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Static marketing site for **HHI Netherlands** — the Netherlands Hip Hop Dance Championship, the official national qualifier of Hip Hop International.
 
+✅ **LIVE at <https://hhi-netherlands.com> since 21 August 2026.** The nameservers were repointed to Cloud86, the contact form was tested end to end and delivers, and the gallery serves ~951 photos. Three things broke on contact with the real host and were fixed the same day — the extensionless-URL 404, the blank gallery, and the 6.6MB first screen. All three are documented below; read the gallery section before touching `/media`, because the two-manifest design there is not obvious and reverting it silently blanks the page in production.
+
 ⚠️ **Most of the Architecture section below is pre-migration and stale.** The site was ported to **SvelteKit** (adapter-static, prerendered) across Phases 0–7; there are no hand-written HTML pages, no `assets/main.js`, and no `data-nl` attributes in the markup any more. Sections describing those are kept only because parts still explain *why* the current code looks as it does. **[MIGRATION-STATUS.md](MIGRATION-STATUS.md) is the authoritative document** — read it first, and trust it over this file wherever they disagree.
 
 **This folder is the live development site.** A previous port to a custom WordPress theme (`C:\Users\Iain\Local Sites\wordpress-7\...\themes\hhi-netherlands`) is dead — ignore it. Do not resurrect or sync to any other copy.
@@ -33,7 +35,9 @@ npm run preview      # serves build/ (see the port-4173 trap below)
 
 ### One stylesheet, one script, every page
 
-Every page loads the same [assets/style.css](assets/style.css) and [assets/main.js](assets/main.js), plus GSAP + ScrollTrigger from cdnjs. Only [index.html](index.html) additionally loads three.js.
+> ⚠️ **None of the files named in this section exist any more.** `assets/style.css`, `assets/main.js` and the hand-written `index.html` were all removed by the migration — the stylesheet is now [src/lib/style.css](src/lib/style.css), the behaviour lives in Svelte components and [src/lib/attachments.svelte.ts](src/lib/attachments.svelte.ts), and the pages are [src/routes/](src/routes/). The links are deliberately left unlinked below so nobody follows them to a 404. Kept because the *reasoning* still explains why the current code is shaped as it is.
+
+Every page loads the same `assets/style.css` and `assets/main.js`, plus GSAP + ScrollTrigger from cdnjs. Only `index.html` additionally loads three.js.
 
 `main.js` is a single IIFE where **every feature guards on its own markup** before initialising (`if (!mount) return`, `if (!contactForm) return`). This is what makes one script safe for all pages — preserve that pattern when adding features. Feature-to-page mapping:
 
@@ -149,6 +153,16 @@ The grid is **six across** with a 14px gap and a 1px border per cell (`.gallery-
 `static/download/` holds the rules PDFs and the four years of results score sheets, and is **source material on the same terms** — for several of those files the repo is the only copy outside Iain's drive. As of 21 Aug 2026 the rules PDFs are the English simplified rules and full manual **plus Dutch translations of both, and `/regulations` now links all four**: `RULES_PDFS` in [config.ts](src/lib/config.ts) holds the English pair, `RULES_PDFS_NL` the Dutch. ⚠️ **They are two exports, not one array of four, and the page renders each into its own `.notice` block** (`.notice--rules-en` / `.notice--rules-nl`) — the two pairs are the same documents in different languages, and a flat row of four buttons leaves a Dutch reader no way to tell which two are theirs. The smoke test counts the links **per block**, so flattening them breaks it. The Dutch block carries `lang="nl"` and Dutch button labels on purpose: someone scanning for their own language finds it by reading Dutch in it.
 
 Off-site destinations live in `EXTERNAL` in [src/lib/config.ts](src/lib/config.ts), not in the markup. Ticketing is `shop.celebratix.io` (**not** the older `shop.compoticketing.eu`).
+
+⚠️ **[static/.htaccess](static/.htaccess) is load-bearing on the live host, and one rule in it is not obvious.** `adapter-static` writes **flat files** — `build/media.html`, not `build/media/index.html` — while every canonical tag, sitemap `<loc>` and internal href is the extensionless `/media`. In-site navigation never notices, because SvelteKit's client router handles it in JS; but a refresh, a bookmark, a pasted link or a crawler asks the server for a file literally named `media`, and **every sub-page 404'd on the live host until an internal rewrite was added** on 21 Aug 2026.
+
+Three things to preserve if you touch that file:
+
+- It is a **rewrite, not a redirect**. `/media` must keep answering 200 at `/media`; a 301 to `/media.html` would contradict the canonical tag, the `og:url` and all ten sitemap entries, and re-publish the `.html` form the legacy-redirect block exists to retire.
+- The three guards are all doing work: `!-f` and `!-d` leave real files and directories alone (`/img/`, `/api/`, `/download/`, `robots.txt`), and the `DOCUMENT_ROOT` test means it only fires where the `.html` twin exists — so a genuine miss still 404s instead of looping.
+- `-MultiViews` is pinned next to `-Indexes` deliberately. On this host `Options -Indexes` **replaces** the inherited option set rather than subtracting from it, which is how MultiViews changed state without anyone touching it. Leaving MultiViews *on* would also mask whether the rewrite works, since it resolves extensionless URLs by guessing at filenames.
+
+The host is **LiteSpeed running PHP 8.3**. Nothing in the test suite covers `.htaccess` — Playwright serves static files and never reads it — so verify changes with `curl -sI` against the live site, and always test a nonsense URL too: that is what catches an over-broad rule that "fixes" the 404 by making everything 200.
 
 **The contact form is the one dynamic thing on this site.** Since 20 Aug 2026 `/contact` posts JSON to [static/api/contact.php](static/api/contact.php) — a hand-written endpoint that ships in `static/`, so Vite copies it into `build/` and the existing FTP action deploys it to `/httpdocs/api/`. It validates, rate-limits and filters spam before mailing `info@hhi-netherlands.com`. Three rules when touching it:
 

@@ -1,8 +1,56 @@
 # Migration status
 
 Working notes for the static HTML → SvelteKit migration.
-Last updated **21 August 2026** — **the 2026 media gallery is merged to `main`
-and everything is pushed.** `origin/main` and `main` are level and the working
+
+## ✅ THE SITE IS LIVE — cutover completed 21 August 2026
+
+Iain repointed the nameservers to Cloud86 and **hhi-netherlands.com now serves
+the SvelteKit site**. The contact form was tested end to end and the message
+arrived in the inbox. This is the milestone the whole document was working
+towards; everything below it that talks about "before the account exists" or
+"on cutover day" is now history rather than planning.
+
+Three things broke on contact with the real host, all found and fixed the same
+day. Each is worth reading before touching the area it affects:
+
+1. **Every sub-page 404'd on refresh.** `adapter-static` writes flat files
+   (`build/media.html`, not `build/media/index.html`) while every canonical
+   tag, sitemap entry and internal link uses the extensionless `/media`.
+   In-site navigation worked because SvelteKit's client router handles it in
+   JS; a refresh, bookmark or crawler asked the server for a file named
+   `media`, which does not exist. Fixed with an **internal rewrite** in
+   `static/.htaccess` — not a redirect, because `/media` must keep answering
+   200 at `/media`. `-MultiViews` is now pinned alongside `-Indexes`: on this
+   host `Options -Indexes` *replaces* the inherited set rather than
+   subtracting from it, which is how MultiViews silently changed state.
+
+2. **`/media` showed no photos at all.** The manifest was baked at build time
+   and the photos are not in the repo, so CI froze an empty list into the
+   bundle — and the build *succeeded*, because an empty gallery is a legitimate
+   state. See *The gallery's two manifests*.
+
+3. **The gallery loaded slowly.** ~1500x1000 photos at ~318KB rendered into
+   ~209px tiles: 6.6MB for the first screen, ~90% of it discarded after
+   decoding. `static/api/thumb.php` now serves a ~480px WebP per tile,
+   generated on first request and cached; measured **6.6MB → 0.67MB**. The
+   lightbox still gets the untouched original. A smoke test asserts that split
+   because collapsing both back to `photo.src` silently restores the 6.6MB page.
+
+**The host is LiteSpeed running PHP 8.3.** Earlier notes in this file guessing
+at the stack predate the account existing.
+
+⚠️ **A stale DNS cache made all of this much harder to diagnose** and is worth
+knowing about for any future host change. The machine investigating kept
+resolving the *old* host long after the switch, so every check reported the new
+site as completely undeployed — old page at `/`, 404s everywhere else — while
+Iain's browser showed it working correctly. Check `nslookup hhi-netherlands.com
+1.1.1.1` against a plain `nslookup` before believing anything about what is
+live, and pin the address with `curl --resolve` when they disagree.
+
+---
+
+**Before the cutover**, last updated 21 August 2026 — **the 2026 media gallery
+is merged to `main` and everything is pushed.** `origin/main` and `main` are level and the working
 tree is clean; there is nothing outstanding in the repo for the first time
 since the migration began.
 
@@ -343,9 +391,8 @@ below. This is the largest untested surface in the repo.
 
 ### Then, unchanged from before
 
-1. **Buy the Cloud86 plan.** Two details to confirm at purchase: what "Git
-   integratie" actually does, and whether a cheaper tier keeps mail + SSH +
-   `.htaccess`.
+1. ✅ **Buy the Cloud86 plan** — done, and the nameservers were repointed on
+   21 Aug 2026. The site is live; see the cutover section at the top.
 2. ✅ **Create the `info@hhi-netherlands.com` mailbox** — done 21 Aug 2026,
    **and the live delivery test passed the same day**: a message sent through
    the real form arrived in the inbox. See *The contact form*. This step is
@@ -353,8 +400,15 @@ below. This is the largest untested surface in the repo.
    stub.
 3. **The photo archive — ~8,163 images, ≈7.8 GB.** Iain's own FTP pull. No
    switch-off date is set, but it is the only irreversible deadline left.
-4. **Cutover day** (needs the account): delete the Pages workflow, stop setting
-   `BASE_PATH`, verify the `.htaccess` redirects on the real host.
+4. **Cutover day** — mostly done 21 Aug 2026. The `.htaccess` was verified on
+   the real host (and needed one fix, the extensionless rewrite). **What is
+   still outstanding: the Pages workflow.** `.github/workflows/pages.yml` still
+   exists and still sets `BASE_PATH`, so every push builds a second, sub-path
+   copy of the site to GitHub Pages. That is harmless — it is `noindex` staging
+   — but it is now a *second* place a deploy can go, and its gallery is
+   permanently empty because Pages has no PHP to serve `api/gallery.php`.
+   Decide whether to keep it as a preview or delete it and stop setting
+   `BASE_PATH`. Deleting it also removes the only reason `withBase()` exists.
 
 ~~One small chore: `src/lib/config.ts` fails `npm run lint` on line endings.~~
 ✅ **Done 15 Aug 2026** — formatted as part of the day-split work, since that
@@ -377,7 +431,7 @@ for real: DNS → Apache → `static/api/contact.php` → `mail()` → delivery.
 Worth being precise about what it proves, because the Playwright suite proves
 none of it — the suite stubs the endpoint, so a green run says nothing about
 the PHP. Until this test, `static/api/contact.php` had **never executed at
-all**. It now has: the file parses under the host's PHP 8.4, the validation and
+all**. It now has: the file parses under the host's PHP 8.3, the validation and
 spam filters let a legitimate message through rather than eating it, and
 `mail()` did not merely return true but actually delivered. That last
 distinction was the whole worry — `mail()` returning true means the host
@@ -1341,14 +1395,15 @@ founded year, current year, NHHDC categories, the homepage division total, and
 the results categories. Note the divisions are now **six** — JV MegaCrew was
 added — which is why the smoke test no longer hard-codes a count of 5.
 
-**Every pre-purchase task is now done.** What remains needs either the Cloud86
-account or a decision from Iain:
+**Every pre-purchase task is done, and the account now exists — the site went
+live 21 Aug 2026.** What remains needs a decision from Iain:
 
 - **The photo archive — ~8,163 images, ≈7.8 GB.** ✅ Decided: **Iain pulls it
   himself over FTP.** No switch-off date is set, so it is not immediate, but it
   carries the only irreversible deadline on the project. See the section below.
-- Cutover day: delete the Pages workflow, stop setting `BASE_PATH`, verify the
-  redirects on the real host.
+- Pages workflow: delete it and stop setting `BASE_PATH`, or keep it as
+  noindex staging. The rest of cutover day is done — the redirects were
+  verified on the real host on 21 Aug.
 - Phase 8: ✅ **built 20 Aug 2026**; mailbox created and the live delivery test
   passed 21 Aug. Nothing outstanding.
 
@@ -1389,8 +1444,8 @@ the mailbox exists (21 Aug).
 | 4 · Shared JavaScript | ✅ attachments, GSAP bundled, teardown, motion watchdog |
 | 5 · Remaining sub-pages | ✅ all six ported, smoke test green |
 | 6 · index.html | ✅ hero, stage floor, preloader, road pin, all sections |
-| 7 · Delete old site | 🟨 items 2–5 done; `.htaccess` written — **only the cutover itself is left, and it needs the account** |
-| 8 · Finish "fully functional" | 🟨 registration hub, favicon + social preview, **contact form (20 Aug)** done; mailbox created 21 Aug — only the live delivery test is left |
+| 7 · Delete old site | ✅ **cutover done 21 Aug 2026** — DNS repointed, `.htaccess` verified live and fixed; only the Pages workflow decision remains |
+| 8 · Finish "fully functional" | ✅ **done 21 Aug 2026** — registration hub, favicon + social preview, contact form, mailbox, and the live delivery test all confirmed |
 
 ## Hosting — decided: Cloud86 (13 Aug 2026)
 
@@ -1457,7 +1512,14 @@ though they served a stub.
 rules: 24 cases pass including the negatives (clean routes, `/img` assets,
 `/og-image.png`, `/_app/…` all correctly untouched), the gallery regex matches all
 71 archive pages with none missed, and `adapter-static` does copy the dotfile into
-`build/`. **Not** verified on LiteSpeed — that needs the Cloud86 account.
+`build/`.
+
+✅ **VERIFIED ON THE REAL HOST 21 Aug 2026**, after the nameservers were
+repointed. The host turned out to be **LiteSpeed running PHP 8.3** — earlier
+notes in this file guessing at the stack were written before it could be
+checked. `curl -sI https://hhi-netherlands.com/media` returned 404 on the first
+attempt, which is what exposed the flat-file problem; after the fix it returns
+200, and a genuine nonsense URL still 404s.
 
 Both `npx serve build` and GitHub Pages resolve `/sponsors` by themselves, which
 is why the smoke test and preview pass. That is those servers being helpful; it is
@@ -1473,7 +1535,7 @@ not entirely — the split is what drives the running order at the top of this f
 |---|---|
 | Registration hub (two JotForms) | ✅ fully — external URLs, no host involved |
 | ~~Rescue the eight media photos~~ | ✅ **done 14 Aug 2026** |
-| ~~Write `static/.htaccess`~~ | ✅ **written 14 Aug**, rule-tested; **verify on cutover day** — whether LiteSpeed applies it as expected is untestable until the account exists |
+| ~~Write `static/.htaccess`~~ | ✅ **written 14 Aug**, ✅ **verified live on LiteSpeed 21 Aug** — it needed one addition, the extensionless rewrite |
 | Rescue the ~8,163-photo archive | ✅ **settled 14 Aug — Iain pulls it over FTP**, outside this repo; ≈7.8 GB is far too large for git |
 | `regulations` → local PDF | ⚠️ partly — the dependency can be removed, but only once the PDF exists |
 | Delete the Pages workflow | ❌ hold — it is the only staging environment; deleting it early leaves no preview at all |
