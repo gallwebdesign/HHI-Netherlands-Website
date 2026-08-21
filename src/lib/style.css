@@ -1118,6 +1118,16 @@ body.menu-open{ overflow:hidden; }
 .form__hint{ font-family:var(--font-mono); font-size:11px; letter-spacing:.1em; color:var(--muted); line-height:1.7; }
 .form__hint a{ color:var(--oranje); }
 
+/* Every field on this form is required, so a marker per label would be four
+   asterisks saying one thing. One legend above the fields says it once.
+   It sits FIRST in the DOM so a screen reader meets the rule before the
+   inputs it governs, not after. */
+.form__legend{
+  font-family:var(--font-mono); font-size:11px; letter-spacing:.2em;
+  text-transform:uppercase; color:var(--muted); margin:0;
+}
+.form__legend span{ color:var(--oranje); }
+
 /* A field the endpoint rejected. Border only — the message below carries
    the meaning, and colour is never the sole signal. */
 .form input[aria-invalid="true"], .form textarea[aria-invalid="true"]{ border-color:var(--oranje); }

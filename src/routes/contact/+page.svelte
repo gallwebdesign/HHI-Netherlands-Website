@@ -37,12 +37,72 @@
 
 	const remaining = $derived(LIMITS.message.max);
 
+	/* Mirrors the endpoint's messages so a field reads the same whichever side
+	   caught it. The form carries `novalidate` — that suppresses the browser's
+	   own bubbles, which are inconsistent across engines and untranslatable, not
+	   the constraints themselves. Without this pass an empty form would post,
+	   wait for a round trip, and come back with errors the browser already knew;
+	   on the Pages preview, where no PHP runs, it would come back with none. */
+	function validate(form: HTMLFormElement): Record<string, string> {
+		const errors: Record<string, string> = {};
+		const value = (name: string) =>
+			(
+				form.elements.namedItem(name) as HTMLInputElement | HTMLTextAreaElement | null
+			)?.value.trim() ?? '';
+
+		const name = value('name');
+		if (name === '') {
+			errors.name = 'Please tell us your name.';
+		} else if (name.length < LIMITS.name.min || name.length > LIMITS.name.max) {
+			errors.name = `Please use between ${LIMITS.name.min} and ${LIMITS.name.max} characters.`;
+		}
+
+		const email = value('email');
+		const emailField = form.elements.namedItem('email') as HTMLInputElement | null;
+		if (email === '') {
+			errors.email = 'Please give us an e-mail address to reply to.';
+		} else if (emailField && !emailField.checkValidity()) {
+			/* type="email" already knows the shape; no second regex to drift. */
+			errors.email = 'That does not look like an e-mail address.';
+		}
+
+		const subject = value('subject');
+		if (subject === '') {
+			errors.subject = 'Please add a subject.';
+		} else if (subject.length < LIMITS.subject.min || subject.length > LIMITS.subject.max) {
+			errors.subject = `Please use between ${LIMITS.subject.min} and ${LIMITS.subject.max} characters.`;
+		}
+
+		const message = value('message');
+		if (message === '') {
+			errors.message = 'Please write us a message.';
+		} else if (message.length < LIMITS.message.min) {
+			errors.message = `Please write a little more — at least ${LIMITS.message.min} characters.`;
+		} else if (message.length > LIMITS.message.max) {
+			errors.message = `That is longer than ${LIMITS.message.max} characters. Please shorten it.`;
+		}
+
+		return errors;
+	}
+
 	async function submitForm(event: SubmitEvent) {
 		event.preventDefault();
 		if (status === 'sending') return;
 
 		const form = event.currentTarget as HTMLFormElement;
 		const data = new FormData(form);
+
+		const invalid = validate(form);
+		if (Object.keys(invalid).length > 0) {
+			status = 'error';
+			fieldErrors = invalid;
+			formError = 'Please check the fields marked below.';
+			/* Send focus to the first problem so a keyboard or screen-reader
+			   visitor is told what to fix rather than left at the button. */
+			const first = form.elements.namedItem(Object.keys(invalid)[0]);
+			if (first instanceof HTMLElement) first.focus();
+			return;
+		}
 
 		status = 'sending';
 		formError = '';
@@ -150,6 +210,8 @@
 				</div>
 			{:else}
 				<form class="form" onsubmit={submitForm} novalidate {@attach reveal()}>
+					<p class="form__legend"><span>*</span> All fields are required</p>
+
 					<label>
 						<span>Name</span>
 						<input

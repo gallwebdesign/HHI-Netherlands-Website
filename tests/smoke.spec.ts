@@ -1344,6 +1344,66 @@ test("contact form renders the endpoint's per-field errors inline", async ({ pag
 	await expect(page.locator('input[name="name"]')).toHaveValue('Kim de Vries');
 });
 
+test('contact form blocks an empty submit without reaching the network', async ({ page }) => {
+	/* The form carries `novalidate`, so the browser's own required/minlength
+	   enforcement never runs — the page has to do it. Without this the four
+	   mandatory fields would be enforced only by the PHP, which means an empty
+	   submit costs a round trip, and on the Pages preview (no PHP at all) it
+	   would report a connection failure instead of naming the empty fields. */
+	let posted = 0;
+	await page.route('**/api/contact.php', (route) => {
+		posted += 1;
+		return route.fulfill({
+			status: 200,
+			contentType: 'application/json',
+			body: JSON.stringify({ ok: true })
+		});
+	});
+
+	await page.goto('/contact');
+	/* reveal() holds the form at visibility:hidden until its ScrollTrigger
+	   fires, so it has to be scrolled to before anything in it is clickable.
+	   The other contact tests get this for free from fillContactForm; this one
+	   submits an empty form, so it has to ask for it. */
+	await page.locator('form.form').scrollIntoViewIfNeeded();
+	await expect(page.locator('button[type="submit"]')).toBeVisible();
+	await page.waitForTimeout(3200);
+	await page.click('button[type="submit"]');
+
+	// Every field names itself rather than one blanket complaint.
+	await expect(page.locator('.form__error', { hasText: /tell us your name/ })).toBeVisible();
+	await expect(
+		page.locator('.form__error', { hasText: /e-mail address to reply to/ })
+	).toBeVisible();
+	await expect(page.locator('.form__error', { hasText: /add a subject/ })).toBeVisible();
+	await expect(page.locator('.form__error', { hasText: /write us a message/ })).toBeVisible();
+
+	// The point of the test: nothing was sent, and the form is still there.
+	expect(posted).toBe(0);
+	await expect(page.locator('form.form')).toBeAttached();
+
+	// Focus lands on the first problem, not on the button that was clicked.
+	await expect(page.locator('input[name="name"]')).toBeFocused();
+
+	// Filling it all in correctly still posts.
+	await fillContactForm(page);
+	await page.click('button[type="submit"]');
+	await expect(page.locator('.form-sent')).toBeVisible();
+	expect(posted).toBe(1);
+});
+
+test('contact form states that all fields are required', async ({ page }) => {
+	await page.goto('/contact');
+
+	// The legend precedes the fields it governs, so it is read before them.
+	await expect(page.locator('.form__legend')).toContainText(/all fields are required/i);
+
+	// And the constraint is on the fields themselves, for anything that reads them.
+	for (const name of ['name', 'email', 'subject', 'message']) {
+		await expect(page.locator(`[name="${name}"]`)).toHaveAttribute('required', '');
+	}
+});
+
 test('contact form reports a failed delivery rather than claiming success', async ({ page }) => {
 	/* A form that says "sent" when nothing was sent is worse than one that
 	   errors: the visitor walks away believing they made contact. */
