@@ -1278,3 +1278,180 @@ body.menu-open{ overflow:hidden; }
    instead of fading — correct here, since this is a control rather than
    decoration. The scroll itself jumps rather than smooth-scrolling, which
    the component handles via prefersReducedMotion(). Nothing to override. */
+
+/* ==== 2026 GALLERY ====
+   The /media photo grid: two stacked tablists (competition, then division)
+   over the existing .gallery grid, plus a lightbox.
+
+   Everything here is at the end of the file on purpose. Both of the
+   specificity traps documented in CLAUDE.md apply to this block:
+   .tabs--divisions overrides .tabs at equal specificity, so it only wins by
+   coming later; and nothing here may use a descendant combinator on
+   .gallery, because the mobile .gallery{repeat(2,1fr)} rule up at the
+   max-width:1000px block is a bare class and a .gallery-shell .gallery
+   would silently outrank it and leave phones at four across. */
+/* .media zeroes the section's side padding so the photo grid runs full
+   bleed, and .media__head re-adds the gutter for the tag above it. The tabs
+   and the empty state are content rather than imagery, so they take the
+   gutter back the same way; only .gallery itself stays edge to edge. */
+.gallery-tabs,
+.gallery-empty{ margin-left:var(--gutter); margin-right:var(--gutter); }
+.gallery-tabs{ display:flex; flex-direction:column; align-items:flex-start; gap:12px; }
+/* .tabs carries margin-bottom:34px, which inside this column would stack on
+   top of the gap and push the second row away from the first. The wrapper
+   owns the spacing instead. */
+/* Both gallery tablists, not just the long one. .tabs is width:max-content,
+   which cannot shrink below its content: on a phone the row runs off the
+   side of the screen instead of wrapping, and takes the whole page's
+   horizontal scroll with it. "HHI Open Division" and "Netherlands HHDC" side
+   by side already overflow 390px, which is how this was caught — measuring
+   the division row alone said everything was fine.
+
+   ⚠️ Must stay after .tabs (line ~859): equal specificity, so source order
+   decides, and written earlier this whole rule would silently do nothing. */
+.gallery-tabs .tabs{ margin-bottom:0; flex-wrap:wrap; width:auto; max-width:100%; }
+/* Spacing above the grid hangs off .gallery-tabs, NOT off a
+   `.gallery-shell .gallery{…}` rule. That rule would work — it only sets a
+   margin — but it is the exact shape of the trap above, and the next person
+   to add grid-template-columns to it would silently kill the mobile
+   two-column rule. Better that the selector never exists. */
+.gallery-tabs{ margin-bottom:34px; }
+
+/* Empty state, held to the same frame as .notice but a distinct class: the
+   two say different things — one cites sources, this admits a gap — and the
+   smoke test has to tell them apart. */
+.gallery-empty{
+  margin-top:34px;
+  border:1px solid var(--oranje); padding:20px 24px;
+  display:flex; gap:16px; align-items:baseline; flex-wrap:wrap;
+  font-size:14px; color:var(--muted);
+}
+.gallery-empty b{
+  color:var(--oranje); font-family:var(--font-mono); font-size:11px;
+  letter-spacing:.2em; text-transform:uppercase;
+}
+
+/* Six across with real spacing, on its own modifier rather than by editing
+   .gallery. The base class keeps its 4-across/1px-gutter look for anything
+   that still wants it, and — the reason this is a modifier at all — the
+   mobile .gallery{repeat(2,1fr)} rule up at max-width:1000px is a bare class
+   that a .gallery-shell .gallery override would silently outrank. A modifier
+   at equal specificity, written later, wins cleanly and stays overridable in
+   the media queries below.
+
+   The 1px gap was doing the work of a border by letting --line show through
+   from behind, which packed the photos edge to edge. Real gap plus a real
+   border on each cell gives them room to read as separate shots. */
+.gallery--grid{
+  grid-template-columns:repeat(6,1fr); gap:14px; background:none;
+  padding:0 var(--gutter);
+}
+.gallery--grid .media__cell{
+  border:1px solid var(--line);
+  transition:border-color .3s var(--ease-out), transform .3s var(--ease-out);
+}
+.gallery--grid .media__cell:hover{ border-color:var(--oranje); transform:translateY(-3px); }
+
+/* Load more. Centred under the grid, and it takes the gutter like the tabs
+   and the empty state because it is a control, not part of the full-bleed
+   imagery. */
+.gallery-more{
+  margin:34px var(--gutter) 0;
+  display:flex; flex-direction:column; align-items:center; gap:14px;
+}
+.gallery-more__count{
+  font-family:var(--font-mono); font-size:11px; letter-spacing:.2em;
+  text-transform:uppercase; color:var(--muted);
+}
+
+/* Tiles are buttons so they are keyboard-reachable without any extra
+   wiring; these rules strip the UA button chrome back to the .media__cell
+   look, which the element still carries. */
+.gallery__tile{
+  display:block; width:100%; padding:0; border:0;
+  background:linear-gradient(160deg, var(--panel-2), var(--ink));
+  cursor:pointer;
+}
+.gallery__tile:focus-visible{ outline:2px solid var(--oranje); outline-offset:-2px; }
+
+/* ==== LIGHTBOX ====
+   z-index 80 sits above the grain (70) so a photo is not viewed through
+   scanlines, and below the cursor (90) and preloader (100). */
+body.lightbox-open{ overflow:hidden; }
+.lightbox{
+  position:fixed; inset:0; z-index:80;
+  display:flex; align-items:center; justify-content:center; gap:12px;
+  padding:64px 24px;
+  background:rgba(10,10,14,.94); backdrop-filter:blur(6px);
+  animation:lightbox-in .25s var(--ease-out);
+}
+@keyframes lightbox-in{ from{ opacity:0 } to{ opacity:1 } }
+/* A modal is a control, not decoration: under reduced motion it should be
+   there at once rather than fade slowly. */
+.lightbox--instant{ animation:none; }
+.lightbox__frame{
+  display:flex; flex-direction:column; align-items:center; gap:14px;
+  max-width:100%; max-height:100%; margin:0; min-width:0;
+}
+.lightbox__img{
+  max-width:100%; max-height:calc(100vh - 150px);
+  object-fit:contain; display:block;
+}
+.lightbox__count{
+  font-family:var(--font-mono); font-size:11px; letter-spacing:.2em;
+  color:var(--muted);
+}
+.lightbox__close,
+.lightbox__nav{
+  flex:none; display:grid; place-items:center;
+  width:48px; height:48px;
+  border:1px solid var(--line); background:rgba(21,21,31,.8); color:var(--bone);
+  cursor:pointer; transition:background-color .25s, border-color .25s, color .25s;
+}
+.lightbox__close:hover,
+.lightbox__nav:hover{ background:var(--oranje); border-color:var(--oranje); color:var(--ink); }
+.lightbox__close:focus-visible,
+.lightbox__nav:focus-visible{ outline:2px solid var(--oranje); outline-offset:2px; }
+.lightbox__close{ position:absolute; top:16px; right:24px; }
+/* Drawn, not typed, for the same reason as .scroll-top__arrow: a × or ‹
+   glyph shifts weight and baseline in every fallback font. */
+.lightbox__x{ position:relative; width:16px; height:16px; }
+.lightbox__x::before,
+.lightbox__x::after{
+  content:""; position:absolute; top:7px; left:0; width:16px; height:2px;
+  background:currentColor;
+}
+.lightbox__x::before{ transform:rotate(45deg); }
+.lightbox__x::after{ transform:rotate(-45deg); }
+.lightbox__chevron{
+  width:12px; height:12px;
+  border-top:2px solid currentColor; border-left:2px solid currentColor;
+}
+.lightbox__nav--prev .lightbox__chevron{ transform:rotate(-45deg); margin-left:4px; }
+.lightbox__nav--next .lightbox__chevron{ transform:rotate(135deg); margin-right:4px; }
+
+/* Six across only holds up on a desktop. These step it down rather than
+   letting the mobile .gallery{repeat(2,1fr)} rule apply, which it cannot do
+   here: .gallery--grid is a second class on the same element, so it wins on
+   source order regardless of the media query. The modifier that overrode the
+   base has to do its own responsive work. */
+@media (max-width:1200px){
+  .gallery--grid{ grid-template-columns:repeat(4,1fr); }
+}
+@media (max-width:1000px){
+  .gallery--grid{ grid-template-columns:repeat(3,1fr); gap:10px; }
+}
+
+@media (max-width:560px){
+  /* Two across on a phone, matching what the base grid does at this width. */
+  .gallery--grid{ grid-template-columns:repeat(2,1fr); gap:8px; }
+  /* A wrapped row of seven division buttons eats the screen at 26px of
+     side padding each; tighten them rather than let the grid start below
+     the fold. */
+  .tabs--divisions button{ padding:10px 14px; letter-spacing:.1em; }
+  /* The controls move off the sides and under the photo, where they do not
+     overlap it on a narrow screen. */
+  .lightbox{ padding:64px 12px 20px; flex-wrap:wrap; }
+  .lightbox__frame{ order:-1; width:100%; }
+  .lightbox__img{ max-height:calc(100vh - 220px); }
+}
