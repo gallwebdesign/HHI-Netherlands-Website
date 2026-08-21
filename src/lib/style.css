@@ -613,7 +613,21 @@ html.has-cursor .cursor-ring{ display:block; }
   transition:color .25s;
 }
 .menu__link:hover{ color:var(--oranje); }
-.menu__ctas{ display:flex; gap:14px; flex-wrap:wrap; position:relative; }
+/* The two CTAs stack and stretch so Tickets is exactly as wide as
+   Register your crew. flex-wrap goes with the row: under a column
+   direction it would break the stretch, not help it. .btn is an
+   inline-flex whose content sits left by default, so the label needs
+   centring back — the same pairing .hero__ctas uses below 1000px. */
+.menu__ctas{ display:flex; flex-direction:column; align-items:stretch; gap:14px; position:relative; }
+.menu__ctas .btn{ justify-content:center; }
+/* Tickets is the inverse of Register: bone ground with an orange label,
+   sweeping to orange on touch where Register sweeps to bone. Scoped to
+   the menu rather than written into .btn--ghost, which six other places
+   still want transparent. The ::before override needs the same
+   .menu__ctas prefix to outrank .btn--ghost::before on specificity. */
+.menu__ctas .btn--ghost{ background:var(--bone); border-color:var(--bone); color:var(--oranje); }
+.menu__ctas .btn--ghost::before{ background:var(--oranje); }
+.menu__ctas .btn--ghost:hover{ color:var(--bone); }
 .menu__socials{
   display:flex; gap:22px; position:relative;
   font-family:var(--font-mono); font-size:11px; letter-spacing:.16em;
