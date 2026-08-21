@@ -41,7 +41,7 @@ export const FACTS: Fact[] = [
 	{
 		term: 'Who',
 		value: 'Crews · Judges · You',
-		note: 'Spectator tickets via the official ticket shop'
+		note: 'Dancers, Coaches and Spectator tickets via the official ticket shop'
 	}
 ];
 

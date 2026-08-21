@@ -45,7 +45,7 @@ export interface RuleColumn {
 const OPEN_DIVISION_RULES: Rule[] = [
 	{
 		title: 'Divisions & ages',
-		body: 'Junior (7–12), Varsity (13–17), Adult (18+), Parents and Special Crews (Dancers with a disability or special needs) open to all ages.'
+		body: 'Junior (12 & younger), Varsity (13–17), Adult (18+), Parents and Special Crews (Dancers with a disability or special needs) open to all ages.'
 	},
 	{
 		title: 'Crew size',
@@ -73,7 +73,7 @@ const OPEN_DIVISION_RULES: Rule[] = [
 const HHDC_RULES: Rule[] = [
 	{
 		title: 'Divisions & ages',
-		body: 'Junior (7–12), Varsity (13–17), Adult (18+), JV-MegaCrew (17 and younger) plus MiniCrew and MegaCrew open to all ages. Your division is set by your dancers’ ages in the competition year.'
+		body: 'Junior (12 & younger), Varsity (13–17), Adult (18+), JV-MegaCrew (17 and younger) plus MiniCrew and MegaCrew open to all ages. Your division is set by your dancers’ ages in the competition year.'
 	},
 	{
 		title: 'Crew size',

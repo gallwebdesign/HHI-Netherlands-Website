@@ -25,7 +25,7 @@ export interface Division {
 
 export const DIVISIONS: Division[] = [
 	{
-		age: 'Ages 7–12',
+		age: 'Ages 12 & younger',
 		name: 'Junior',
 		crew: '5–9 dancers',
 		desc: 'The youngest crews on the biggest stage. Foundations first — swagger included.'

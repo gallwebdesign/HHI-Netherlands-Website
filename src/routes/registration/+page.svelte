@@ -74,7 +74,7 @@
 		<div class="notice" {@attach reveal()}>
 			<b>Which day do we dance?</b>
 			<span
-				>The <b>HHI Open Division</b> dances on {EVENT_DAY_ONE}, and the
+				>The <b>HHI Open Division</b> dances on {EVENT_DAY_ONE}. Great atmosphere, a fun day out for all, and the
 				<b>Netherlands HHDC</b> on {EVENT_DAY_TWO}. The HHDC is the official national qualifier —
 				its medallists represent the Netherlands at the HHI World Finals. Final times follow with
 				the full programme.</span
