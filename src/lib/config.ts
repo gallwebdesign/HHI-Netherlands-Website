@@ -48,7 +48,22 @@ export const EVENT_DAY_TWO = dayLabel(EVENT_END_DATE);
 /** First edition of the championship; the left half of the footer range. */
 export const FOUNDED_YEAR = 2016;
 
-/** TODO: confirm the real inbox before relying on this. */
+/** The championship inbox. Confirmed 20 Aug 2026 as the address the contact
+ *  form delivers to.
+ *
+ *  ⚠️ **Nothing renders this any more, and that is deliberate.** The /contact
+ *  page dropped its mailto: on 20 Aug 2026 when the form became a real
+ *  submission — an address written into the markup is harvested by exactly the
+ *  crawlers the endpoint's spam defences exist to stop. The address now lives
+ *  in `MAIL_TO` in [static/api/contact.php](../../static/api/contact.php),
+ *  which is server-side and never shipped to a browser.
+ *
+ *  Kept here as the single written record of where messages go. If you change
+ *  the inbox, change it in contact.php too — that is the copy that routes mail.
+ *
+ *  ⚠️ The mailbox must exist on Cloud86 for delivery to work. As of 20 Aug 2026
+ *  it had not been created; until it is, submissions are accepted and silently
+ *  go nowhere. */
 export const CONTACT_EMAIL = 'info@hhi-netherlands.com';
 
 /** Canonical origin, no trailing slash. Open Graph requires absolute URLs —

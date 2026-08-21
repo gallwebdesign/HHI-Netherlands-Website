@@ -702,6 +702,18 @@ body.menu-open{ overflow:hidden; }
      it. Hover speed-up is dropped deliberately. */
   .ticker__track{ animation-duration:55s !important; }
   .ticker:hover .ticker__track{ animation-duration:55s !important; }
+
+  /* Show the envelope fully drawn, and do NOT wait for the observer.
+     ⚠️ The undrawn start state lives on `--animate` alone, so without this
+     the illustration is a blank frame until something adds `--drawn` — and
+     under reduced motion nothing should depend on that. Forced complete
+     here instead: reduced motion means less motion, not a missing drawing,
+     which is the same failure the stage floor and ticker both had. Must
+     stay after the blanket `animation-duration` rule above to win. */
+  .envelope__body,
+  .envelope__fold,
+  .envelope__mouth{ stroke-dashoffset:0 !important; animation:none !important; }
+  .envelope__letter{ opacity:1 !important; transform:none !important; animation:none !important; }
 }
 
 /* ============================================================
@@ -965,8 +977,102 @@ body.menu-open{ overflow:hidden; }
 }
 
 /* contact */
-.contact-grid{ display:grid; grid-template-columns:minmax(0,5fr) minmax(0,6fr); gap:60px; align-items:start; }
-.form{ display:grid; gap:18px; }
+/* Was 5fr:6fr, which made the form the wider half and left its fields at an
+   uncomfortable ~610px measure. Evened to 1:1 on 20 Aug 2026 when the
+   envelope arrived: the form loses ~90px at 1440px and the illustration
+   gets a real column to sit in rather than the leftover space. */
+.contact-grid{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:60px; align-items:start; }
+
+/* ---- envelope ----------------------------------------------------------
+   Fills the space the Socials and E-mail facts left. Sized in CSS rather
+   than on the SVG so it scales with its column; max-width stops it becoming
+   a billboard on a wide screen. */
+.envelope{
+  display:block; width:100%; max-width:340px; height:auto;
+  margin:48px auto 0; overflow:visible;
+}
+/* Every stroke inherits this, so the whole drawing recolours from one place. */
+.envelope{ color:var(--oranje); }
+
+/* ⚠️ The geometry is traced verbatim from Iain's Envelope.svg (21 Aug 2026)
+   in its own 280.69 × 235.35 viewBox. Only the COLOURS are this site's: the
+   source hard-codes #ff4d00, which is --oranje, so every stroke reads
+   currentColor instead and the drawing follows the palette. Stroke widths
+   are the source's 5 user units, which at this viewBox scale matches the
+   2.5 the previous version used in a 240-wide box.
+
+   All strokes share round caps and joins, as the source does — the corners
+   of the splayed top and the fold's apex both depend on it. */
+.envelope__body,
+.envelope__fold,
+.envelope__mouth,
+.envelope__paper{
+  fill:none; stroke:currentColor; stroke-width:5;
+  stroke-linecap:round; stroke-linejoin:round;
+}
+
+/* ⚠️ The sheet stays UNFILLED, as the source has it. The letter paints last,
+   over the envelope, so a fill here would blank out the two mouth diagonals
+   exactly where they are supposed to cross in front of the paper — the one
+   detail that makes the envelope read as open. The sheet is defined by its
+   stroke and its rules, not by a ground. */
+.envelope__paper{ fill:none; }
+
+/* The source's one accent block. Full-strength orange, small enough to stay
+   a detail rather than a second focal point. */
+.envelope__tile{ fill:currentColor; }
+
+/* The source's #bdbec1 rules stand in for text. Expressed as --bone rather
+   than that literal grey so they track the type colour, and held just off
+   full strength so the orange stays the loudest thing in the drawing. */
+.envelope__rule{ fill:var(--bone); opacity:.72; }
+
+/* Painted first and behind everything, with no stroke of its own: it gives
+   the drawing an opaque ground so the fold and mouth lines read against a
+   solid shape rather than against whatever the page puts behind them. */
+.envelope__panel{ fill:var(--ink); }
+
+/* Draw-in. Each stroked path is dashed to its own length and the offset
+   animates to zero, so the lines appear to be drawn. The letter fades and
+   rises instead, because dashing a filled rect does nothing.
+
+   ⚠️ TWO CLASSES, AND BOTH ARE LOAD-BEARING. `--animate` sets the undrawn
+   start state; `--drawn` is added by an IntersectionObserver in the component
+   and is what actually starts the animation. Putting the animation on
+   `--animate` alone runs it at page load, while the wrapper is still held at
+   visibility:hidden by reveal() — the draw finishes unseen and the envelope
+   fades in already-complete. That was measured here, not guessed.
+
+   ⚠️ The dasharray values are per-path path lengths — pathLength is NOT set
+   on the SVG, so these are real user units, MEASURED from the traced
+   geometry (605 / 307 / 125) rather than estimated. If a path's geometry
+   changes, its dasharray has to change with it or the line will either stop
+   short or start already-visible. */
+.envelope--animate .envelope__body{ stroke-dasharray:605; stroke-dashoffset:605; }
+.envelope--animate .envelope__fold{ stroke-dasharray:307; stroke-dashoffset:307; }
+/* Both mouth diagonals are ~125; one dasharray covers the pair. */
+.envelope--animate .envelope__mouth{ stroke-dasharray:125; stroke-dashoffset:125; }
+.envelope--animate .envelope__letter{ opacity:0; }
+
+.envelope--animate.envelope--drawn .envelope__body{ animation:envelope-draw 1.1s ease forwards .1s; }
+/* The letter drops in once the envelope exists to receive it, then the front
+   fold and the mouth edges land last, so the envelope reads as closing up
+   around the sheet rather than the sheet arriving into a finished drawing. */
+.envelope--animate.envelope--drawn .envelope__letter{ animation:envelope-rise .7s ease forwards .55s; }
+.envelope--animate.envelope--drawn .envelope__fold{ animation:envelope-draw .7s ease forwards .85s; }
+.envelope--animate.envelope--drawn .envelope__mouth{ animation:envelope-draw .5s ease forwards 1s; }
+
+@keyframes envelope-draw{ to{ stroke-dashoffset:0; } }
+/* Downward, not up: the letter is being inserted, so it travels INTO the
+   envelope. Sliding it up would read as a letter being pulled out. */
+@keyframes envelope-rise{ from{ opacity:0; transform:translateY(-14px); } to{ opacity:1; transform:none; } }
+/* ⚠️ The max-width is what actually narrows the form, not the grid.
+   Evening .contact-grid to 1:1 was expected to trim it and did the opposite
+   (measured 625px, up from 610px) — the columns had slack the form was
+   already absorbing. Capping the form itself is the only reliable control;
+   540px keeps the fields at a comfortable typing measure and stops a wide
+   screen stretching them into letterboxes. */
+.form{ display:grid; gap:18px; max-width:540px; }
 .form label{
   display:grid; gap:8px; font-family:var(--font-mono); font-size:11px;
   letter-spacing:.2em; text-transform:uppercase; color:var(--muted);
@@ -978,10 +1084,59 @@ body.menu-open{ overflow:hidden; }
 }
 .form input:focus, .form textarea:focus{ outline:none; border-color:var(--oranje); }
 .form textarea{ min-height:150px; resize:vertical; }
-.form__hint{ font-family:var(--font-mono); font-size:11px; letter-spacing:.1em; color:var(--muted); }
+.form__hint{ font-family:var(--font-mono); font-size:11px; letter-spacing:.1em; color:var(--muted); line-height:1.7; }
+.form__hint a{ color:var(--oranje); }
+
+/* A field the endpoint rejected. Border only — the message below carries
+   the meaning, and colour is never the sole signal. */
+.form input[aria-invalid="true"], .form textarea[aria-invalid="true"]{ border-color:var(--oranje); }
+
+/* Inline field errors. Not uppercase/tracked like the labels above them:
+   an error is prose to read, not a heading to scan. */
+.form__error{
+  font-family:var(--font-body); font-style:normal; font-size:13px;
+  letter-spacing:0; text-transform:none; color:var(--oranje-2); line-height:1.5;
+}
+/* The form-level error (delivery failed, rate limited) sits between the
+   fields and the button, so it needs the space a field error does not. */
+.form__error--block{
+  border-left:2px solid var(--oranje); padding:12px 0 12px 14px; margin:0;
+}
+
+/* Honeypot. Must be genuinely reachable to a bot that reads the DOM and
+   genuinely absent for everyone else, which rules out display:none — some
+   form-fillers skip hidden inputs, and skipping it is the one outcome that
+   defeats the trap. Positioned off-canvas instead, with aria-hidden and
+   tabindex=-1 on the markup keeping it out of the a11y tree and tab order. */
+.form__hp{
+  position:absolute; left:-9999px; width:1px; height:1px;
+  overflow:hidden; opacity:0; pointer-events:none;
+}
+
+.btn[disabled]{ opacity:.55; cursor:not-allowed; }
+/* The button's hover wipe is a ::before that slides in; leaving it live on a
+   disabled button makes a dead control look interactive. */
+.btn[disabled]::before{ display:none; }
+
+/* Confirmation, replacing the form in place. Sized to sit in the same
+   column without the grid collapsing around a short block. */
+/* Same cap as .form — it replaces the form in place, so a different width
+   would make the column jump on submit. */
+.form-sent{
+  display:grid; gap:18px; justify-items:start; align-content:start;
+  border:1px solid var(--line); background:var(--panel); padding:38px 34px;
+  max-width:540px;
+}
+.form-sent h2{ font-family:var(--font-display); font-size:38px; line-height:1; }
+.form-sent p{ color:var(--muted); line-height:1.7; max-width:46ch; }
 
 @media (max-width:1000px){
   .contact-grid{ grid-template-columns:1fr; gap:40px; }
+  /* Stacked, the envelope would sit between the Organisation fact and the
+     form, pushing the form itself below the fold on a phone for the sake of
+     a decoration. The form is the reason the page exists, so the
+     illustration is dropped rather than reordered. */
+  .envelope{ display:none; }
   .gallery{ grid-template-columns:repeat(2,1fr); }
   .rule{ grid-template-columns:48px 1fr; gap:14px; }
   /* Stacked, the cards get the full width back, so the tightened desktop

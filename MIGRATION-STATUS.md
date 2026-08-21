@@ -37,26 +37,277 @@ Verified on `main` at the end of 17 Aug: `npm run lint` clean, `npm run check`
 regulations layout tests, → 36 with the three scroll-to-top tests on 16 Aug,
 → 37 with the hero layout test, which arrived with the hero merge).
 
-## ▶ Start here on 18 August 2026
+## ▶ Start here on 21 August 2026
 
-**Nothing on `main` is half-finished.** Every pre-purchase task is done. What is
-left needs either the Cloud86 account or a decision:
+**Work stopped mid-task on 20 Aug: the envelope illustration is not right and
+Iain called it there.** Everything else from that day is finished and verified.
+Read *The envelope* below before touching it — three attempts failed and the
+fourth should not be a fourth guess.
 
-0. **`git push`.** One unpushed commit: `af789e8`, the Dutch full rules manual.
-   Everything else from 17 Aug is already on `origin/main`.
+### Where the code is
+
+**Branch `contact-form-php`, four commits, NONE PUSHED.** `main` is untouched
+and level with `origin/main`. The working tree is clean.
+
+| Commit | What | State |
+|---|---|---|
+| `1e47a6f` | Phase 8 — the real contact form + PHP endpoint | ✅ finished |
+| `0edec31` | Envelope v1 + form width cap | ⚠️ the width cap is good; the envelope is superseded |
+| `db35dce` | Envelope v2 — "open with a flap" | ❌ rejected |
+| `b452d9c` | Envelope v3 — no flap | ❌ rejected, current state |
+
+`npm test` **45 passed**, `npm run lint` clean, `npm run check` 0 errors /
+0 warnings, as of the last commit.
+
+### The decision waiting for you
+
+**The envelope is the only unfinished thing.** Three hand-drawn SVG attempts did
+not match Iain's reference image. Do not start a fourth by drawing again — the
+options that have NOT been tried are in *The envelope* below, and Iain's own
+words were "if it is not possible, then we can think of another solution." That
+is a decision to take with him, not to guess at.
+
+⚠️ **The rest of the branch does not depend on the envelope.** If the
+illustration is abandoned, the contact form itself is complete and mergeable —
+removing `<EnvelopeMark />` from the page and the three envelope assertions from
+the suite is a ten-minute job. Do not let a stuck decoration hold up a working
+form.
+
+### Then, unchanged from before
+
 1. **Buy the Cloud86 plan.** Two details to confirm at purchase: what "Git
    integratie" actually does, and whether a cheaper tier keeps mail + SSH +
-   `.htaccess`. This unblocks everything below.
-2. **The photo archive — ~8,163 images, ≈7.8 GB.** Iain's own FTP pull. No
+   `.htaccess`.
+2. **Create the `info@hhi-netherlands.com` mailbox** — see *The contact form*.
+   **Until it exists the form accepts submissions and delivers nothing**, which
+   is the one failure mode that looks like success.
+3. **The photo archive — ~8,163 images, ≈7.8 GB.** Iain's own FTP pull. No
    switch-off date is set, but it is the only irreversible deadline left.
-3. **Cutover day** (needs the account): delete the Pages workflow, stop setting
+4. **Cutover day** (needs the account): delete the Pages workflow, stop setting
    `BASE_PATH`, verify the `.htaccess` redirects on the real host.
-4. **Phase 8** (needs the mailbox): `CONTACT_EMAIL` becomes real, and the
-   contact form becomes a working PHP form.
 
 ~~One small chore: `src/lib/config.ts` fails `npm run lint` on line endings.~~
 ✅ **Done 15 Aug 2026** — formatted as part of the day-split work, since that
 commit had to touch `config.ts` anyway. `npm run lint` is clean.
+
+## The contact form — Phase 8, built 20 August 2026
+
+**Branch `contact-form-php`.** The form stopped being a `mailto:` compose and
+became a real submission: it posts JSON to a PHP endpoint on Cloud86, which
+validates it, filters spam and mails `info@hhi-netherlands.com`.
+
+⚠️ **IT DOES NOT DELIVER YET, AND IT FAILS SILENTLY.** The mailbox
+`info@hhi-netherlands.com` had not been created on Cloud86 as of 20 Aug 2026.
+Until it exists, `mail()` accepts the message, returns success, and the mail
+goes nowhere — the visitor sees "We got it." and nothing arrives. **Create the
+mailbox in the Cloud86 panel, then send a test through the live form before
+trusting the page.** This is the only outstanding step, and it is not repo work.
+
+### What was removed, and the one consequence
+
+Two of the three "Reach us" facts are gone at Iain's request: **Socials** and
+**E-mail**. The socials survive in the footer on every page, so nothing was lost
+sitewide. **The e-mail address is now absent from the markup entirely, and that
+is deliberate rather than incidental** — a `mailto:` in the HTML is harvested by
+the same crawlers the endpoint's spam defences exist to stop, so printing it
+would undo part of what was just built.
+
+~~⚠️ **The visible consequence: the left column is now mostly empty.**~~
+✅ **Filled 20 Aug 2026** — see *The envelope* below. The left column went from
+178px to 460px against a 578px form.
+
+### The endpoint — `static/api/contact.php`
+
+Lives in `static/`, so Vite copies it verbatim into `build/api/contact.php` and
+the existing FTP action pushes it to `/httpdocs/api/contact.php`. **No workflow
+step was added for it**; the only workflow change was an `exclude` (see below).
+
+Six layers, cheapest first. The ordering is the point: an instant-submit bot is
+rejected before any string work happens.
+
+| Layer | Catches | Answer |
+|---|---|---|
+| Method + content type + `Origin` | cross-site and drive-by posts | 405 / 415 / 403 |
+| Honeypot (`company`) | anything that fills every input | **200, silently dropped** |
+| Timing trap (<3s, >6h) | scripted instant submits, replays | **200, silently dropped** |
+| Rate limit (3/15min, 10/day per IP) | flooding | 429, honestly |
+| Field validation | malformed input | 422 + per-field messages |
+| **CRLF / header tokens** | **mail-header injection** | 400 |
+| Link and markup heuristics | bot spam payloads | **200, silently dropped** |
+
+Three things about that table are load-bearing:
+
+- **The silent drops answer 200 on purpose.** A bot told "rejected" retries with
+  a variation; a bot told "sent" goes away. The rate limit is the exception — it
+  can hit a real person who sent one message and thought of something to add, so
+  it says what happened.
+- **CRLF is rejected, never stripped.** This is the only layer defending against
+  a real security bug rather than a nuisance: a newline in a value that reaches a
+  header lets an attacker append `Bcc:` and turn the form into an open relay,
+  which gets the domain blacklisted. A name containing a CRLF is not a name that
+  needed cleaning — quietly repairing it into a delivered mail hides the attack.
+- **The heuristics layer is deliberately the weakest.** A false positive there
+  silently discards a real message from a real crew, which is worse than a spam
+  mail someone deletes in two seconds. One or two links pass; four do not.
+
+The IP is **hashed, never stored in the clear**, in the rate-limit files under
+`sys_get_temp_dir()` — that file is a log of who contacted the championship, and
+the policy at `/privacy` does not promise to keep one.
+
+### SMTP, if mail() ever proves unreliable
+
+`mail()` is what ships, because it needs no secret. If mail starts landing in
+spam, create `/httpdocs/api/contact.secret.php` **on the server by hand**
+returning `['host', 'port', 'user', 'pass']`, and `contact.php` picks it up
+automatically — no code change. It is gitignored, **and the FTP action now
+carries an `exclude` for it**, because the action mirrors `build/` and deletes
+what it does not find there; without that exclusion the next deploy would wipe
+the credentials and silently fall back to `mail()`.
+
+⚠️ Setting `exclude` **replaces the action's default excludes wholesale**, so
+the `.git*` and `node_modules` patterns are repeated in the workflow. Do not
+trim them.
+
+### How it was verified
+
+- **`npm test` → 45 passed** (37 before, plus five contact-form tests and three
+  for the envelope and the form width).
+- ⚠️ **The Playwright tests stub the endpoint and prove nothing about the PHP.**
+  The harness serves `build/` as static files, so the PHP never executes;
+  `page.route()` stands in for it. They prove the *client* handles each response
+  shape. **Do not read a green suite as "the form works".**
+- **The PHP was verified separately against `php -S`** — 18 of 20 cases passing,
+  with the two "failures" traced to the bash harness mangling multi-byte
+  characters, not the endpoint. Re-tested with PHP-generated JSON: em dashes,
+  curly quotes, apostrophes, emoji and Dutch accents all pass. Header
+  construction was checked separately (RFC 2047 encoding, 7-bit-clean headers,
+  SMTP dot-stuffing).
+- **Looked at, not just measured** — desktop and mobile, plus the confirmation
+  and error states, per the standing rule in CLAUDE.md.
+
+⚠️ **A trap for the next person writing a contact test.** The form sits behind
+`reveal()`, which holds it at `visibility:hidden` until its ScrollTrigger fires.
+Below the fold it is *attached but unfillable*, so `page.fill()` times out
+against a perfectly working form. `fillContactForm()` scrolls first, which is
+what a real visitor does. Three tests failed this way before it was added, and
+a fourth did later — the envelope test, the same afternoon, the same cause.
+
+### ⚠️ The envelope — UNRESOLVED, stopped 20 August 2026
+
+**STATUS: three attempts, all rejected by Iain. Work stopped here.** The current
+committed state (`b452d9c`) is the third attempt and it is *not* accepted. It
+renders, it is tested, and it still does not look like the reference.
+
+**Do not start a fourth attempt by drawing again.** That is what the last three
+did. Iain's own words on stopping were *"If it is not possible, then we can
+think of another solution"* — so the next move is a conversation about approach,
+not another hand-drawn SVG.
+
+It fills the space the removed Socials and E-mail facts left, from a reference
+image Iain supplied: an open envelope with a letter going into it. It lives in
+[EnvelopeMark.svelte](src/lib/components/EnvelopeMark.svelte) and is **the first
+inline SVG in the repo**. Decorative and marked as such: `aria-hidden`, no title,
+no role — it says nothing the page does not already say in text.
+
+**Untried options, for that conversation:**
+
+- **Trace the reference to exact paths.** The PNG Iain supplied could be traced
+  (Inkscape, `potrace`, or an online tracer) to an SVG that matches by
+  construction rather than by eye, then recoloured with the site tokens. The
+  most likely to actually work, and the least creative latitude — which is the
+  point.
+- **Ship the reference image as an asset** in `static/img/` and recolour it with
+  CSS filters or `mask-image`. Loses the crisp line art and adds a request, but
+  it is guaranteed to look like the reference because it *is* the reference.
+  ⚠️ Check its licence first — provenance unknown.
+- **Ask Iain for the source file.** If the reference came from an icon set, the
+  original SVG may be available and everything above is moot.
+- **Drop the illustration.** The left column had ~400px of dead space, which is
+  what started this. Something simpler (a large quiet quote, the HHI plates
+  mark, the championship dates) would fill it without a pixel-matching problem.
+  **This is a real option, not a failure** — the form works without it.
+
+⚠️ **If the envelope is abandoned, removing it is small and self-contained:**
+delete `<EnvelopeMark />` and its wrapper from
+[+page.svelte](src/routes/contact/+page.svelte), the `.envelope*` block and the
+reduced-motion override from [style.css](src/lib/style.css), the component file,
+and the three envelope assertions in the smoke test (the form-width test also
+covers the envelope — keep the width half). The contact form does not depend on
+any of it.
+
+**What was tried, and what Iain said about each.** Recorded so a fourth attempt
+does not repeat one of them:
+
+| # | Commit | What was drawn | Rejected because |
+|---|---|---|---|
+| 1 | `0edec31` | Downward V in front of the body | "It looks closed when it should be open"; "the letter looks to be behind the envelope" |
+| 2 | `db35dce` | Inverted V behind, as a flap folded back | "The envelope is still wrong" |
+| 3 | `b452d9c` | No flap; wide body, large letter, V from the mouth | "No its not working" |
+
+⚠️ **Do not treat any structural claim below as confirmed by Iain.** "The
+reference has no flap", "the letter must be large" and the paint order were all
+*my* readings of the reference image, and the version built on them was rejected
+too. They are recorded as what was tried, not as requirements. The only
+confirmed facts are Iain's three sentences in the table above.
+
+The current committed structure, back to front, is: **back wall → letter →
+front panel**, with a test asserting that order, the front panel's opaque fill,
+and the absence of an `envelope__flap`. ⚠️ **Those assertions encode attempt 3,
+which was rejected** — a different approach should expect to delete them rather
+than satisfy them.
+
+⚠️ **The general lesson, worth more than the drawing.** Three wrong versions
+shipped past a green suite because "does this look like the reference" is not a
+property any assertion here can check. When the deliverable is a picture,
+**the screenshot is the test** — and a structural assertion is only ever a guard
+against regressing a shape that a human already confirmed. Nobody has confirmed
+this shape.
+
+**Rendering facts that survive whatever gets drawn.** Unlike the composition
+above, these were measured and hold for any envelope-shaped SVG on this page —
+worth keeping even if the drawing is replaced wholesale:
+
+- **The front panel needs an opaque `--ink` fill, not `fill:none`.** That
+  overlap is the entire illusion of a sheet sitting *inside* an envelope. With
+  no fill, the letter's bottom edge shows straight through and the drawing goes
+  flat.
+- **The letter must be large.** It is 136×140 and dominates the upper
+  two-thirds, as in the reference. Earlier versions shrank it to solve other
+  problems and it stopped reading as a letter *in* an envelope — it looked like
+  a small card floating over one. It must extend below the front's top edge
+  (y=96) or a gap opens between sheet and envelope; it ends at y=150.
+- **`--panel` fills and `--line` strokes are too dim at this size.** The letter
+  first rendered as a grey ghost and the address tile as muddy brown
+  (`currentColor` at .28 over `--ink`). The paper carries its own `#1c1c28` with
+  a bright edge, the tile is full-strength orange, and the text rules are
+  `--bone` at .35. The back wall is dimmed to .55 — it is behind the sheet in
+  space, and full strength flattens the depth the paint order just created.
+
+⚠️ **The draw-in has to be gated on visibility, and the reason is not obvious.**
+A CSS animation starts at page load, but the wrapper is held at
+`visibility:hidden` by `reveal()` until its ScrollTrigger fires — so an ungated
+draw *finishes unseen* and the envelope simply fades in already-complete. That
+was measured here at dashoffset 0 before the section had ever been scrolled to,
+not guessed. An IntersectionObserver in the component adds `.envelope--drawn`,
+and the animation hangs off `.envelope--animate.envelope--drawn`; `--animate`
+alone only sets the undrawn start state. A test asserts the whole sequence.
+
+Under reduced motion it is forced complete, **without waiting for the
+observer** — the undrawn state lives on `--animate` alone, so a rule keyed to
+`--drawn` would leave a blank frame. Same principle as the stage floor and the
+ticker: less motion, never a missing drawing.
+
+On mobile it is `display:none`. Stacked, it would sit between the Organisation
+fact and the form and push the form below the fold for the sake of a decoration.
+
+### The form width
+
+⚠️ **The cap on `.form` is what narrows the form — the grid is not.** Evening
+`.contact-grid` from 5fr:6fr to 1:1 was expected to trim the form and **did the
+opposite**: measured 625px, up from 610px, because the columns had slack the
+form was already absorbing. `max-width:540px` on `.form` (and on `.form-sent`,
+so the column does not jump on submit) is the only reliable control. A test
+asserts the rendered width, so a future grid change cannot silently widen it.
 
 ## Home hero finished — 17 August 2026
 
@@ -693,11 +944,12 @@ it could not see.
 
 - **The controller named in the policy is Marion Gall-Wierts.** Carried over
   as-is (confirmed 15 Aug), but worth re-checking it is still current.
-- **The policy tells people to use "het contact formulier" to exercise their
-  rights.** That was `contact.php`. The page links to `/contact` instead, whose
-  form is still the Phase 8 placeholder — so the route a visitor is told to use
-  for a GDPR request is not yet functional. **This is the strongest argument for
-  Phase 8 being real work, not polish.**
+- ~~**The policy tells people to use "het contact formulier" to exercise their
+  rights.**~~ ✅ **Resolved 20 Aug 2026.** The form is a real submission now, so
+  the route a visitor is told to use for a GDPR request works — **once the
+  mailbox exists.** That last condition is the whole of what is left: a GDPR
+  request that silently goes nowhere is worse than one that bounces, so
+  creating the mailbox is not an optional finishing touch.
 
 ## The reduced-motion freeze — ✅ fixed 15 August 2026
 
@@ -824,7 +1076,7 @@ account or a decision from Iain:
   carries the only irreversible deadline on the project. See the section below.
 - Cutover day: delete the Pages workflow, stop setting `BASE_PATH`, verify the
   redirects on the real host.
-- Phase 8: `CONTACT_EMAIL` and a real contact form, both needing the mailbox.
+- Phase 8: ✅ **built 20 Aug 2026.** Only the mailbox itself is outstanding.
 
 **Explicitly NOT before the account exists, and why** — agreed with Iain 13 Aug,
 and still true:
@@ -837,8 +1089,9 @@ and still true:
   are already no-ops when `BASE_PATH` is unset. The cutover is "stop setting the
   env var and delete the workflow", *not* a code change. These two items are one
   task, and it belongs to cutover day.
-- **Contact form and `CONTACT_EMAIL`** — both need the real mailbox to exist.
-  Phase 8.
+- ~~**Contact form and `CONTACT_EMAIL`**~~ — ✅ **built 20 Aug 2026.** The form
+  and its PHP endpoint are done and testable; only *delivery* waits on the
+  mailbox, and that is a panel click rather than repo work.
 
 ## Where we stopped
 
@@ -862,7 +1115,7 @@ remains needs the Cloud86 account or the mailbox.
 | 5 · Remaining sub-pages | ✅ all six ported, smoke test green |
 | 6 · index.html | ✅ hero, stage floor, preloader, road pin, all sections |
 | 7 · Delete old site | 🟨 items 2–5 done; `.htaccess` written — **only the cutover itself is left, and it needs the account** |
-| 8 · Finish "fully functional" | 🟨 registration hub, favicon + social preview done; contact form and `CONTACT_EMAIL` still need the mailbox |
+| 8 · Finish "fully functional" | 🟨 registration hub, favicon + social preview, **contact form (20 Aug)** done; only the mailbox itself is left |
 
 ## Hosting — decided: Cloud86 (13 Aug 2026)
 
@@ -950,8 +1203,8 @@ not entirely — the split is what drives the running order at the top of this f
 | `regulations` → local PDF | ⚠️ partly — the dependency can be removed, but only once the PDF exists |
 | Delete the Pages workflow | ❌ hold — it is the only staging environment; deleting it early leaves no preview at all |
 | Stop setting `BASE_PATH` | ❌ hold — same task as the workflow. The two are in tension: the workflow *sets* `BASE_PATH` because Pages serves from a sub-path, so removing base handling early breaks the preview |
-| `CONTACT_EMAIL` becomes real | ❌ needs the mailbox to exist |
-| Real contact form (PHP) | ❌ needs somewhere to run — Phase 8 |
+| `CONTACT_EMAIL` becomes real | 🟨 **confirmed as the address 20 Aug**; the mailbox still has to be created |
+| Real contact form (PHP) | ✅ **built 20 Aug 2026** — `static/api/contact.php`, deployed by the existing FTP action |
 
 ## Phase 7 — items 2–5, done 13 August 2026
 
@@ -1275,9 +1528,12 @@ Both come back as links the moment the archives get real routes.
 
 1. ~~**Hosting**~~ — **settled 13 Aug 2026: Cloud86.** See the hosting section above.
    Two purchase-time details still to confirm there (Git integration, cheaper tier).
-2. **Contact address** — `CONTACT_EMAIL` in [config.ts](src/lib/config.ts) is still
-   a guess, but **stops being one at Cloud86**: the mailbox gets created by hand, so
-   `info@hhi-netherlands.com` becomes true by construction. Confirm on setup.
+2. **Contact address** — ✅ **confirmed 20 Aug 2026** as
+   `info@hhi-netherlands.com`, and now written in two places: `CONTACT_EMAIL` in
+   [config.ts](src/lib/config.ts) as the record, and `MAIL_TO` in
+   [static/api/contact.php](static/api/contact.php) as the copy that actually
+   routes mail. **The mailbox itself still has to be created in the Cloud86
+   panel** — see *The contact form* below.
 3. ~~**Favicon and social preview**~~ — ✅ **settled 14 Aug 2026.** Iain supplied
    the official logo as a true vector. See *Brand assets* below.
 4. ~~**Division split across the two event days**~~ — ✅ **settled 15 Aug 2026:

@@ -992,3 +992,301 @@ test('every "register" CTA points at the hub, not a form', async ({ page }) => {
 		await expect(page.locator('a[href*="form.jotform.com"]')).toHaveCount(0);
 	}
 });
+
+/* ============================================================
+   CONTACT FORM — Phase 8
+   The form stopped being a mailto: compose on 20 Aug 2026 and became a
+   real POST to /api/contact.php.
+
+   ⚠️ THESE TESTS STUB THE ENDPOINT. The harness serves build/ as static
+   files, so the PHP never executes — page.route() stands in for it. That
+   means these prove the *client* handles each response shape correctly,
+   and prove nothing whatsoever about the validation, the rate limit or
+   the mail. The PHP is verified separately against `php -S`; see
+   MIGRATION-STATUS.md. Do not read a green run here as "the form works".
+   ============================================================ */
+
+/** Fill the four real fields with something that passes client validation.
+ *
+ *  Scrolls first, and that is not incidental: the form sits behind reveal(),
+ *  which holds it at visibility:hidden until its ScrollTrigger fires. Below
+ *  the fold it is attached but unfillable, so a test that goes straight to
+ *  page.fill() times out against a perfectly working form. Scrolling is what
+ *  a real visitor does to reach it. */
+async function fillContactForm(page: import('@playwright/test').Page) {
+	await page.locator('form.form').scrollIntoViewIfNeeded();
+	await expect(page.locator('input[name="name"]')).toBeVisible();
+	await page.fill('input[name="name"]', 'Kim de Vries');
+	await page.fill('input[name="email"]', 'kim@example.com');
+	await page.fill('input[name="subject"]', 'Registration question');
+	await page.fill('textarea[name="message"]', 'Can a crew enter both competitions in one weekend?');
+}
+
+test('contact page no longer prints the socials or the e-mail address', async ({ page }) => {
+	/* Removed 20 Aug 2026 when the form became a real submission. The address
+	   is deliberately absent from the markup: a mailto: in the HTML is
+	   harvested by exactly the crawlers the endpoint defends against. The
+	   socials still live in the footer, which is why this scopes to main. */
+	await page.goto('/contact');
+
+	await expect(page.locator('main a[href^="mailto:"]')).toHaveCount(0);
+	await expect(page.locator('main')).not.toContainText('info@hhi-netherlands.com');
+
+	// The Organisation fact stays; it was the only one of the three that kept its purpose.
+	await expect(page.locator('main .event__fact')).toHaveCount(1);
+	await expect(page.locator('main .event__fact dt')).toHaveText('Organisation');
+
+	// Socials survive in the footer, so nothing was lost sitewide.
+	await expect(page.locator('.footer a', { hasText: /^Instagram$/ })).toHaveCount(1);
+});
+
+test('contact form posts JSON to the PHP endpoint and confirms in place', async ({ page }) => {
+	let posted: Record<string, unknown> | null = null;
+
+	await page.route('**/api/contact.php', async (route) => {
+		posted = JSON.parse(route.request().postData() ?? '{}');
+		await route.fulfill({
+			status: 200,
+			contentType: 'application/json',
+			body: JSON.stringify({ ok: true, message: 'Message sent.' })
+		});
+	});
+
+	await page.goto('/contact');
+	await fillContactForm(page);
+
+	/* The endpoint rejects anything submitted within 3s of page load, and the
+	   client posts the timestamp that drives it. Waiting here is not padding —
+	   it is the test honouring the same trap a real visitor does. */
+	await page.waitForTimeout(3200);
+	await page.click('button[type="submit"]');
+
+	/* Confirmation replaces the form; no navigation. Attached rather than
+	   visible — the confirmation is behind reveal() too, and it mounts where
+	   the form was rather than at the current scroll position. */
+	await expect(page.locator('.form-sent')).toBeAttached();
+	await expect(page.locator('form.form')).toHaveCount(0);
+	expect(page.url()).toContain('/contact');
+
+	expect(posted).toMatchObject({
+		name: 'Kim de Vries',
+		email: 'kim@example.com',
+		subject: 'Registration question'
+	});
+	// The honeypot must go over empty, and the timing token must be real.
+	expect(posted!.company).toBe('');
+	expect(typeof posted!.loadedAt).toBe('number');
+	expect(posted!.loadedAt as number).toBeGreaterThan(0);
+
+	// "Send another" restores the form without a reload.
+	await page.locator('.form-sent button').scrollIntoViewIfNeeded();
+	await page.click('.form-sent button');
+	await expect(page.locator('form.form')).toBeAttached();
+});
+
+test("contact form renders the endpoint's per-field errors inline", async ({ page }) => {
+	/* The server is the only validator that counts, so the client has to be
+	   able to display what it sends back rather than assuming its own checks
+	   already caught everything. */
+	await page.route('**/api/contact.php', (route) =>
+		route.fulfill({
+			status: 422,
+			contentType: 'application/json',
+			body: JSON.stringify({
+				ok: false,
+				message: 'Please check the fields marked below.',
+				fields: { email: 'That does not look like an e-mail address.' }
+			})
+		})
+	);
+
+	await page.goto('/contact');
+	await fillContactForm(page);
+	await page.waitForTimeout(3200);
+	await page.click('button[type="submit"]');
+
+	await expect(
+		page.locator('.form__error', { hasText: /does not look like an e-mail/ })
+	).toBeVisible();
+	await expect(page.locator('input[name="email"]')).toHaveAttribute('aria-invalid', 'true');
+
+	// The form survives, so nothing typed is lost.
+	await expect(page.locator('form.form')).toBeAttached();
+	await expect(page.locator('input[name="name"]')).toHaveValue('Kim de Vries');
+});
+
+test('contact form reports a failed delivery rather than claiming success', async ({ page }) => {
+	/* A form that says "sent" when nothing was sent is worse than one that
+	   errors: the visitor walks away believing they made contact. */
+	await page.route('**/api/contact.php', (route) =>
+		route.fulfill({
+			status: 502,
+			contentType: 'application/json',
+			body: JSON.stringify({
+				ok: false,
+				message: 'We could not send your message just now. Please try again shortly.'
+			})
+		})
+	);
+
+	await page.goto('/contact');
+	await fillContactForm(page);
+	await page.waitForTimeout(3200);
+	await page.click('button[type="submit"]');
+
+	await expect(page.locator('.form__error--block')).toContainText(/could not send/i);
+	await expect(page.locator('.form-sent')).toHaveCount(0);
+});
+
+test('contact form carries a hidden honeypot no real visitor can reach', async ({ page }) => {
+	/* The trap only works if it is invisible to people and present for bots.
+	   Asserted on all three mechanisms, because dropping any one of them
+	   either exposes the field to a visitor or hides it from the DOM readers
+	   it is meant to catch. */
+	await page.goto('/contact');
+
+	const honeypot = page.locator('input[name="company"]');
+	await expect(honeypot).toHaveCount(1);
+	await expect(honeypot).toBeHidden();
+	await expect(honeypot).toHaveAttribute('tabindex', '-1');
+	await expect(page.locator('.form__hp')).toHaveAttribute('aria-hidden', 'true');
+
+	/* display:none would let some form-fillers skip it, which defeats the
+	   trap — it must be positioned away instead. */
+	const display = await honeypot.evaluate((el) => getComputedStyle(el).display);
+	expect(display).not.toBe('none');
+
+	// Tabbing through the form must never land on it.
+	await page.focus('input[name="name"]');
+	for (let i = 0; i < 6; i++) {
+		await page.keyboard.press('Tab');
+		const focused = await page.evaluate(() => document.activeElement?.getAttribute('name'));
+		expect(focused).not.toBe('company');
+	}
+});
+
+test('contact page fills its left column with the envelope, and the form is capped', async ({
+	page
+}) => {
+	/* Both landed 20 Aug 2026: the envelope fills the space the Socials and
+	   E-mail facts left, and the form was capped because it was too wide.
+
+	   ⚠️ The form's width comes from the max-width on .form, NOT from the
+	   grid. Evening .contact-grid to 1:1 was expected to trim it and did the
+	   opposite — measured 625px, up from 610px, because the columns had slack
+	   the form was already absorbing. Asserted on the rendered width so a
+	   future grid change cannot silently widen it again. */
+	await page.setViewportSize({ width: 1440, height: 900 });
+	await page.goto('/contact');
+
+	const form = page.locator('form.form');
+	const width = await form.evaluate((el) => Math.round(el.getBoundingClientRect().width));
+	expect(width).toBeLessThanOrEqual(540);
+
+	/* Decorative: it must be hidden from assistive tech, since it says nothing
+	   the page does not already say in text. */
+	const envelope = page.locator('.envelope');
+	await expect(envelope).toHaveAttribute('aria-hidden', 'true');
+
+	/* Scroll before asserting visibility — the wrapper is behind reveal(),
+	   which holds it at visibility:hidden until its ScrollTrigger fires. The
+	   same trap that broke three contact-form tests; see fillContactForm(). */
+	await envelope.scrollIntoViewIfNeeded();
+	await expect(envelope).toBeVisible();
+
+	/* The illustration exists to fill dead space, so it has to have real
+	   height — a collapsed SVG would pass a mere attachment check. */
+	const box = await envelope.boundingBox();
+	expect(box!.height).toBeGreaterThan(150);
+
+	/* ⚠️ Paint order IS the drawing, and it has no visual assertion — so it is
+	   checked structurally. Three hand-drawn versions were visibly wrong (a
+	   sealed envelope, a letter stuck behind it, an invented flap) and every
+	   one passed a fully green suite. The geometry is now traced from Iain's
+	   Envelope.svg (21 Aug 2026) and follows that file's order:
+	     filled panel → outline → fold → mouth → letter.
+	   The letter paints LAST, in front, which is what lets its side edges and
+	   its last rule cross the envelope's mouth. */
+	const order = await envelope.evaluate((svg) =>
+		[...svg.children].map((child) => child.getAttribute('class') ?? child.tagName)
+	);
+	const indexOf = (name: string) => order.findIndex((c) => c.includes(name));
+
+	// The opaque panel is the backmost element; the letter is the frontmost.
+	expect(indexOf('envelope__panel')).toBe(0);
+	expect(indexOf('envelope__letter')).toBe(order.length - 1);
+
+	/* The two mouth diagonals must paint BEFORE the letter, or they cross in
+	   front of the paper and the sheet stops reading as being inside. */
+	expect(indexOf('envelope__mouth')).toBeGreaterThanOrEqual(0);
+	expect(indexOf('envelope__mouth')).toBeLessThan(indexOf('envelope__letter'));
+
+	/* No flap element. Two earlier versions invented one and both read wrong;
+	   the reference has none — "open" comes from the upward fold plus the two
+	   mouth edges, nothing else. */
+	expect(indexOf('envelope__flap')).toBe(-1);
+
+	/* The panel must be opaque: it is the ground the fold and mouth lines read
+	   against. And the sheet must NOT be filled, or it blanks out the mouth
+	   diagonals exactly where they should cross in front of it. */
+	const panelFill = await page
+		.locator('.envelope__panel')
+		.evaluate((el) => getComputedStyle(el).fill);
+	expect(panelFill).not.toBe('none');
+
+	const paperFill = await page
+		.locator('.envelope__paper')
+		.evaluate((el) => getComputedStyle(el).fill);
+	expect(paperFill).toBe('none');
+});
+
+test('the envelope draws itself in only once it is on screen', async ({ page }) => {
+	/* ⚠️ This is the bug this test exists for. A CSS animation starts at page
+	   load, but the wrapper is held at visibility:hidden by reveal() until its
+	   ScrollTrigger fires — so an ungated draw finishes unseen and the
+	   envelope just fades in already-complete. Measured at dashoffset 0 before
+	   the section had ever been scrolled to. An IntersectionObserver in the
+	   component adds .envelope--drawn, which is what starts it. */
+	await page.setViewportSize({ width: 1440, height: 900 });
+	await page.goto('/contact');
+
+	const envelope = page.locator('.envelope');
+
+	// At load, before scrolling: undrawn and un-started.
+	await expect(envelope).not.toHaveClass(/envelope--drawn/);
+	const offsetAtLoad = await page
+		.locator('.envelope__body')
+		.evaluate((el) => getComputedStyle(el).strokeDashoffset);
+	expect(offsetAtLoad).not.toBe('0px');
+
+	// Scrolled into view: the class arrives and the stroke completes.
+	await envelope.scrollIntoViewIfNeeded();
+	await expect(envelope).toHaveClass(/envelope--drawn/);
+	await expect
+		.poll(
+			async () =>
+				page.locator('.envelope__body').evaluate((el) => getComputedStyle(el).strokeDashoffset),
+			{ timeout: 4000 }
+		)
+		.toBe('0px');
+});
+
+test('the envelope is dropped on mobile rather than pushing the form down', async ({ page }) => {
+	/* Stacked, the illustration would sit between the Organisation fact and
+	   the form, pushing the form below the fold for the sake of a decoration.
+	   The form is the reason the page exists. */
+	await page.setViewportSize({ width: 390, height: 844 });
+	await page.goto('/contact');
+
+	/* Asserted on display, not on toBeHidden(): reveal() also reports hidden
+	   before its trigger fires, so a bare visibility check would pass here
+	   even if the mobile rule were deleted. display:none is the actual
+	   mechanism, so that is what gets checked. */
+	const display = await page.locator('.envelope').evaluate((el) => getComputedStyle(el).display);
+	expect(display).toBe('none');
+	await expect(page.locator('form.form')).toBeAttached();
+
+	// The off-canvas honeypot must not widen the page at this width either.
+	const overflows = await page.evaluate(() => document.body.scrollWidth > window.innerWidth);
+	expect(overflows).toBe(false);
+});
