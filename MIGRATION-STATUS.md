@@ -133,6 +133,36 @@ since the button either vanishes or stays put while content lands above it.
 Two tests added (paging, and the lightbox-past-the-page gap), so **52 passed**
 with no skips. The three photo-dependent tests self-skip on an empty folder.
 
+### Merged to `main` as `1bceb3b`, and one real flake diagnosed
+
+Merged `--no-ff` on 21 Aug, so the branch history survives. Iain confirmed
+the empty-state question was moot by then — his 114 photos were already in.
+
+⚠️ **A pre-existing flake in the `/media` route test was found and fixed on
+the merge.** It had failed once in five runs earlier and been noted as
+unexplained, which was the wrong call — it was written off as harness
+interference on the strength of a coincidence. On the merge it failed again,
+and the recorded error context named the actual cause:
+
+```
+console: Permissions policy violation: compute-pressure is not allowed in this document.
+```
+
+The **YouTube iframes** request `compute-pressure`; the site does not grant it,
+so Chrome logs that the policy did its job. It appears only on some player
+builds, which is what made it look like flakiness. The route test's origin
+filter only exempts entries carrying a URL (`http 404: https://…`), so a bare
+`console:` line from a third-party frame could never be filtered by it.
+
+Fixed by exempting that one message, matched on the feature name rather than
+by ignoring permissions-policy warnings wholesale — a violation the site
+causes itself still fails. Verified with six consecutive runs of that test
+plus two full-suite runs.
+
+**Lesson worth keeping: an intermittent failure is a bug until proven
+otherwise.** Re-running until green hid a real, findable cause for several
+sessions; `test-results/error-context.md` had the answer the whole time.
+
 **One bug found and fixed by looking rather than measuring.** The competition
 tablist overflowed 390px — `.tabs` is `width:max-content`, which cannot shrink
 — pushing the whole page into horizontal scroll with "Netherlands HHDC" cut

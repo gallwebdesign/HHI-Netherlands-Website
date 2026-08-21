@@ -28,8 +28,25 @@ for (const route of ROUTES) {
 		   attribute to an origin. Requests are tracked via the response event
 		   instead, which does carry the URL; the matching console noise is
 		   dropped here so one failed request is not counted twice. */
+		/* Chrome reports a permissions-policy violation when an embedded frame
+		   asks for a feature the embedder has not granted. The YouTube player
+		   on /media requests compute-pressure, which this site neither grants
+		   nor wants to; the message is Chrome telling us the policy WORKED.
+		   It appears only on some player builds, which made it look like a
+		   flaky test rather than third-party noise — it failed once in five
+		   runs before it was caught.
+
+		   Matched narrowly on the feature name rather than exempting
+		   permissions-policy warnings wholesale, so a violation we cause
+		   ourselves still fails. */
+		const embedNoise = /Permissions policy violation: compute-pressure/;
+
 		page.on('console', (msg) => {
-			if (msg.type() === 'error' && !/Failed to load resource/.test(msg.text())) {
+			if (
+				msg.type() === 'error' &&
+				!/Failed to load resource/.test(msg.text()) &&
+				!embedNoise.test(msg.text())
+			) {
 				problems.push(`console: ${msg.text()}`);
 			}
 		});
