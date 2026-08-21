@@ -1,14 +1,19 @@
 # Migration status
 
 Working notes for the static HTML → SvelteKit migration.
-Last updated **21 August 2026** — **`media-gallery-2026` is open and complete**,
-replacing the flat eight-photo grid on `/media` with a folder-driven 2026
-gallery: competition tabs over division tabs, plus a lightbox. It ships an
-empty state, because **the 2026 photography does not exist in the repo yet** —
-the whole point of the branch is that Iain can drop photos into
-`static/img/gallery/2026/<competition>/<division>/` and they appear with no
-code edit. See *2026 media gallery* below. Before that, on **21 August 2026** —
-**`contact-form-php` landed on `main`**
+Last updated **21 August 2026** — **the 2026 media gallery is merged to `main`
+and everything is pushed.** `origin/main` and `main` are level and the working
+tree is clean; there is nothing outstanding in the repo for the first time
+since the migration began.
+
+The gallery replaces the flat eight-photo grid on `/media` with competition
+tabs over division tabs, a six-across grid paging 24 at a time, and a
+lightbox. Iain has filled all eleven divisions — **~950 photos** — but they are
+**deliberately not in the repo**: he uploads them to the server by FTP by hand,
+and the FTP deploy is configured not to delete them. See *2026 media gallery*
+below, and read the deploy warning there before touching the workflow.
+
+Before that, on **21 August 2026** — **`contact-form-php` landed on `main`**
 (merge `31a784d`), bringing the real contact form, its PHP endpoint, and the
 envelope illustration, which was finally resolved by tracing a source SVG Iain
 supplied rather than drawing from a description. See *Start here* below.
@@ -31,12 +36,11 @@ and social preview shipped, two layout/navigation bugs fixed.
 
 Plan: <https://claude.ai/code/artifact/b42e8908-c534-4c72-8ef2-7a465a78ad28>
 Branch: **`main`** — the migration was merged there in PR #2.
-`sveltekit-migration` merged and safe to delete.
+`sveltekit-migration` merged and safe to delete, as is `media-gallery-2026`.
 
-⚠️ **`main` is 7 commits ahead of `origin/main`** as of 21 Aug: the six from
-`contact-form-php` plus the merge commit. Iain has not asked for a push yet.
-(The older unpushed `af789e8`, the Dutch full rules manual, is among them.)
-Nothing is half-finished — see *Start here* below.
+✅ **Everything is pushed.** `main` and `origin/main` are level as of 21 Aug,
+including the long-unpushed `af789e8` (the Dutch full rules manual). Nothing
+is half-finished — see *Start here* below.
 
 **The commit before the hero work is tagged `pre-hero-merge` (`b6e895b`).**
 `git reset --hard pre-hero-merge` undoes all of 17 August. ⚠️ **The `revert -m 1`
@@ -51,30 +55,44 @@ regulations layout tests, → 36 with the three scroll-to-top tests on 16 Aug,
 
 ## ▶ Start here on 22 August 2026
 
-**Nothing is half-finished in the repo.** `contact-form-php` was merged to
-`main` on 21 Aug and the branch's one open question — the envelope — is
-resolved. `media-gallery-2026` is open, complete and verified, but **not
-merged and not pushed** — it is waiting on one decision from Iain, below. The
-remaining work is all *off* the repo: the Cloud86 account, the mailbox, and
-the photo archive.
+**Nothing is half-finished in the repo, and everything is pushed.** Both
+branches that were open on 21 Aug — `contact-form-php` and
+`media-gallery-2026` — are merged to `main`, and `origin/main` is level with
+it. The remaining work is all *off* the repo: the Cloud86 account, the
+mailbox, and the photo archive.
 
-## 2026 media gallery — `media-gallery-2026`
+⚠️ **Two things about the gallery that are not visible from the code**, both
+detailed under *2026 media gallery* below:
 
-Branched off `main` on 21 Aug. Replaces the flat eight-photo grid on `/media`
-with a filtered gallery of the January 2026 competition. The Videos section is
-untouched.
+1. **The ~950 gallery photos are not in the repo.** Iain uploads them to
+   `/httpdocs/img/gallery/` by FTP by hand. A clone has the eleven division
+   folders (via tracked `.gitkeep` files) and no images.
+2. **The FTP deploy excludes `**/img/gallery/**` and must keep doing so.** A
+   CI checkout builds an *empty* gallery, the deploy mirrors `build/` and
+   deletes what it does not find, and the build **succeeds** in that state —
+   so removing that exclusion silently destroys every uploaded photo with
+   nothing to flag it.
+
+## 2026 media gallery — merged, `1bceb3b`
+
+Built on `media-gallery-2026`, merged `--no-ff` to `main` on 21 Aug and
+pushed. Replaces the flat eight-photo grid on `/media` with a filtered gallery
+of the January 2026 competition. The Videos section is untouched. The branch
+is merged and safe to delete.
 
 **What it does.** Two stacked tablists — competition (`HHI Open Division` /
 `Netherlands HHDC`) over division (`All` plus that competition's own
-divisions, 5 and 6 respectively) — over the existing `.gallery` grid, with a
-lightbox on click (arrow keys, Escape, focus returned to the opening tile).
+divisions, 5 and 6 respectively) — over a **six-across grid paging 24 at a
+time** behind a *Load more* button, with a lightbox on click (arrow keys,
+Escape, focus returned to the opening tile).
 
-⚠️ **It ships an empty state, because there are no 2026 photos.** `static/img/`
-holds only the eight generic archive shots, with no year, competition or
-division metadata. Iain chose to build the shell now rather than wait, so
-`/media` visibly goes **from eight photos to zero** until real photography
-lands. **That is the one decision outstanding: whether this is acceptable
-live, or whether the branch waits.** Everything else is finished.
+**It was built against an empty state and no longer runs in one.** When the
+branch was written there were no 2026 photos at all, so the whole thing was
+designed to work at zero photos and at several thousand; Iain accepted
+`/media` going from eight photos to zero in the interim. He then filled all
+eleven divisions, so that interim never really happened. The empty state still
+renders per division — Special Crews and the smaller HHDC divisions are the
+ones most likely to show it.
 
 **How photos get in.** Drop them in
 `static/img/gallery/2026/<competition-slug>/<division-slug>/`, rebuild, done —
@@ -162,6 +180,65 @@ plus two full-suite runs.
 **Lesson worth keeping: an intermittent failure is a bug until proven
 otherwise.** Re-running until green hid a real, findable cause for several
 sessions; `test-results/error-context.md` had the answer the whole time.
+
+### 21 Aug, last — the photos leave the repo
+
+Iain filled all eleven divisions and then decided the photography should
+**not** be version-controlled at all: he uploads it to `/httpdocs/img/gallery/`
+by FTP by hand. As of that decision the tree on his machine is **951 photos**:
+
+| Competition | Division | Photos |
+|---|---:|---:|
+| HHI Open Division | Varsity | 202 |
+| HHI Open Division | Adult | 149 |
+| HHI Open Division | Junior | 114 |
+| HHI Open Division | Parents | 79 |
+| HHI Open Division | Special Crews | 13 |
+| Netherlands HHDC | MegaCrew | 147 |
+| Netherlands HHDC | Adult | 87 |
+| Netherlands HHDC | Varsity | 57 |
+| Netherlands HHDC | MiniCrew | 46 |
+| Netherlands HHDC | JV MegaCrew | 37 |
+| Netherlands HHDC | Junior | 20 |
+
+**The `.gitignore` he wrote did not work, for two independent reasons**, both
+now fixed:
+
+- The patterns were anchored as `/img/gallery/…`, which resolves from the repo
+  root. The photos live under `static/`, so every pattern matched nothing.
+  Anything added here must start with `static/` or be unanchored.
+- **`.gitignore` does not apply to files already tracked.** 316 photos (Junior
+  and Varsity) had already been committed — 114 in `f01c981`, the rest in
+  Iain's `24bd138` — and stayed in the index regardless of any pattern.
+  Removed with `git rm --cached`; untouched on disk.
+
+**The folder names are kept, the images are not.** Git cannot store an empty
+directory, so each of the eleven divisions carries a tracked `.gitkeep`,
+negated in `.gitignore`. Without them a clone has no gallery tree at all and
+the build produces an empty gallery with nothing to suggest photos were ever
+expected.
+
+⚠️ **The dangerous part was the deploy.** The Cloud86 FTP action mirrors
+`build/` onto the server and deletes whatever it does not find there — the
+same property that already required excluding `api/contact.secret.php`. With
+the photos out of the repo, a CI checkout builds an **empty** gallery, so the
+next push to `main` would have deleted all 951 uploaded photos.
+
+**What makes it worth a warning is that the build succeeds.** A missing
+`static/img/image01.jpg` fails the build loudly, by design; a missing gallery
+folder just yields a smaller manifest. Nothing would have flagged the loss
+until somebody opened `/media`. `**/img/gallery/**` is now in the workflow's
+`exclude:` list — do not remove it without first getting the photos into
+`build/` some other way.
+
+The Pages preview needs no equivalent: it uploads a self-contained artifact
+rather than mirroring, so it deletes nothing and simply shows an empty
+gallery, which is correct for a noindex staging preview.
+
+**Verified against a real bare clone**, not just reasoning: cloned the repo
+fresh, confirmed 11 folders and 0 images, ran `npm run build` (succeeds) and
+the media tests (**5 passed, 3 skipped** — the photo-dependent ones self-skip,
+so CI stays green rather than failing on absent content).
 
 **One bug found and fixed by looking rather than measuring.** The competition
 tablist overflowed 390px — `.tabs` is `width:max-content`, which cannot shrink

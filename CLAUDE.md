@@ -21,11 +21,11 @@ npm run dev          # development
 npm run check        # svelte-check — expect 0 errors, 0 warnings
 npm run lint         # prettier --check + eslint — expect both clean
 npm run build        # prerenders every route; this is what proves the SSR guards
-npm test             # build + Playwright smoke test — expect 52 passed
+npm test             # build + Playwright smoke test — 52 passed with photos, 49 + 3 skipped without
 npm run preview      # serves build/ (see the port-4173 trap below)
 ```
 
-Three of those tests self-skip when `static/img/gallery/2026/` is empty — the lightbox and the two paging tests need real photos. With Iain's 114 Junior photos in place they all run, so **a skip now means the gallery folder is empty**, not that a test is broken.
+⚠️ **The count depends on whether the gallery photos are on your disk, and they are not in the repo** (see the gallery section below). Three tests — the two lightbox tests and the paging one — self-skip when `static/img/gallery/` holds no images, so **a fresh clone correctly reports 49 passed, 3 skipped**. That is the expected state for anyone but Iain, and for CI. A *failure* in those three means something is broken; a *skip* means there are no photos there.
 
 ⚠️ **`npm test` rebuilds first, and that matters.** Plain `npx playwright test` reuses whatever is already in `build/`, so a test can pass against a stale build while the bug is live in `src/`. Also kill any stray `vite preview` on **port 4173** before testing — it hijacks the harness and fails ~16 tests wholesale with `_app/immutable` 404s on pages you never touched.
 
@@ -108,11 +108,15 @@ Media images live in `static/img/` — eight 1200×900 JPEGs (`image01`–`image
 
 **The 2026 gallery on `/media` is folder-driven.** Since 21 Aug 2026 the flat eight-photo grid is replaced by a filtered gallery: competition tabs (`HHI Open Division` / `Netherlands HHDC`) over division tabs (`All` plus that competition's divisions), with a lightbox. Photos go in `static/img/gallery/2026/<competition-slug>/<division-slug>/` and appear with **no code edit** — drag and drop, then rebuild. ⚠️ **The manifest is baked at build time, so a photo added without a rebuild does not appear** — that is not a bug, and it is the first thing to check when new photos "do not load". `npm run dev` picks them up live; a stale `build/` will not.
 
-⚠️ **The gallery photos are NOT in the repo and must not be added to it.** Iain uploads them to `/httpdocs/img/gallery/` by FTP by hand — ~950 files as of 21 Aug 2026. `.gitignore` excludes every image under `static/img/gallery/`, and a tracked `.gitkeep` in each of the eleven division folders keeps the *tree* in the repo (git cannot store an empty directory), so a clone has the folder names but no images. Three consequences that are easy to get wrong:
+⚠️ **The gallery photos are NOT in the repo and must not be added to it.** Iain uploads them to `/httpdocs/img/gallery/` by FTP by hand — **951 files across all eleven divisions** as of 21 Aug 2026. `.gitignore` excludes every image under `static/img/gallery/`, and a tracked `.gitkeep` in each division folder keeps the *tree* in the repo (git cannot store an empty directory), so a clone has the folder names but no images.
+
+Two things to know if you ever need to change this. Patterns here must start with `static/` — an earlier attempt used `/img/gallery/…`, which anchors to the repo root and matched nothing. And `.gitignore` has no effect on files already tracked: 316 photos had to be removed with `git rm --cached` before the rules did anything.
+
+Three consequences that are easy to get wrong:
 
 - **A CI checkout builds an empty gallery, and the build SUCCEEDS.** It does not fail the way a missing `static/img/image01.jpg` does, because the manifest is generated from whatever is on disk. Nothing flags the absence.
 - ⚠️ **The Cloud86 FTP deploy mirrors `build/` and deletes what it does not find**, so `**/img/gallery/**` is in its `exclude:` list. Without that line, one push to `main` silently deletes every uploaded photo. Do not remove it without first getting the photos into the build another way.
-- The three photo-dependent smoke tests (lightbox ×2, paging) **self-skip** when the folders are empty, so CI stays green. A skip means "no photos here", not "broken test".
+- The three photo-dependent smoke tests (lightbox ×2, paging) **self-skip** when the folders are empty, so CI stays green — a fresh clone gives 49 passed, 3 skipped, verified. A skip means "no photos here", not "broken test".
 
 The GitHub Pages preview publishes a self-contained artifact rather than mirroring, so it deletes nothing — it just shows an empty gallery, which is fine for a noindex staging preview.
 
@@ -152,4 +156,4 @@ See `MIGRATION-STATUS.md`, which is the authoritative note on what is confirmed 
 
 - `index.html` is Prettier-formatted (2-space, wrapped attributes); the eight sub-pages are hand-formatted with more compact markup. Match whichever file you are editing.
 - Prose is written in a deliberately punchy, battle-poster voice ("Own the floor.", "Prove it."). Keep new copy in that register in both languages.
-- **The event year is inconsistent across the site.** `index.html` says 2027 throughout (title, hero, countdown `EVENT_DATE = 2027-01-30`, footer); all eight sub-pages still say 2026. Confirm the intended year with the user before writing a new one — do not silently normalise either way.
+- **Two different years are correct at once, and that is not drift.** The pre-migration inconsistency (a 2027 home page against eight 2026 sub-pages) is gone: every user-facing year now derives from `EVENT_DATE` in [config.ts](src/lib/config.ts), which is **2027** — the next championship. The exception is the media gallery, which is **2026** because it shows the edition that already happened; `GALLERY_YEAR` in [gallery.ts](src/lib/data/gallery.ts) is deliberately hardcoded and must not be wired to `EVENT_YEAR`. A hardcoded year anywhere else is a bug — confirm with the user before writing one.
