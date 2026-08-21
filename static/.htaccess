@@ -21,6 +21,117 @@
 
 RewriteEngine On
 
+# ============================================================
+# SECURITY AND TRANSPORT
+#
+# Added 21 Aug 2026. Everything above this point is a redirect
+# map; none of it protects anything. These rules do.
+#
+# ⚠️ SAME CAVEAT AS THE REDIRECTS: unverified on the real host.
+# The HTTPS rule is the one entry here that can take the site
+# down rather than merely not working — if Cloud86 terminates
+# TLS at a proxy and does not set X-Forwarded-Proto, a naive
+# rule loops forever. The two-condition form below is written
+# to survive that, but verify on cutover day before trusting:
+#   curl -sI http://hhi-netherlands.com/     -> 301 to https
+#   curl -sI https://www.hhi-netherlands.com/ -> 301 to bare
+#   curl -sI https://hhi-netherlands.com/     -> 200, no loop
+# If the first check loops, comment the HTTPS block out and use
+# Cloud86's panel-level Force HTTPS instead.
+# ============================================================
+
+# --- Force HTTPS ------------------------------------------------
+# The contact form POSTs names, emails and messages; over plain
+# http that is readable in transit. The canonical tags in the
+# built HTML already claim https, so this makes the server agree.
+#
+# Two conditions, not one. %{HTTPS} is what Apache sets when it
+# terminated TLS itself; X-Forwarded-Proto is what a proxy in
+# front sets when IT did. Checking only the first redirects an
+# already-secure proxied request back to itself, forever.
+RewriteCond %{HTTPS} !=on
+RewriteCond %{HTTP:X-Forwarded-Proto} !https
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
+# --- Canonical host ---------------------------------------------
+# Both hostnames answer, so every page exists at two URLs and
+# search engines split the ranking between them. The bare domain
+# wins because SITE_URL in src/lib/config.ts is already
+# 'https://hhi-netherlands.com' and every canonical/og:url tag is
+# built from it — redirecting the other way would contradict the
+# markup. Change both together or neither.
+#
+# %1 is the capture from the RewriteCond, i.e. the host minus www.
+RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
+RewriteRule ^ https://%1%{REQUEST_URI} [R=301,L]
+
+# --- Protect the SMTP credentials -------------------------------
+# api/contact.secret.php holds a live mailbox password. It is
+# gitignored and excluded from the FTP mirror, so it cannot leak
+# through the repo or be erased by a deploy — but that is all
+# about getting it TO the server, and says nothing about who can
+# read it once there.
+#
+# The failure this guards is narrow and real: if PHP ever stops
+# handling .php on this host — a bad .htaccess edit, a panel
+# change, a PHP version switch — the server falls back to serving
+# the file as plain text, and the password is public at a URL a
+# scanner will guess. Denying it outright costs nothing, because
+# contact.php reads it from disk and never over HTTP.
+#
+# One FilesMatch rather than a name plus a pattern: the pattern
+# already covers contact.secret.php, and anything else that ever
+# takes a .secret.php name is covered the day it is created.
+#
+# Both syntaxes on purpose. "Require" is Apache 2.4 and is what
+# LiteSpeed should honour; "Order/Deny" is the 2.2 spelling, kept
+# because a host silently running in 2.2-compat mode would treat
+# Require as unknown and 500 the whole site. Each is wrapped in
+# its own IfModule so only the one the server understands is ever
+# parsed, and an unrecognised directive can never take the site
+# down to protect one file.
+<FilesMatch "\.secret\.php$">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+  </IfModule>
+</FilesMatch>
+
+# --- No directory listings --------------------------------------
+# /download/, /img/ and the eleven gallery division folders hold
+# no index file. With Indexes on — which is the default on plenty
+# of shared hosts — each one is browsable, publishing the whole
+# file inventory including ~950 gallery photos nobody linked.
+# The files are public; the exhaustive list of them need not be.
+Options -Indexes
+
+# --- Response headers -------------------------------------------
+# Wrapped in IfModule so the file still parses if mod_headers is
+# unavailable: a missing header degrades to today's behaviour,
+# while an unrecognised directive would 500 the entire site.
+<IfModule mod_headers.c>
+  # Stop browsers guessing a MIME type different from the one
+  # sent. The classic exploit is a user-uploaded file sniffed as
+  # HTML and executed in-origin.
+  Header always set X-Content-Type-Options "nosniff"
+
+  # Send the full URL to same-origin requests, bare origin to
+  # cross-origin ones, nothing when leaving https for http.
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+  # The site has no reason to be framed. Blocks the clickjacking
+  # dressing-up of /contact or /registration inside another page.
+  Header always set X-Frame-Options "SAMEORIGIN"
+
+  # None of these features are used; deny them rather than leave
+  # the defaults to whatever a future browser decides.
+  Header always set Permissions-Policy "geolocation=(), microphone=(), camera=(), interest-cohort=()"
+</IfModule>
+
+
 # --- Main pages -------------------------------------------------
 # One line per legacy page. R=301 (permanent) so search engines
 # transfer ranking rather than treating these as temporary.

@@ -1,6 +1,7 @@
 import adapter from '@sveltejs/adapter-static';
 import { sveltekit } from '@sveltejs/kit/vite';
-import { existsSync, readdirSync } from 'node:fs';
+import { existsSync, readdirSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defineConfig, type Plugin, type ViteDevServer } from 'vite';
 
@@ -123,6 +124,97 @@ function galleryManifest(): Plugin {
 	};
 }
 
+/* ============================================================
+   sitemap.xml
+
+   robots.txt advertises a sitemap, so one has to exist — a
+   Sitemap: line pointing at a 404 is worse than no line at all.
+
+   The route list is READ FROM DISK, not hand-written, for the
+   same reason the gallery manifest is: a hardcoded list goes
+   stale the first time someone adds a route, and nothing fails
+   to tell you. Every route here is prerendered (+layout.js sets
+   prerender = true), so "directory under src/routes containing
+   a +page.svelte" is exactly the set of real public URLs.
+
+   Two things this deliberately does NOT do:
+   - No <lastmod>. A build timestamp would claim every page
+     changed on every deploy, which is a lie crawlers learn to
+     ignore. No date is better than a wrong one.
+   - No <priority>/<changefreq>. Google has ignored both for
+     years; they are noise.
+
+   ⚠️ Absolute URLs, built from SITE_URL. The sitemap spec
+   requires them, and BASE_PATH is deliberately NOT applied: the
+   GitHub Pages preview is noindex staging whose robots.txt is
+   overwritten to Disallow: / by the workflow, so a sitemap
+   describing the production domain is never consulted there.
+   ============================================================ */
+const ROUTES_ROOT = fileURLToPath(new URL('./src/routes', import.meta.url));
+
+/** Canonical origin. Mirrors SITE_URL in src/lib/config.ts, which cannot be
+ *  imported here — this file is loaded by eslint.config.js, and pulling in a
+ *  .ts module from src/ at config-load time is exactly the kind of side
+ *  effect the gallery plugin's warning above is about. Change both together. */
+const SITEMAP_ORIGIN = 'https://hhi-netherlands.com';
+
+function readRoutes(): string[] {
+	/* '' is the home route: src/routes/+page.svelte itself. */
+	const found = existsSync(join(ROUTES_ROOT, '+page.svelte')) ? [''] : [];
+
+	if (existsSync(ROUTES_ROOT)) {
+		for (const entry of readdirSync(ROUTES_ROOT, { withFileTypes: true })) {
+			/* Skip (groups), [params] and anything without a page. A dynamic
+			   segment has no single URL to list, and there are none today. */
+			if (!entry.isDirectory()) continue;
+			if (entry.name.startsWith('(') || entry.name.startsWith('[')) continue;
+			if (!existsSync(join(ROUTES_ROOT, entry.name, '+page.svelte'))) continue;
+			found.push(entry.name);
+		}
+	}
+
+	return found.sort();
+}
+
+function sitemap(): Plugin {
+	return {
+		name: 'hhi-sitemap',
+		apply: 'build',
+		/* enforce:'post' + closeBundle is the ONLY combination that works here,
+		   and getting it wrong fails silently in a way worth spelling out.
+
+		   adapter-static runs inside SvelteKit's own closeBundle and populates
+		   build/ from scratch at that point. Writing the sitemap any earlier —
+		   generateBundle, or closeBundle without enforce:'post' — succeeds,
+		   logs happily, and is then wiped by the adapter. The file simply is
+		   not there afterwards, with nothing in the build log to say so.
+		   enforce:'post' puts this plugin last in the hook order, so it writes
+		   into the finished build/ rather than one about to be replaced. */
+		enforce: 'post',
+		closeBundle() {
+			/* Both the SSR and client passes reach this hook. build/ only
+			   exists once the adapter has finished, so this guard skips the
+			   pass that runs too early instead of writing a doomed file. */
+			const out = fileURLToPath(new URL('./build', import.meta.url));
+			if (!existsSync(out)) return;
+
+			const routes = readRoutes();
+			const urls = routes
+				.map((r) => `\t<url>\n\t\t<loc>${SITEMAP_ORIGIN}/${r}</loc>\n\t</url>`)
+				.join('\n');
+
+			const xml =
+				'<?xml version="1.0" encoding="UTF-8"?>\n' +
+				'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
+				urls +
+				'\n</urlset>\n';
+
+			writeFileSync(join(out, 'sitemap.xml'), xml, 'utf-8');
+			this.info(`sitemap.xml written with ${routes.length} URLs`);
+		}
+	};
+}
+
 /* GitHub Pages serves a project repo from a sub-path
    (/HHI-Netherlands-Website), which would 404 every root-relative link.
    BASE_PATH tells Kit about it and it rewrites internal hrefs at build
@@ -143,6 +235,7 @@ const base = raw as '' | `/${string}`;
 export default defineConfig({
 	plugins: [
 		galleryManifest(),
+		sitemap(),
 		sveltekit({
 			compilerOptions: {
 				// Force runes mode for the project, except for libraries. Can be removed in svelte 6.

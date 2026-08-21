@@ -1,3 +1,27 @@
-# allow crawling everything by default
+# HHI Netherlands — crawl policy
+#
+# ⚠️ This is the PRODUCTION file. The GitHub Pages preview does not
+# use it: .github/workflows/pages.yml overwrites build/robots.txt
+# with a blanket "Disallow: /" so staging cannot be indexed. If you
+# edit this file, that rule is unaffected and still protects the
+# preview — but check it still says what you expect before assuming
+# a change here reached the preview, because it did not.
+
 User-agent: *
 Disallow:
+
+# The contact endpoint only answers POST, and a GET returns an
+# error. No crawler gains anything by fetching it, and keeping it
+# out of the crawl means the rate limiter is not spending its
+# budget on bots that were never going to submit the form.
+#
+# This is politeness, not protection: robots.txt is advisory and
+# ignored by exactly the bots worth worrying about. The real
+# defences (honeypot, rate limit, CRLF strip, origin check) live
+# in static/api/contact.php and do not depend on this line.
+Disallow: /api/
+
+# Generated at build time by the hhi-sitemap plugin in
+# vite.config.ts, from the routes that actually exist on disk.
+# Absolute URL because the spec requires one.
+Sitemap: https://hhi-netherlands.com/sitemap.xml
