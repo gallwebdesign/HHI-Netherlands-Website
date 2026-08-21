@@ -7,7 +7,18 @@ node_modules
 .wrangler
 /.svelte-kit
 /build
-/img/gallery
+/img/gallery/2026/hhi-open-division/junior
+/img/gallery/2026/hhi-open-division/varsity
+/img/gallery/2026/hhi-open-division/adult
+/img/gallery/2026/hhi-open-division/parents
+/img/gallery/2026/hhi-open-division/special-crews
+
+/img/gallery/2026/hhi-open-division/junior
+/img/gallery/2026/hhi-open-division/varsity
+/img/gallery/2026/hhi-open-division/adult
+/img/gallery/2026/hhi-open-division/jv-megacrew
+/img/gallery/2026/hhi-open-division/minicrew
+/img/gallery/2026/hhi-open-division/megacrew
 
 # Playwright
 /test-results
