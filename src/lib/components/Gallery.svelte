@@ -1,10 +1,65 @@
 <script lang="ts">
 	import Lightbox from '$lib/components/Lightbox.svelte';
-	import { ALL_DIVISIONS, COMPETITIONS, GALLERY_YEAR, photosFor } from '$lib/data/gallery';
+	import {
+		ALL_DIVISIONS,
+		COMPETITIONS,
+		GALLERY_PHOTOS,
+		GALLERY_YEAR,
+		fetchGalleryPhotos,
+		photosFor,
+		type GalleryPhoto
+	} from '$lib/data/gallery';
 	import { magnetic, reveal } from '$lib/attachments.svelte';
 
 	let competition = $state(COMPETITIONS[0].slug);
 	let division = $state<string>(ALL_DIVISIONS);
+
+	/* ============================================================
+	   The photo list starts as the build-time manifest and is
+	   replaced by the server's own folder listing once it answers.
+
+	   Why it cannot just be the build manifest: the ~951 photos are
+	   deliberately not in the repo, so the CI build that produces
+	   the live site walks an empty tree and bakes an empty list.
+	   That is how /media shipped showing nothing on 21 Aug 2026
+	   while every photo sat on the server returning 200.
+
+	   Starting from GALLERY_PHOTOS rather than an empty array is
+	   what keeps this honest in the other two environments: `npm
+	   run dev` and the smoke tests both have the real photos on
+	   disk, so the grid is populated on first paint and the tests
+	   still assert against real tiles rather than a loading state.
+	   In production the initial list is empty and the fetch fills
+	   it; on GitHub Pages there is no PHP, the fetch fails, and
+	   the build manifest is kept. Every path renders something
+	   truthful.
+	   ============================================================ */
+	let photoSource = $state<GalleryPhoto[]>(GALLERY_PHOTOS);
+
+	/* Only true while the FIRST load is in flight AND there is nothing to
+	   show yet. Used to tell "still asking" apart from "asked, and the answer
+	   was no photos" — the empty state must not accuse Iain of having
+	   uploaded nothing while the request is still open. */
+	let loading = $state(GALLERY_PHOTOS.length === 0);
+
+	$effect(() => {
+		/* Runs once, in the browser only. The prerender pass has no server to
+		   ask and must not block on one; it renders the build manifest, which
+		   is what the crawler and a no-JS visitor see. */
+		let cancelled = false;
+
+		fetchGalleryPhotos().then((photos) => {
+			if (cancelled) return;
+			/* null means the endpoint failed in some way — keep whatever we
+			   already had rather than emptying a working gallery. */
+			if (photos) photoSource = photos;
+			loading = false;
+		});
+
+		return () => {
+			cancelled = true;
+		};
+	});
 
 	/* Roving focus needs a handle on each button, and the two tablists are
 	   independent — separate arrays, separate handlers, separate wrap lengths. */
@@ -19,7 +74,7 @@
 	   so the keys and the buttons share one source and cannot drift apart. */
 	const divisionKeys = $derived([ALL_DIVISIONS, ...activeCompetition.divisions.map((d) => d.slug)]);
 
-	const photos = $derived(photosFor(competition, division));
+	const photos = $derived(photosFor(competition, division, photoSource));
 
 	/* Selecting a competition resets the division in the same synchronous
 	   update. Doing it in an $effect instead would let one render happen with
@@ -192,6 +247,17 @@
 						</button>
 					</div>
 				{/if}
+			{:else if loading}
+				<!-- Distinct from the empty state on purpose. In production the
+				     build manifest is empty and the real list arrives from
+				     api/gallery.php a moment later, so "Coming soon" would flash
+				     up and call Iain a liar about photos that are about to
+				     appear. aria-live announces the change to a screen reader
+				     once the tiles land, since nothing moves focus. -->
+				<div class="gallery-empty" aria-live="polite">
+					<b>Loading photos&hellip;</b>
+					<span>Pulling the {GALLERY_YEAR} gallery.</span>
+				</div>
 			{:else}
 				<div class="gallery-empty">
 					<b>Coming soon</b>

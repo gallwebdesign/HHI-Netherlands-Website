@@ -2,15 +2,30 @@
    2026 competition gallery.
 
    Photos are folder-driven: drop files into
-   static/img/gallery/2026/<competition>/<division>/ and they
-   appear on /media with no code edit. The walk happens at build
-   time in vite.config.ts and arrives here as MANIFEST.
+   img/gallery/2026/<competition>/<division>/ and they appear on
+   /media with no code edit.
 
-   As of 21 Aug 2026 that tree is empty — the January 2026
-   photography has not been handed over yet — so the page ships
-   the tab shell and an empty state rather than a claim it
-   cannot back. Everything below is written to work at zero
-   photos and at several thousand.
+   ⚠️ THERE ARE TWO MANIFESTS, and which one wins depends on
+   where the page is running. This is the whole design, so read
+   it before changing either:
+
+   1. BUILD-TIME — vite.config.ts walks static/img/gallery/2026/
+      and hands the result here as MANIFEST. Correct on Iain's
+      machine and in the smoke tests, where the photos are on
+      disk. EMPTY in CI, because the ~951 photos are deliberately
+      not in the repo.
+
+   2. RUNTIME — api/gallery.php walks the same tree ON THE
+      SERVER, where the FTP-uploaded photos actually live, and
+      the page fetches it on mount.
+
+   The build manifest is the initial value and the runtime one
+   replaces it. That ordering matters: it means the prerendered
+   HTML is never empty in dev, and production — where the baked
+   list is empty and the server's is not — fills in a moment
+   after load.
+
+   Everything below works at zero photos and at several thousand.
    ============================================================ */
 
 import { MANIFEST } from 'virtual:gallery-manifest';
@@ -108,20 +123,116 @@ function photoAlt(competition: string, division: string): string {
 	return `${label.competition} ${label.division} — Netherlands Hip Hop Dance Championship ${GALLERY_YEAR}`;
 }
 
+/** Shape of one record from either manifest source. */
+interface ManifestRecord {
+	competition: string;
+	division: string;
+	src: string;
+}
+
 /* withBase() because the page binds src from this variable, and Kit only
    rewrites root-relative paths written literally in markup. Without it every
    photo 404s on the GitHub Pages sub-path build. */
-export const GALLERY_PHOTOS: GalleryPhoto[] = MANIFEST.map((record) => ({
-	src: withBase(record.src),
-	alt: photoAlt(record.competition, record.division),
-	competition: record.competition,
-	division: record.division
-}));
+function toPhotos(records: readonly ManifestRecord[]): GalleryPhoto[] {
+	return records.map((record) => ({
+		src: withBase(record.src),
+		alt: photoAlt(record.competition, record.division),
+		competition: record.competition,
+		division: record.division
+	}));
+}
+
+/* ============================================================
+   The BUILD-TIME manifest — a fallback, no longer the source of
+   truth in production.
+
+   It is still exactly right in two situations and wrong in one:
+
+   ✅ `npm run dev` and `npm run build` on Iain's machine, where
+      static/img/gallery/ holds the real photos. This is what
+      makes the smoke tests meaningful and what makes dropping a
+      photo into the folder work locally with no server.
+
+   ❌ Production. The photos are deliberately not in the repo, so
+      a GitHub Actions checkout walks an empty tree and bakes an
+      EMPTY list — and the build succeeds, because an empty
+      gallery is a legitimate state. That is precisely how /media
+      shipped with zero photos on 21 Aug 2026 while all 951 sat
+      on the server returning 200.
+
+   So it stays as the initial value, and fetchGalleryPhotos()
+   below replaces it at runtime with what is actually on the
+   server. In production that swaps an empty list for 951 photos;
+   in dev it replaces the list with an identical one.
+   ============================================================ */
+export const GALLERY_PHOTOS: GalleryPhoto[] = toPhotos(MANIFEST);
+
+/* Where the runtime manifest lives. Root-relative through withBase() for the
+   same reason the photo paths are — the GitHub Pages preview is served from a
+   sub-path, and a bare '/api/gallery.php' would miss it. */
+export const GALLERY_ENDPOINT = withBase('/api/gallery.php');
+
+/* ============================================================
+   The RUNTIME manifest.
+
+   Asks api/gallery.php what is actually in the folders, which is
+   the only party that can answer: the photos reach the server by
+   FTP and the build never sees them.
+
+   Returns null rather than throwing on ANY failure — a network
+   error, a non-200, malformed JSON, or a response whose shape is
+   not what we expect. The caller keeps whatever it already had
+   (the build manifest) in that case, so a broken endpoint
+   degrades to today's behaviour instead of emptying a gallery
+   that was rendering fine. On GitHub Pages there is no PHP at
+   all, so this 404s every time by design and the preview simply
+   keeps its build-time list.
+   ============================================================ */
+export async function fetchGalleryPhotos(
+	fetcher: typeof fetch = fetch
+): Promise<GalleryPhoto[] | null> {
+	try {
+		const response = await fetcher(GALLERY_ENDPOINT, { headers: { accept: 'application/json' } });
+		if (!response.ok) return null;
+
+		const payload: unknown = await response.json();
+		if (typeof payload !== 'object' || payload === null) return null;
+
+		const { ok, photos } = payload as { ok?: unknown; photos?: unknown };
+		if (ok !== true || !Array.isArray(photos)) return null;
+
+		/* Validate every record rather than trusting the endpoint. This is the
+		   one place where data from off-machine becomes an img src, and a
+		   malformed entry would render a broken tile with no clue where it came
+		   from. Anything that is not three non-empty strings is dropped. */
+		const records = photos.filter(
+			(record): record is ManifestRecord =>
+				typeof record === 'object' &&
+				record !== null &&
+				typeof (record as ManifestRecord).competition === 'string' &&
+				typeof (record as ManifestRecord).division === 'string' &&
+				typeof (record as ManifestRecord).src === 'string' &&
+				(record as ManifestRecord).src.startsWith('/img/gallery/')
+		);
+
+		return toPhotos(records);
+	} catch {
+		return null;
+	}
+}
 
 /** Photos for one competition, optionally narrowed to a single division.
- *  Pass ALL_DIVISIONS to keep the whole competition. */
-export function photosFor(competition: string, division: string): GalleryPhoto[] {
-	return GALLERY_PHOTOS.filter(
+ *  Pass ALL_DIVISIONS to keep the whole competition.
+ *
+ *  `source` defaults to the build manifest so existing callers and the
+ *  prerendered first paint are unchanged; the Gallery passes the runtime list
+ *  once it has one. */
+export function photosFor(
+	competition: string,
+	division: string,
+	source: readonly GalleryPhoto[] = GALLERY_PHOTOS
+): GalleryPhoto[] {
+	return source.filter(
 		(photo) =>
 			photo.competition === competition &&
 			(division === ALL_DIVISIONS || photo.division === division)

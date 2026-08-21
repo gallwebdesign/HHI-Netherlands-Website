@@ -21,11 +21,11 @@ npm run dev          # development
 npm run check        # svelte-check — expect 0 errors, 0 warnings
 npm run lint         # prettier --check + eslint — expect both clean
 npm run build        # prerenders every route; this is what proves the SSR guards
-npm test             # build + Playwright smoke test — 52 passed with photos, 49 + 3 skipped without
+npm test             # build + Playwright smoke test — 56 passed with photos, 52 + 4 skipped without
 npm run preview      # serves build/ (see the port-4173 trap below)
 ```
 
-⚠️ **The count depends on whether the gallery photos are on your disk, and they are not in the repo** (see the gallery section below). Three tests — the two lightbox tests and the paging one — self-skip when `static/img/gallery/` holds no images, so **a fresh clone correctly reports 49 passed, 3 skipped**. That is the expected state for anyone but Iain, and for CI. A *failure* in those three means something is broken; a *skip* means there are no photos there.
+⚠️ **The count depends on whether the gallery photos are on your disk, and they are not in the repo** (see the gallery section below). Four tests carry a `test.skip` that fires when `static/img/gallery/` holds no images — the two lightbox tests, the paging one, and the filename-encoding one added 21 Aug 2026. A fresh clone therefore reports fewer passes and some skips; **56 passed / 0 skipped is the with-photos number, verified 21 Aug 2026**, and the exact fresh-clone split has not been re-measured since the count changed. A *failure* in those four means something is broken; a *skip* means there are no photos there.
 
 ⚠️ **`npm test` rebuilds first, and that matters.** Plain `npx playwright test` reuses whatever is already in `build/`, so a test can pass against a stale build while the bug is live in `src/`. Also kill any stray `vite preview` on **port 4173** before testing — it hijacks the harness and fails ~16 tests wholesale with `_app/immutable` 404s on pages you never touched.
 
@@ -106,7 +106,18 @@ Media images live in `static/img/` — eight 1200×900 JPEGs (`image01`–`image
 
 ⚠️ **`image01`–`08` are no longer rendered anywhere except the home teaser** (`TEASER_PHOTOS`, which uses `image01`–`04`). `/media` moved to the 2026 gallery below on 21 Aug 2026. `PHOTOS` in `media.ts` is kept rather than deleted precisely so `image05`–`08` are still named by something — do not "clean up" either the export or the files without deciding about both together.
 
-**The 2026 gallery on `/media` is folder-driven.** Since 21 Aug 2026 the flat eight-photo grid is replaced by a filtered gallery: competition tabs (`HHI Open Division` / `Netherlands HHDC`) over division tabs (`All` plus that competition's divisions), with a lightbox. Photos go in `static/img/gallery/2026/<competition-slug>/<division-slug>/` and appear with **no code edit** — drag and drop, then rebuild. ⚠️ **The manifest is baked at build time, so a photo added without a rebuild does not appear** — that is not a bug, and it is the first thing to check when new photos "do not load". `npm run dev` picks them up live; a stale `build/` will not.
+**The 2026 gallery on `/media` is folder-driven.** Since 21 Aug 2026 the flat eight-photo grid is replaced by a filtered gallery: competition tabs (`HHI Open Division` / `Netherlands HHDC`) over division tabs (`All` plus that competition's divisions), with a lightbox. Photos go in `img/gallery/2026/<competition-slug>/<division-slug>/` and appear with **no code edit**.
+
+⚠️ **There are TWO manifests and you must know which one you are debugging.** This is the single most confusing thing about the gallery, and it caused a live outage on 21 Aug 2026 where `/media` showed nothing while all 951 photos sat on the server returning 200.
+
+| | Built by | Walks | Correct where | Empty where |
+|---|---|---|---|---|
+| **Build-time** | `hhi-gallery-manifest` in [vite.config.ts](vite.config.ts) | `static/img/gallery/2026/` on the build machine | dev, `npm test`, local `npm run build` | **CI** — the photos are not in the repo |
+| **Runtime** | [static/api/gallery.php](static/api/gallery.php) | `img/gallery/2026/` on the server | **production** | GitHub Pages (no PHP) |
+
+The build manifest is the page's initial value; [gallery.ts](src/lib/data/gallery.ts) `fetchGalleryPhotos()` replaces it on mount with the server's own listing. **In production the baked list is empty and the fetched one has everything** — which is why the gallery is the one part of this static site that needs JS to populate. A failed fetch keeps whatever was baked, so a broken endpoint degrades rather than blanking a working page.
+
+Consequences: **FTP a photo and it appears on the next page load — no rebuild, no push.** That is the whole point of the runtime manifest. `npm run dev` still picks up local drops live. And a CI deploy can no longer blank the gallery, which it could and did before.
 
 ⚠️ **The gallery photos are NOT in the repo and must not be added to it.** Iain uploads them to `/httpdocs/img/gallery/` by FTP by hand — **951 files across all eleven divisions** as of 21 Aug 2026. `.gitignore` excludes every image under `static/img/gallery/`, and a tracked `.gitkeep` in each division folder keeps the *tree* in the repo (git cannot store an empty directory), so a clone has the folder names but no images.
 
@@ -114,9 +125,9 @@ Two things to know if you ever need to change this. Patterns here must start wit
 
 Three consequences that are easy to get wrong:
 
-- **A CI checkout builds an empty gallery, and the build SUCCEEDS.** It does not fail the way a missing `static/img/image01.jpg` does, because the manifest is generated from whatever is on disk. Nothing flags the absence.
+- **A CI checkout builds an empty gallery, and the build SUCCEEDS.** It does not fail the way a missing `static/img/image01.jpg` does, because the manifest is generated from whatever is on disk. Nothing flags the absence. ⚠️ **This shipped a blank `/media` to production on 21 Aug 2026** — the Actions run was green, the photos were on the server answering 200, and the page carried zero references to them. It is why the runtime PHP manifest above exists: the build is no longer allowed to be the only source of truth. Do not "simplify" the gallery back to the baked list alone.
 - ⚠️ **The Cloud86 FTP deploy mirrors `build/` and deletes what it does not find**, so `**/img/gallery/**` is in its `exclude:` list. Without that line, one push to `main` silently deletes every uploaded photo. Do not remove it without first getting the photos into the build another way.
-- The three photo-dependent smoke tests (lightbox ×2, paging) **self-skip** when the folders are empty, so CI stays green — a fresh clone gives 49 passed, 3 skipped, verified. A skip means "no photos here", not "broken test".
+- The four photo-dependent smoke tests (lightbox ×2, paging, filename encoding) **self-skip** when the folders are empty, so CI stays green. A skip means "no photos here", not "broken test".
 
 The GitHub Pages preview publishes a self-contained artifact rather than mirroring, so it deletes nothing — it just shows an empty gallery, which is fine for a noindex staging preview.
 
@@ -126,7 +137,8 @@ The grid is **six across** with a 14px gap and a 1px border per cell (`.gallery-
 - ⚠️ **All `fs` work must stay inside the plugin's `load` hook.** [eslint.config.js](eslint.config.js) imports `vite.config.ts`, so `npm run lint` executes everything at module scope there; a `readdirSync` at the top level turns a missing folder into a lint failure that reads as completely unrelated.
 - The slug lists are written **twice on purpose** — `GALLERY_TREE` in `vite.config.ts` decides which folders are real, `COMPETITIONS` in `gallery.ts` supplies labels and order. Change both together: a division added only to `COMPETITIONS` shows an empty tab forever, one added only to `GALLERY_TREE` has its photos read and then dropped.
 - Unrecognised folders are skipped with a build-log warning rather than rendered, so `Thumbs.db` and a mistyped `juniour/` cannot invent a division. **A folder typo therefore ships silently as "no photos"** — check the build log.
-- Filenames sort with `Intl.Collator({numeric:true})`. A plain sort puts `IMG_10` before `IMG_2`, which is exactly what a camera dump produces.
+- Filenames sort with `Intl.Collator({numeric:true})` in the plugin and `strnatcasecmp` in the PHP — the same order from both. A plain sort puts `IMG_10` before `IMG_2`, which is exactly what a camera dump produces.
+- ⚠️ **Filenames are percent-encoded, folder slugs are not.** 83 of the 951 photos are named `jv crew-N.jpg`, and a raw space in an `img src` is not a valid URL — the browser does not fetch it. `encodeURIComponent()` in the plugin, `rawurlencode()` in the PHP (**not** `urlencode`, which writes `+` for a space). Both were emitting raw spaces until 21 Aug 2026. A smoke test walks every division and asserts no `src` contains a space; it has to walk them because the default tab's first 24 tiles contain none of the affected files, and a tile-based check passes vacuously.
 - **The gallery has no broken-image guard, deliberately** — every `src` comes from a file the build just read, so the typo the guard exists to survive cannot occur, and a genuine 404 already fails the smoke test. The guard stays in `home.ts`, where filenames are still hand-written.
 - Photos are served as dropped, with no optimisation step. **Export at ~1600px long edge before adding them**, matching the 1200×900 discipline of `image01`–`08`.
 

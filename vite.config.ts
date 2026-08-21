@@ -85,8 +85,25 @@ function readGallery(warn: (msg: string) => void): ManifestRecord[] {
 					competition: compEntry.name,
 					division: divEntry.name,
 					/* A path, not a URL: gallery.ts runs it through withBase() so the
-					   GitHub Pages sub-path build resolves. */
-					src: `/img/gallery/2026/${compEntry.name}/${divEntry.name}/${name}`
+					   GitHub Pages sub-path build resolves.
+
+					   ⚠️ The FILENAME is percent-encoded, the folder names are not.
+					   83 of the 951 photos have spaces in their names ("jv crew-1.jpg"),
+					   and a raw space in an img src is not a valid URL — the browser
+					   does not fetch it. Verified 21 Aug 2026: the encoded form returns
+					   the image, the raw form fails outright.
+
+					   encodeURIComponent, not encodeURI, because only one path SEGMENT
+					   is being escaped here — encodeURI would leave "/" alone, which is
+					   right for a whole path but wrong for a name that could itself
+					   contain one. The slugs are matched against GALLERY_TREE above and
+					   are known-safe, so they are interpolated as-is.
+
+					   api/gallery.php does the same with rawurlencode(), which is the
+					   exact PHP equivalent (it escapes a space as %20, NOT as "+" the
+					   way urlencode does). The two manifests must agree byte for byte;
+					   they are diffed as part of verifying a change to either. */
+					src: `/img/gallery/2026/${compEntry.name}/${divEntry.name}/${encodeURIComponent(name)}`
 				});
 			}
 		}

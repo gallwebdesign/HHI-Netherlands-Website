@@ -196,6 +196,94 @@ test('media gallery shows photos or an honest empty state', async ({ page }) => 
 	}
 });
 
+/* ============================================================
+   The 21 Aug 2026 regression: /media shipped showing NOTHING while
+   all 951 photos sat on the server returning 200.
+
+   Nothing in this suite caught it, and it is worth being precise
+   about why. The harness serves build/ from the local disk, where
+   the photos ARE present, so the baked manifest was correct here
+   and every gallery test passed. Production is the environment
+   that differs: the photos are deliberately not in the repo, so
+   the CI checkout walks an empty tree, bakes an empty list, and
+   the build SUCCEEDS because an empty gallery is a legitimate
+   state. Green suite, blank page.
+
+   The fix makes the page ask api/gallery.php for the real folder
+   listing at runtime. These two tests cover the parts of that a
+   static harness genuinely can check.
+   ============================================================ */
+test('media gallery asks the endpoint for the real photo list', async ({ page }) => {
+	/* The build manifest can no longer be the only source, so the page MUST
+	   make this request. Asserting the call happens is what catches the fetch
+	   being dropped in a refactor — at which point production silently goes
+	   back to rendering whatever CI baked, which is nothing. */
+	const requested: string[] = [];
+	page.on('request', (r) => {
+		if (r.url().includes('gallery.php')) requested.push(r.url());
+	});
+
+	/* The static harness has no PHP, so the endpoint 404s here. That is the
+	   point: the page must survive it and keep showing the build manifest
+	   rather than emptying a gallery that was rendering fine. */
+	await page.goto('/media');
+	await settleReveals(page);
+
+	expect(requested.length, 'the gallery must request the runtime manifest').toBeGreaterThan(0);
+
+	/* And the failure must be invisible to the visitor. */
+	const tiles = await page.locator('.gallery__tile').count();
+	const empty = await page.locator('.gallery-empty').count();
+	if (tiles > 0) {
+		expect(empty, 'endpoint failed but photos were on disk — keep showing them').toBe(0);
+	} else {
+		expect(empty, 'no photos anywhere, so exactly one empty state').toBe(1);
+	}
+});
+
+test('every gallery src is a valid URL, spaces encoded', async ({ page }) => {
+	/* 83 of the 951 photos are named "jv crew-N.jpg". A raw space in an img
+	   src is not a valid URL and the browser does not fetch it — verified
+	   against the live server on 21 Aug 2026, where the encoded form returned
+	   the image and the raw form failed outright. The build plugin emitted
+	   raw spaces until that day, so this asserts the encoding both it and
+	   api/gallery.php now apply.
+
+	   ⚠️ It must read the MANIFEST, not the rendered tiles. The grid shows
+	   the first 24 photos of the default tab (HHI Open Division / All), and
+	   every space-named file is in netherlands-hhdc/jv-megacrew — so a
+	   tile-based check passes while 83 broken URLs sit one tab away. That
+	   exact vacuity was caught by reintroducing the bug and watching this
+	   test stay green. */
+	await page.goto('/media');
+	await settleReveals(page);
+
+	/* Walk every competition/division pair and collect what each renders. */
+	const seen: string[] = [];
+	const comps = competitionTabs(page);
+	const compCount = await comps.count();
+
+	for (let c = 0; c < compCount; c++) {
+		await comps.nth(c).click();
+		const divs = divisionTabs(page);
+		const divCount = await divs.count();
+		for (let d = 0; d < divCount; d++) {
+			await divs.nth(d).click();
+			const batch = await page.evaluate(() =>
+				[...document.querySelectorAll('.gallery__tile img')].map(
+					(img) => img.getAttribute('src') ?? ''
+				)
+			);
+			seen.push(...batch);
+		}
+	}
+
+	test.skip(seen.length === 0, 'no photos on disk — nothing to check');
+
+	const withRawSpace = [...new Set(seen.filter((src) => src.includes(' ')))];
+	expect(withRawSpace, 'a raw space in an img src never loads').toEqual([]);
+});
+
 test('media gallery tabs wrap on a phone instead of scrolling the page', async ({ page }) => {
 	await page.setViewportSize({ width: 390, height: 844 });
 	await page.goto('/media');

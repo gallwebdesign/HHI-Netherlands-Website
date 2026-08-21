@@ -88,6 +88,29 @@ pushed. Replaces the flat eight-photo grid on `/media` with a filtered gallery
 of the January 2026 competition. The Videos section is untouched. The branch
 is merged and safe to delete.
 
+> ⚠️ **This shipped BLANK to production and was fixed the same day.** The
+> gallery went live showing nothing while all 951 photos sat on the server
+> answering 200 with real bytes. The cause was structural rather than a coding
+> mistake: the manifest was baked at build time, the photos are deliberately
+> not in the repo, so the CI build walked an empty tree and froze an empty
+> list into the bundle — and the build *succeeded*, because an empty gallery
+> is a legitimate state. Nothing failed, nothing warned, and the Actions run
+> was green.
+>
+> The fix adds a **runtime manifest**: `static/api/gallery.php` walks the
+> folders on the server, where the FTP-uploaded photos actually are, and the
+> page fetches it on mount. See *The gallery's two manifests* below. A photo
+> dropped in by FTP now appears on the next page load with no rebuild, and a
+> deploy can no longer blank the page.
+>
+> Two things this cost a session to learn, both worth keeping:
+> **the local smoke suite could never have caught it** (the harness serves
+> `build/` from a disk that has the photos, so the baked manifest was correct
+> there and every gallery test passed), and **a stale DNS cache made the
+> diagnosis much harder** — the machine investigating resolved the old host
+> and reported the whole site missing. Check `nslookup` against `1.1.1.1`
+> before concluding anything about what is live.
+
 **What it does.** Two stacked tablists — competition (`HHI Open Division` /
 `Netherlands HHDC`) over division (`All` plus that competition's own
 divisions, 5 and 6 respectively) — over a **six-across grid paging 24 at a
@@ -102,10 +125,37 @@ eleven divisions, so that interim never really happened. The empty state still
 renders per division — Special Crews and the smaller HHDC divisions are the
 ones most likely to show it.
 
-**How photos get in.** Drop them in
-`static/img/gallery/2026/<competition-slug>/<division-slug>/`, rebuild, done —
-no code edit. A Vite plugin in `vite.config.ts` walks the tree at build time
-and hands it to `src/lib/data/gallery.ts` via `virtual:gallery-manifest`. The
+### The gallery's two manifests — read this before changing either
+
+Since the 21 Aug 2026 blank-page fix there are **two** sources for the photo
+list, and knowing which one you are looking at is most of any gallery debugging:
+
+| | Built by | Walks | Right where | Empty where |
+|---|---|---|---|---|
+| **Build-time** | `hhi-gallery-manifest`, `vite.config.ts` | `static/img/gallery/2026/` on the build machine | dev, `npm test`, local builds | **CI** |
+| **Runtime** | `static/api/gallery.php` | `img/gallery/2026/` on the server | **production** | GitHub Pages (no PHP) |
+
+`GALLERY_PHOTOS` (the baked list) is the page's initial value;
+`fetchGalleryPhotos()` in `gallery.ts` replaces it on mount with the server's
+listing. The ordering is deliberate — the prerendered HTML is never empty in
+dev, and production fills in a moment after load. **A failed fetch returns
+`null` and the page keeps what it had**, so a broken or missing endpoint
+degrades to the old behaviour instead of blanking a gallery that was fine.
+
+Three things that must stay in step, in three files: `GALLERY_TREE`
+(vite.config.ts), `GALLERY_TREE` (gallery.php), and `COMPETITIONS`
+(gallery.ts). A division missing from any one of them is dropped silently.
+
+⚠️ **Filenames are percent-encoded; folder slugs are not.** 83 of the 951
+photos are named `jv crew-N.jpg`, and a raw space in an `img src` never loads.
+`encodeURIComponent()` in the plugin, `rawurlencode()` in the PHP — *not*
+`urlencode`, which writes `+`. Both emitted raw spaces until 21 Aug 2026; the
+two manifests were diffed byte for byte to prove they now agree.
+
+**How photos get in.** For production: **FTP them to
+`/httpdocs/img/gallery/2026/<competition-slug>/<division-slug>/` and they
+appear on the next page load** — no rebuild, no push. Locally: drop them in
+`static/img/gallery/2026/...` and `npm run dev` picks them up live. The
 full set of traps is documented in CLAUDE.md under the gallery bullet; the two
 worth repeating here:
 
