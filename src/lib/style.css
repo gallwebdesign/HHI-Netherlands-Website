@@ -866,14 +866,31 @@ body.menu-open{ overflow:hidden; }
 .tabs button.is-active{ background:var(--oranje); color:var(--ink); }
 [data-tab-panel]{ display:none; }
 [data-tab-panel].is-active{ display:block; }
-.rtable{ width:100%; border-collapse:collapse; border:1px solid var(--line); }
+/* ⚠️ table-layout:fixed is what keeps the four year panels identical.
+   With the default `auto`, each panel sizes its columns from its own
+   content, so switching tabs visibly shifts the column boundaries. Measured
+   at 1440px before this fix, Bronze ran 358px on 2026 but 471px on 2024,
+   whose "D-Three (DCBD - Brunssum)" is the longest crew name on the page.
+   Fixed layout takes the widths from the first row (the header) instead, so
+   all four tables share one geometry. The percentages must total 100 and are
+   set on the header cells below. */
+.rtable{ width:100%; table-layout:fixed; border-collapse:collapse; border:1px solid var(--line); }
+/* Four even columns. Division is set in the display face at 18px so it needs
+   more room per character, and "JV MegaCrew" is the longest label — an even
+   quarter clears it, and keeping the three podium columns equal means no
+   medal reads as more important than another. */
 .rtable th{
+  width:25%;
   font-family:var(--font-mono); font-size:11px; letter-spacing:.2em; text-transform:uppercase;
   color:var(--muted); text-align:left; padding:14px 18px; border-bottom:1px solid var(--line);
   background:var(--panel);
 }
+/* overflow-wrap because a long crew name ("D-Three (DCBD - Brunssum)") must
+   wrap rather than force its column wider — that widening is the bug the
+   fixed layout exists to stop. */
 .rtable td{
   padding:16px 18px; border-bottom:1px solid var(--line); font-size:15px;
+  overflow-wrap:break-word;
 }
 .rtable td:first-child{
   font-family:var(--font-display); text-transform:uppercase; font-size:18px; letter-spacing:.02em;
@@ -1153,7 +1170,14 @@ body.menu-open{ overflow:hidden; }
   .rule-col + .rule-col{ margin-top:44px; }
   .sched-days{ grid-template-columns:1fr; gap:44px; }
   .sched__row{ grid-template-columns:78px 1fr; }
-  .rtable{ display:block; overflow-x:auto; }
+  /* ⚠️ display:block takes the element out of table layout, so the desktop
+     table-layout:fixed and the 25% header widths stop applying here — under
+     `block` the percentages resolve against the scroll box and the columns
+     go back to sizing themselves per year. min-width restores a single
+     geometry for all four panels and is what gives the box something to
+     scroll; without it the table just shrinks to fit and never overflows. */
+  .rtable{ display:block; overflow-x:auto; min-width:100%; }
+  .rtable thead, .rtable tbody{ display:table; width:100%; min-width:560px; table-layout:fixed; }
 }
 
 /* ==== PHASE 7: FORMER INLINE STYLES ====
