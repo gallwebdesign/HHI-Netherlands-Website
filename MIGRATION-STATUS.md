@@ -1,7 +1,11 @@
 # Migration status
 
 Working notes for the static HTML → SvelteKit migration.
-Last updated **17 August 2026** — **`hero-two-column` landed on `main`**,
+Last updated **21 August 2026** — **`contact-form-php` landed on `main`**
+(merge `31a784d`), bringing the real contact form, its PHP endpoint, and the
+envelope illustration, which was finally resolved by tracing a source SVG Iain
+supplied rather than drawing from a description. See *Start here* below.
+Before that, on **17 August 2026** — **`hero-two-column` landed on `main`**,
 settling the one unresolved piece of work in the repo. On top of it, three
 pieces of home-hero polish landed the same day: the **black band under the nav
 was trimmed 25%**, the **ticker now pins to the bottom of the viewport on load**
@@ -22,9 +26,10 @@ Plan: <https://claude.ai/code/artifact/b42e8908-c534-4c72-8ef2-7a465a78ad28>
 Branch: **`main`** — the migration was merged there in PR #2.
 `sveltekit-migration` merged and safe to delete.
 
-⚠️ **One commit is unpushed** as of the end of 17 Aug: `af789e8`, the Dutch full
-rules manual. Everything else is level with `origin/main`. Nothing is
-half-finished — see *Start here* below.
+⚠️ **`main` is 7 commits ahead of `origin/main`** as of 21 Aug: the six from
+`contact-form-php` plus the merge commit. Iain has not asked for a push yet.
+(The older unpushed `af789e8`, the Dutch full rules manual, is among them.)
+Nothing is half-finished — see *Start here* below.
 
 **The commit before the hero work is tagged `pre-hero-merge` (`b6e895b`).**
 `git reset --hard pre-hero-merge` undoes all of 17 August. ⚠️ **The `revert -m 1`
@@ -37,41 +42,39 @@ Verified on `main` at the end of 17 Aug: `npm run lint` clean, `npm run check`
 regulations layout tests, → 36 with the three scroll-to-top tests on 16 Aug,
 → 37 with the hero layout test, which arrived with the hero merge).
 
-## ▶ Start here on 21 August 2026
+## ▶ Start here on 22 August 2026
 
-**Work stopped mid-task on 20 Aug: the envelope illustration is not right and
-Iain called it there.** Everything else from that day is finished and verified.
-Read *The envelope* below before touching it — three attempts failed and the
-fourth should not be a fourth guess.
+**Nothing is half-finished in the repo.** `contact-form-php` was merged to
+`main` on 21 Aug and the branch's one open question — the envelope — is
+resolved. The remaining work is all *off* the repo: the Cloud86 account, the
+mailbox, and the photo archive.
 
 ### Where the code is
 
-**Branch `contact-form-php`, four commits, NONE PUSHED.** `main` is untouched
-and level with `origin/main`. The working tree is clean.
+**Merged to `main` as `31a784d`** (`--no-ff`, so the branch history survives).
+The working tree is clean. ⚠️ **Not pushed** — `main` is 7 commits ahead of
+`origin/main`.
 
 | Commit | What | State |
 |---|---|---|
 | `1e47a6f` | Phase 8 — the real contact form + PHP endpoint | ✅ finished |
-| `0edec31` | Envelope v1 + form width cap | ⚠️ the width cap is good; the envelope is superseded |
-| `db35dce` | Envelope v2 — "open with a flap" | ❌ rejected |
-| `b452d9c` | Envelope v3 — no flap | ❌ rejected, current state |
+| `0edec31` | Envelope v1 + form width cap | ✅ the width cap survives; the envelope was superseded |
+| `db35dce` | Envelope v2 — "open with a flap" | ⛔ superseded |
+| `b452d9c` | Envelope v3 — no flap | ⛔ superseded |
+| `c96dd5d` | Envelope v4 — **traced from Iain's `Envelope.svg`** | ✅ accepted |
+| `31a784d` | Merge to `main` | ✅ |
 
-`npm test` **45 passed**, `npm run lint` clean, `npm run check` 0 errors /
-0 warnings, as of the last commit.
+Verified **on merged `main`**: `npm test` **45 passed**, `npm run lint` clean,
+`npm run check` 0 errors / 0 warnings.
 
-### The decision waiting for you
+### ⚠️ The one thing still unverified in code
 
-**The envelope is the only unfinished thing.** Three hand-drawn SVG attempts did
-not match Iain's reference image. Do not start a fourth by drawing again — the
-options that have NOT been tried are in *The envelope* below, and Iain's own
-words were "if it is not possible, then we can think of another solution." That
-is a decision to take with him, not to guess at.
-
-⚠️ **The rest of the branch does not depend on the envelope.** If the
-illustration is abandoned, the contact form itself is complete and mergeable —
-removing `<EnvelopeMark />` from the page and the three envelope assertions from
-the suite is a ten-minute job. Do not let a stuck decoration hold up a working
-form.
+**The PHP endpoint has never actually executed.** The Playwright suite stubs it
+(the harness serves static files), so all 600 lines of
+[contact.php](static/api/contact.php) are unexercised end to end. A green suite
+proves the *client* handles each response shape and nothing more. Running it
+under `php -S` is the obvious next coding task — the method is in *The endpoint*
+below. This is the largest untested surface in the repo.
 
 ### Then, unchanged from before
 
@@ -92,9 +95,10 @@ commit had to touch `config.ts` anyway. `npm run lint` is clean.
 
 ## The contact form — Phase 8, built 20 August 2026
 
-**Branch `contact-form-php`.** The form stopped being a `mailto:` compose and
-became a real submission: it posts JSON to a PHP endpoint on Cloud86, which
-validates it, filters spam and mails `info@hhi-netherlands.com`.
+**Built on `contact-form-php`, merged to `main` 21 Aug 2026 (`31a784d`).** The
+form stopped being a `mailto:` compose and became a real submission: it posts
+JSON to a PHP endpoint on Cloud86, which validates it, filters spam and mails
+`info@hhi-netherlands.com`.
 
 ⚠️ **IT DOES NOT DELIVER YET, AND IT FAILS SILENTLY.** The mailbox
 `info@hhi-netherlands.com` had not been created on Cloud86 as of 20 Aug 2026.
@@ -192,96 +196,82 @@ against a perfectly working form. `fillContactForm()` scrolls first, which is
 what a real visitor does. Three tests failed this way before it was added, and
 a fourth did later — the envelope test, the same afternoon, the same cause.
 
-### ⚠️ The envelope — UNRESOLVED, stopped 20 August 2026
+### ✅ The envelope — RESOLVED 21 August 2026, on the fourth attempt
 
-**STATUS: three attempts, all rejected by Iain. Work stopped here.** The current
-committed state (`b452d9c`) is the third attempt and it is *not* accepted. It
-renders, it is tested, and it still does not look like the reference.
+**STATUS: accepted (`c96dd5d`).** Three hand-drawn attempts were rejected; the
+fourth is **traced coordinate-for-coordinate from a source SVG Iain supplied**
+and was accepted on sight. It fills the space the removed Socials and E-mail
+facts left, lives in
+[EnvelopeMark.svelte](src/lib/components/EnvelopeMark.svelte), and is **the
+first inline SVG in the repo**. Decorative and marked as such: `aria-hidden`, no
+title, no role.
 
-**Do not start a fourth attempt by drawing again.** That is what the last three
-did. Iain's own words on stopping were *"If it is not possible, then we can
-think of another solution"* — so the next move is a conversation about approach,
-not another hand-drawn SVG.
+⚠️ **The source file is NOT in the repo.** Iain pasted `Envelope.svg` into the
+conversation on 21 Aug; it was never committed. **If this drawing ever needs to
+change shape, ask him for the file again — do not nudge the coordinates.** The
+whole reason it converged is that no coordinate was chosen by eye.
 
-It fills the space the removed Socials and E-mail facts left, from a reference
-image Iain supplied: an open envelope with a letter going into it. It lives in
-[EnvelopeMark.svelte](src/lib/components/EnvelopeMark.svelte) and is **the first
-inline SVG in the repo**. Decorative and marked as such: `aria-hidden`, no title,
-no role — it says nothing the page does not already say in text.
+**What broke the deadlock, and it is the transferable lesson:** three attempts
+failed because I was drawing from a *description* of a reference image. The
+moment the actual vector source arrived, the job became transcription. When
+"does this look right" is the acceptance test and it keeps failing, **get the
+source artefact — do not iterate harder.**
 
-**Untried options, for that conversation:**
+**What the guessed versions got wrong**, all four only visible once the real
+coordinates were readable:
 
-- **Trace the reference to exact paths.** The PNG Iain supplied could be traced
-  (Inkscape, `potrace`, or an online tracer) to an SVG that matches by
-  construction rather than by eye, then recoloured with the site tokens. The
-  most likely to actually work, and the least creative latitude — which is the
-  point.
-- **Ship the reference image as an asset** in `static/img/` and recolour it with
-  CSS filters or `mask-image`. Loses the crisp line art and adds a request, but
-  it is guaranteed to look like the reference because it *is* the reference.
-  ⚠️ Check its licence first — provenance unknown.
-- **Ask Iain for the source file.** If the reference came from an icon set, the
-  original SVG may be available and everything above is moot.
-- **Drop the illustration.** The left column had ~400px of dead space, which is
-  what started this. Something simpler (a large quiet quote, the HHI plates
-  mark, the championship dates) would fill it without a pixel-matching problem.
-  **This is a real option, not a failure** — the form works without it.
-
-⚠️ **If the envelope is abandoned, removing it is small and self-contained:**
-delete `<EnvelopeMark />` and its wrapper from
-[+page.svelte](src/routes/contact/+page.svelte), the `.envelope*` block and the
-reduced-motion override from [style.css](src/lib/style.css), the component file,
-and the three envelope assertions in the smoke test (the form-width test also
-covers the envelope — keep the width half). The contact form does not depend on
-any of it.
-
-**What was tried, and what Iain said about each.** Recorded so a fourth attempt
-does not repeat one of them:
-
-| # | Commit | What was drawn | Rejected because |
+| # | Commit | What was drawn | Iain's verdict |
 |---|---|---|---|
 | 1 | `0edec31` | Downward V in front of the body | "It looks closed when it should be open"; "the letter looks to be behind the envelope" |
 | 2 | `db35dce` | Inverted V behind, as a flap folded back | "The envelope is still wrong" |
 | 3 | `b452d9c` | No flap; wide body, large letter, V from the mouth | "No its not working" |
+| 4 | `c96dd5d` | **Traced from `Envelope.svg`** | ✅ accepted |
 
-⚠️ **Do not treat any structural claim below as confirmed by Iain.** "The
-reference has no flap", "the letter must be large" and the paint order were all
-*my* readings of the reference image, and the version built on them was rejected
-too. They are recorded as what was tried, not as requirements. The only
-confirmed facts are Iain's three sentences in the table above.
+- **The V points UP**, from the two bottom corners to an apex at
+  `(140.35, 146.86)`. Attempts 1 and 3 had it descending from the top edge,
+  which reads as a *sealed* envelope.
+- **The mouth is two SEPARATE diagonals** running down-inward from the top
+  corners. That pair is what reads as open — not a flap, which the reference
+  does not have at all.
+- **The top corners splay outward** rather than meeting the sides square.
+- **The letter paints LAST, in front of the envelope.** Attempts 1–3 buried it
+  behind a front panel. Painting it last is what lets its side edges and its
+  final short rule cross the mouth — the detail that makes the sheet read as
+  sitting *in* the envelope rather than behind it.
 
-The current committed structure, back to front, is: **back wall → letter →
-front panel**, with a test asserting that order, the front panel's opaque fill,
-and the absence of an `envelope__flap`. ⚠️ **Those assertions encode attempt 3,
-which was rejected** — a different approach should expect to delete them rather
-than satisfy them.
+**Structure, back to front:** `envelope__panel` (opaque, unstroked) →
+`envelope__body` → `envelope__fold` → `envelope__mouth` → `envelope__letter`.
+The smoke test asserts exactly that order plus the two fill rules below. Unlike
+attempt 3's assertions, **this shape has been confirmed by Iain**, so the test
+is now a real regression guard rather than a guess written down.
+
+**Rendering facts, measured:**
+
+- **The panel needs an opaque `--ink` fill.** It is the ground the fold and
+  mouth lines read against; with `fill:none` they read against whatever the page
+  puts behind them and the drawing goes flat.
+- ⚠️ **The sheet must stay UNFILLED**, as the source has it. Because the letter
+  paints last, a fill there blanks out the two mouth diagonals exactly where
+  they should cross in front of the paper. Attempt 3's `#1c1c28` paper fill was
+  correct *for its paint order* and is wrong for this one — the two changes go
+  together.
+- **Only the colours are this site's.** The source hard-codes `#ff4d00`, which
+  is `--oranje`, so every stroke reads `currentColor` and the text rules read
+  `--bone` at .72; the accent tile is full-strength. That is why the drawing
+  follows the palette if it ever moves.
+- **Dasharrays are measured, not estimated** — 605 (body), 307 (fold), 125
+  (each mouth diagonal), computed from the traced geometry. `pathLength` is not
+  set, so they are real user units: **change the geometry and these must change
+  with it**, or a line stops short or starts already-visible.
 
 ⚠️ **The general lesson, worth more than the drawing.** Three wrong versions
 shipped past a green suite because "does this look like the reference" is not a
 property any assertion here can check. When the deliverable is a picture,
-**the screenshot is the test** — and a structural assertion is only ever a guard
-against regressing a shape that a human already confirmed. Nobody has confirmed
-this shape.
-
-**Rendering facts that survive whatever gets drawn.** Unlike the composition
-above, these were measured and hold for any envelope-shaped SVG on this page —
-worth keeping even if the drawing is replaced wholesale:
-
-- **The front panel needs an opaque `--ink` fill, not `fill:none`.** That
-  overlap is the entire illusion of a sheet sitting *inside* an envelope. With
-  no fill, the letter's bottom edge shows straight through and the drawing goes
-  flat.
-- **The letter must be large.** It is 136×140 and dominates the upper
-  two-thirds, as in the reference. Earlier versions shrank it to solve other
-  problems and it stopped reading as a letter *in* an envelope — it looked like
-  a small card floating over one. It must extend below the front's top edge
-  (y=96) or a gap opens between sheet and envelope; it ends at y=150.
-- **`--panel` fills and `--line` strokes are too dim at this size.** The letter
-  first rendered as a grey ghost and the address tile as muddy brown
-  (`currentColor` at .28 over `--ink`). The paper carries its own `#1c1c28` with
-  a bright edge, the tile is full-strength orange, and the text rules are
-  `--bone` at .35. The back wall is dimmed to .55 — it is behind the sheet in
-  space, and full strength flattens the depth the paint order just created.
+**the screenshot is the test.** The accepted version was verified by rendering
+the supplied SVG *beside* the built page at 1440px and comparing them — and
+that comparison caught a real trap: the first screenshot looked right but was a
+**stale build**, with the old paint order still live. Computed styles proved it.
+Per CLAUDE.md: measure *and* look, and rebuild before you believe either.
 
 ⚠️ **The draw-in has to be gated on visibility, and the reason is not obvious.**
 A CSS animation starts at page load, but the wrapper is held at
@@ -1723,7 +1713,7 @@ npm run check        # svelte-check — expect 0 errors, 0 warnings
 npm run lint         # prettier --check + eslint — expect both clean
 npm run format       # prettier --write
 npm run build        # prerenders all ten routes; this is what proves SSR guards
-npm test             # build + Playwright smoke test — expect 36 passed
+npm test             # build + Playwright smoke test — expect 45 passed
 npm run preview      # trustworthy again since Phase 7
 npx serve build      # second opinion on the real output
 
