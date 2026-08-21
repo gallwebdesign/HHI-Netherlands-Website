@@ -199,6 +199,72 @@ test('media gallery tabs wrap on a phone instead of scrolling the page', async (
 
 	const overflow = await page.evaluate(() => document.body.scrollWidth - document.body.clientWidth);
 	expect(overflow, 'page should not scroll horizontally').toBeLessThanOrEqual(0);
+
+	/* .gallery--grid is a second class on the same element as .gallery, so it
+	   beats the mobile .gallery{repeat(2,1fr)} rule on source order no matter
+	   what the media query says — the modifier has to carry its own responsive
+	   steps, and this is what proves it does. */
+	const cols = await page.locator('.gallery--grid').count();
+	if (cols > 0) {
+		const columns = await page.evaluate(
+			() =>
+				getComputedStyle(document.querySelector('.gallery--grid')!).gridTemplateColumns.split(' ')
+					.length
+		);
+		expect(columns, 'two across on a phone, not six').toBe(2);
+	}
+});
+
+test('media gallery pages in 24 at a time and resets on a filter change', async ({ page }) => {
+	await page.goto('/media');
+	await settleReveals(page);
+
+	const tiles = page.locator('.gallery__tile');
+	const more = page.getByRole('button', { name: 'Load more' });
+
+	/* Skips rather than asserts a hard count: with fewer than 25 photos in the
+	   opening division there is nothing to page, which is a legitimate state
+	   and not a failure. */
+	const total = await page.locator('.gallery-more__count').count();
+	test.skip(total === 0, 'opening division has 24 photos or fewer');
+
+	await expect(tiles).toHaveCount(24);
+	await more.click();
+	await expect(tiles).toHaveCount(48);
+
+	/* Focus lands on the first newly added tile. Without this a keyboard user
+	   is left on a button that has either moved or vanished, with no signal
+	   that anything happened. */
+	const onNewTile = await page.evaluate(() => {
+		const el = document.activeElement;
+		if (!el?.classList.contains('gallery__tile')) return false;
+		return [...document.querySelectorAll('.gallery__tile')].indexOf(el) === 24;
+	});
+	expect(onNewTile, 'focus moves to the first newly loaded tile').toBe(true);
+
+	/* Changing the filter starts the count again — carrying a large page size
+	   into another division would dump its whole set onto the page. */
+	await divisionTabs(page).nth(1).click();
+	const afterFilter = await tiles.count();
+	expect(afterFilter).toBeLessThanOrEqual(24);
+});
+
+test('media lightbox runs past the loaded page, not just the visible tiles', async ({ page }) => {
+	await page.goto('/media');
+	await settleReveals(page);
+
+	const shown = await page.locator('.gallery__tile').count();
+	const label = await page.locator('.gallery-more__count').count();
+	test.skip(label === 0, 'nothing is paged, so there is no gap to test');
+
+	/* The lightbox is handed the full filtered list, deliberately not the
+	   paged one: arrowing should run to the end of the division rather than
+	   stopping at whatever the grid happens to have loaded. */
+	await page.locator('.gallery__tile').first().click();
+	const counter = await page.locator('.lightbox__count').textContent();
+	const total = Number(counter?.split('/')[1]?.trim());
+	expect(total).toBeGreaterThan(shown);
+	await page.keyboard.press('Escape');
 });
 
 test('media lightbox opens, arrows navigate, and Escape closes', async ({ page }) => {

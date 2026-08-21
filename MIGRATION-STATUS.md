@@ -89,13 +89,49 @@ worth repeating here:
 - **The slug lists exist twice** — `GALLERY_TREE` (vite.config.ts) and
   `COMPETITIONS` (gallery.ts). Change both or a division silently shows nothing.
 
-**Verified.** `npm run check` 0/0, `npm run lint` clean, `npm run build`
-prerenders with an empty manifest, `npm test` **49 passed, 1 skipped**. The
-skip is the lightbox test, which cannot run without photos and un-skips itself
-when they arrive — it was proved to pass by building against five throwaway
-JPEGs, which were then deleted. The plugin was likewise proved end to end:
-numeric filename ordering (`IMG_2` before `IMG_10`), `Thumbs.db` filtered, and
-a mistyped `juniour-typo-test/` folder warned about and skipped.
+**Verified.** `npm run check` 0/0, `npm run lint` clean, `npm test`
+**52 passed**. The plugin was proved end to end: numeric filename ordering
+(`IMG_2` before `IMG_10`), `Thumbs.db` filtered, and a mistyped
+`juniour-typo-test/` folder warned about and skipped.
+
+### 21 Aug, later — real photos, and three changes on top
+
+**Iain added 114 Junior photos** (1500×1000, ~300 KB each, 35 MB) under
+`hhi-open-division/junior/`, and reported they were not loading. **Nothing was
+broken: the site had not been rebuilt.** The manifest is baked at build time,
+so `build/` was still the empty-gallery version. One `npm run build` and all
+114 appeared, in correct numeric order, with no 404s and no console errors.
+⚠️ **This is the first thing to check when new photos "do not load"** — it is
+now called out in CLAUDE.md.
+
+Note the photos are Junior shots of the *Netherlands* championship but sit
+under **`hhi-open-division/`**. Queried and **confirmed correct by Iain** — do
+not "fix" the folder.
+
+Then, at Iain's request:
+
+- **Grid is six across**, was four (`.gallery--grid`), stepping 6 / 4 / 3 / 2
+  down the breakpoints.
+- **Photos have room**: 14px gap and a 1px `--line` border per cell, going
+  `--oranje` with a 3px lift on hover. They were packed edge to edge before,
+  because the 1px gap was letting the background show through as a hairline
+  rather than giving the cells real separation.
+- **Paging: 24 at a time** behind a *Load more* button, with a
+  "Showing 24 of 114" count. Resets on any filter change.
+
+⚠️ **`.gallery--grid` is a second class on the same element as `.gallery`**, so
+it beats the mobile `.gallery{repeat(2,1fr)}` rule on source order no matter
+what the media query says. The modifier carries its own responsive steps; a
+test asserts the 2-column result at 390px so this cannot regress silently.
+
+⚠️ **The lightbox is handed the full filtered list, not the paged one.**
+Arrowing runs to the end of the division (`1 / 114`) rather than stopping at
+the last loaded tile — the obvious implementation gets this wrong, and a test
+covers the gap. Focus also moves to the first newly loaded tile on *Load more*,
+since the button either vanishes or stays put while content lands above it.
+
+Two tests added (paging, and the lightbox-past-the-page gap), so **52 passed**
+with no skips. The three photo-dependent tests self-skip on an empty folder.
 
 **One bug found and fixed by looking rather than measuring.** The competition
 tablist overflowed 390px — `.tabs` is `width:max-content`, which cannot shrink

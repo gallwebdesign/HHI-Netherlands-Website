@@ -1331,6 +1331,39 @@ body.menu-open{ overflow:hidden; }
   letter-spacing:.2em; text-transform:uppercase;
 }
 
+/* Six across with real spacing, on its own modifier rather than by editing
+   .gallery. The base class keeps its 4-across/1px-gutter look for anything
+   that still wants it, and — the reason this is a modifier at all — the
+   mobile .gallery{repeat(2,1fr)} rule up at max-width:1000px is a bare class
+   that a .gallery-shell .gallery override would silently outrank. A modifier
+   at equal specificity, written later, wins cleanly and stays overridable in
+   the media queries below.
+
+   The 1px gap was doing the work of a border by letting --line show through
+   from behind, which packed the photos edge to edge. Real gap plus a real
+   border on each cell gives them room to read as separate shots. */
+.gallery--grid{
+  grid-template-columns:repeat(6,1fr); gap:14px; background:none;
+  padding:0 var(--gutter);
+}
+.gallery--grid .media__cell{
+  border:1px solid var(--line);
+  transition:border-color .3s var(--ease-out), transform .3s var(--ease-out);
+}
+.gallery--grid .media__cell:hover{ border-color:var(--oranje); transform:translateY(-3px); }
+
+/* Load more. Centred under the grid, and it takes the gutter like the tabs
+   and the empty state because it is a control, not part of the full-bleed
+   imagery. */
+.gallery-more{
+  margin:34px var(--gutter) 0;
+  display:flex; flex-direction:column; align-items:center; gap:14px;
+}
+.gallery-more__count{
+  font-family:var(--font-mono); font-size:11px; letter-spacing:.2em;
+  text-transform:uppercase; color:var(--muted);
+}
+
 /* Tiles are buttons so they are keyboard-reachable without any extra
    wiring; these rules strip the UA button chrome back to the .media__cell
    look, which the element still carries. */
@@ -1397,7 +1430,21 @@ body.lightbox-open{ overflow:hidden; }
 .lightbox__nav--prev .lightbox__chevron{ transform:rotate(-45deg); margin-left:4px; }
 .lightbox__nav--next .lightbox__chevron{ transform:rotate(135deg); margin-right:4px; }
 
+/* Six across only holds up on a desktop. These step it down rather than
+   letting the mobile .gallery{repeat(2,1fr)} rule apply, which it cannot do
+   here: .gallery--grid is a second class on the same element, so it wins on
+   source order regardless of the media query. The modifier that overrode the
+   base has to do its own responsive work. */
+@media (max-width:1200px){
+  .gallery--grid{ grid-template-columns:repeat(4,1fr); }
+}
+@media (max-width:1000px){
+  .gallery--grid{ grid-template-columns:repeat(3,1fr); gap:10px; }
+}
+
 @media (max-width:560px){
+  /* Two across on a phone, matching what the base grid does at this width. */
+  .gallery--grid{ grid-template-columns:repeat(2,1fr); gap:8px; }
   /* A wrapped row of seven division buttons eats the screen at 26px of
      side padding each; tighten them rather than let the grid start below
      the fold. */

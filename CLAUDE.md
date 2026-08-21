@@ -21,11 +21,11 @@ npm run dev          # development
 npm run check        # svelte-check — expect 0 errors, 0 warnings
 npm run lint         # prettier --check + eslint — expect both clean
 npm run build        # prerenders every route; this is what proves the SSR guards
-npm test             # build + Playwright smoke test — expect 49 passed, 1 skipped
+npm test             # build + Playwright smoke test — expect 52 passed
 npm run preview      # serves build/ (see the port-4173 trap below)
 ```
 
-The one skip is deliberate, not a broken test: the media lightbox cannot be exercised until `static/img/gallery/2026/` has photos in it, so that test skips itself with a reason and un-skips the day the folders are populated (it passes — verified against throwaway photos). A second skip, or none at all, is the thing worth looking at.
+Three of those tests self-skip when `static/img/gallery/2026/` is empty — the lightbox and the two paging tests need real photos. With Iain's 114 Junior photos in place they all run, so **a skip now means the gallery folder is empty**, not that a test is broken.
 
 ⚠️ **`npm test` rebuilds first, and that matters.** Plain `npx playwright test` reuses whatever is already in `build/`, so a test can pass against a stale build while the bug is live in `src/`. Also kill any stray `vite preview` on **port 4173** before testing — it hijacks the harness and fails ~16 tests wholesale with `_app/immutable` 404s on pages you never touched.
 
@@ -106,7 +106,9 @@ Media images live in `static/img/` — eight 1200×900 JPEGs (`image01`–`image
 
 ⚠️ **`image01`–`08` are no longer rendered anywhere except the home teaser** (`TEASER_PHOTOS`, which uses `image01`–`04`). `/media` moved to the 2026 gallery below on 21 Aug 2026. `PHOTOS` in `media.ts` is kept rather than deleted precisely so `image05`–`08` are still named by something — do not "clean up" either the export or the files without deciding about both together.
 
-**The 2026 gallery on `/media` is folder-driven.** Since 21 Aug 2026 the flat eight-photo grid is replaced by a filtered gallery: competition tabs (`HHI Open Division` / `Netherlands HHDC`) over division tabs (`All` plus that competition's divisions), with a lightbox. Photos go in `static/img/gallery/2026/<competition-slug>/<division-slug>/` and appear with **no code edit** — drag and drop, then rebuild.
+**The 2026 gallery on `/media` is folder-driven.** Since 21 Aug 2026 the flat eight-photo grid is replaced by a filtered gallery: competition tabs (`HHI Open Division` / `Netherlands HHDC`) over division tabs (`All` plus that competition's divisions), with a lightbox. Photos go in `static/img/gallery/2026/<competition-slug>/<division-slug>/` and appear with **no code edit** — drag and drop, then rebuild. ⚠️ **The manifest is baked at build time, so a photo added without a rebuild does not appear** — that is not a bug, and it is the first thing to check when new photos "do not load". `npm run dev` picks them up live; a stale `build/` will not.
+
+The grid is **six across** with a 14px gap and a 1px border per cell (`.gallery--grid`), stepping to 4 / 3 / 2 columns down the breakpoints. It pages **24 at a time** behind a *Load more* button. ⚠️ `.gallery--grid` is a second class on the same element as `.gallery`, so it beats the mobile `.gallery{repeat(2,1fr)}` rule on source order regardless of the media query — the modifier carries its own responsive steps, and a test asserts the 2-column result at 390px. The lightbox is handed the **full** filtered list, not the paged one, so arrowing runs to the end of the division rather than stopping at the last loaded tile.
 
 - The walk happens at build time in a Vite plugin in [vite.config.ts](vite.config.ts), reaching [gallery.ts](src/lib/data/gallery.ts) through the `virtual:gallery-manifest` module (typed in [src/virtual-gallery.d.ts](src/virtual-gallery.d.ts)). `import.meta.glob` cannot do this job — it only sees project source, never `static/`.
 - ⚠️ **All `fs` work must stay inside the plugin's `load` hook.** [eslint.config.js](eslint.config.js) imports `vite.config.ts`, so `npm run lint` executes everything at module scope there; a `readdirSync` at the top level turns a missing folder into a lint failure that reads as completely unrelated.

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Lightbox from '$lib/components/Lightbox.svelte';
 	import { ALL_DIVISIONS, COMPETITIONS, GALLERY_YEAR, photosFor } from '$lib/data/gallery';
-	import { reveal } from '$lib/attachments.svelte';
+	import { magnetic, reveal } from '$lib/attachments.svelte';
 
 	let competition = $state(COMPETITIONS[0].slug);
 	let division = $state<string>(ALL_DIVISIONS);
@@ -31,6 +31,12 @@
 	function selectCompetition(slug: string) {
 		competition = slug;
 		division = ALL_DIVISIONS;
+		resetPaging();
+	}
+
+	function selectDivision(slug: string) {
+		division = slug;
+		resetPaging();
 	}
 
 	function onCompetitionKeydown(e: KeyboardEvent, i: number) {
@@ -47,7 +53,7 @@
 		if (!delta) return;
 		e.preventDefault();
 		const next = (i + delta + divisionKeys.length) % divisionKeys.length;
-		division = divisionKeys[next];
+		selectDivision(divisionKeys[next]);
 		divTabs[next]?.focus();
 	}
 
@@ -56,9 +62,43 @@
 		return activeCompetition.divisions.find((d) => d.slug === slug)?.label ?? slug;
 	}
 
-	/* Lightbox state. `openIndex` indexes into `photos` — the filtered list —
-	   and the tile that opened it is kept so focus can go back there on close,
-	   which the Lightbox itself cannot do once it has unmounted. */
+	/* Paging. A division can run to hundreds of shots and every tile is a real
+	   <img>, so the whole set is not put on the page at once. */
+	const PAGE_SIZE = 24;
+	let shown = $state(PAGE_SIZE);
+
+	/* Any change of filter starts the count again — carrying a large `shown`
+	   from a big division into a small one would render its entire set, and
+	   carrying a small one the other way would hide photos with no way back
+	   short of clicking Load more. Assigning in the same handlers as the
+	   filter change keeps it synchronous, for the reason above. */
+	function resetPaging() {
+		shown = PAGE_SIZE;
+	}
+
+	const visible = $derived(photos.slice(0, shown));
+	const remaining = $derived(photos.length - visible.length);
+
+	let grid = $state<HTMLDivElement | null>(null);
+
+	/* Focus has to be moved by hand. The button either disappears (last page)
+	   or stays put while the content it added lands above it, so a keyboard
+	   user is left either on a dead node or with no idea anything happened.
+	   Sending focus to the first newly added tile both announces the change
+	   and puts them where the new photos are. */
+	function loadMore() {
+		const firstNew = shown;
+		shown += PAGE_SIZE;
+		requestAnimationFrame(() => {
+			grid?.querySelectorAll<HTMLButtonElement>('.gallery__tile')[firstNew]?.focus();
+		});
+	}
+
+	/* Lightbox state. `openIndex` indexes into `photos` — the FULL filtered
+	   list, deliberately not `visible`: arrowing through the lightbox should
+	   run to the end of the division rather than stopping at whatever the grid
+	   has paged in. The tile that opened it is kept so focus can go back
+	   there, which the Lightbox itself cannot do once it has unmounted. */
 	let openIndex = $state<number | null>(null);
 	let opener: HTMLButtonElement | null = null;
 
@@ -112,7 +152,7 @@
 						aria-selected={division === key}
 						tabindex={division === key ? 0 : -1}
 						class:is-active={division === key}
-						onclick={() => (division = key)}
+						onclick={() => selectDivision(key)}
 						onkeydown={(e) => onDivisionKeydown(e, i)}>{divisionLabel(key)}</button
 					>
 				{/each}
@@ -131,8 +171,8 @@
 	>
 		<div id="divpanel-{division}" role="tabpanel" aria-labelledby="divtab-{division}">
 			{#if photos.length > 0}
-				<div class="gallery">
-					{#each photos as photo, i (photo.src)}
+				<div class="gallery gallery--grid" bind:this={grid}>
+					{#each visible as photo, i (photo.src)}
 						<button
 							class="media__cell gallery__tile"
 							onclick={(e) => openAt(i, e.currentTarget)}
@@ -142,6 +182,16 @@
 						</button>
 					{/each}
 				</div>
+				{#if remaining > 0}
+					<div class="gallery-more">
+						<p class="gallery-more__count" aria-live="polite">
+							Showing {visible.length} of {photos.length}
+						</p>
+						<button class="btn btn--ghost" {@attach magnetic()} onclick={loadMore}>
+							Load more
+						</button>
+					</div>
+				{/if}
 			{:else}
 				<div class="gallery-empty">
 					<b>Coming soon</b>
