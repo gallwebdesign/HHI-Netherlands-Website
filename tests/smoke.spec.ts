@@ -241,24 +241,74 @@ test('media gallery asks the endpoint for the real photo list', async ({ page })
 	}
 });
 
-test('every gallery src is a valid URL, spaces encoded', async ({ page }) => {
-	/* 83 of the 951 photos are named "jv crew-N.jpg". A raw space in an img
-	   src is not a valid URL and the browser does not fetch it — verified
-	   against the live server on 21 Aug 2026, where the encoded form returned
-	   the image and the raw form failed outright. The build plugin emitted
-	   raw spaces until that day, so this asserts the encoding both it and
-	   api/gallery.php now apply.
+test('grid tiles use thumbnails, the lightbox uses the original', async ({ page }) => {
+	/* The photos are ~1500x1000 at ~318KB and a tile renders about 209px wide,
+	   so the first screen of 24 was 6.6MB of which the browser discarded ~90%.
+	   api/thumb.php serves a ~480px WebP instead; measured 6.6MB -> 0.67MB.
 
-	   ⚠️ It must read the MANIFEST, not the rendered tiles. The grid shows
-	   the first 24 photos of the default tab (HHI Open Division / All), and
-	   every space-named file is in netherlands-hhdc/jv-megacrew — so a
-	   tile-based check passes while 83 broken URLs sit one tab away. That
-	   exact vacuity was caught by reintroducing the bug and watching this
-	   test stay green. */
+	   This asserts the SPLIT rather than the byte count: tiles must point at
+	   the thumbnail endpoint and the lightbox must not, because the easy
+	   regression is someone "simplifying" both back to photo.src and silently
+	   restoring the 6.6MB page. The harness serves static files, so thumb.php
+	   never executes here — the tile images 404 and that is expected. What is
+	   checkable without PHP is which URL each element asks for. */
 	await page.goto('/media');
 	await settleReveals(page);
+	/* reveal() holds the shell at visibility:hidden until its ScrollTrigger
+	   fires, so a tile is present in the DOM but unclickable until the
+	   gallery has actually been scrolled to. */
+	await page.locator('.gallery-shell').scrollIntoViewIfNeeded();
 
-	/* Walk every competition/division pair and collect what each renders. */
+	const tileSrcs = await page.evaluate(() =>
+		[...document.querySelectorAll('.gallery__tile img')].map((img) => img.getAttribute('src') ?? '')
+	);
+
+	test.skip(tileSrcs.length === 0, 'no photos on disk — nothing to check');
+
+	const notThumbed = tileSrcs.filter((src) => !src.includes('thumb.php'));
+	expect(notThumbed, 'every grid tile must go through the thumbnail endpoint').toEqual([]);
+
+	/* The lightbox is the one place the full resolution is looked at, so it
+	   must keep the untouched original. */
+	await page.locator('.gallery__tile').first().click();
+	await expect(page.getByRole('dialog', { name: 'Photo viewer' })).toBeVisible();
+
+	const lightboxSrc = await page.evaluate(
+		() => document.querySelector('.lightbox__img')?.getAttribute('src') ?? ''
+	);
+	expect(lightboxSrc, 'the lightbox must serve the full-size original').not.toContain('thumb.php');
+	expect(lightboxSrc).toContain('/img/gallery/');
+});
+
+test('every gallery src is a valid URL, whatever the filename', async ({ page }) => {
+	/* Photo filenames are percent-encoded by the build plugin
+	   (encodeURIComponent) and by api/gallery.php (rawurlencode). A raw space
+	   in an img src is not a valid URL and the browser does not fetch it —
+	   verified against the live server on 21 Aug 2026, where the encoded form
+	   returned the image and the raw form failed outright.
+
+	   ⚠️ THIS TEST CANNOT CURRENTLY FAIL, and that is worth stating rather
+	   than hiding. Earlier on 21 Aug the gallery held 83 files named
+	   "jv crew-N.jpg"; they were renamed before the FTP upload, and both the
+	   repo and the live manifest now contain zero filenames with a space.
+	   With no awkward filename on disk there is nothing for the assertion to
+	   catch — removing the encoding entirely leaves this green, which was
+	   confirmed by trying it.
+
+	   It is kept because the encoding is the thing that makes dropping in an
+	   awkwardly named file safe, and camera dumps produce those regularly
+	   ("DSC 0001.JPG", "crew #2.jpg"). The day one lands in a division folder
+	   this starts doing real work. Do not delete it as dead weight, and do not
+	   trust it as proof the encoding works — for that, check the manifest
+	   directly. */
+	await page.goto('/media');
+	await settleReveals(page);
+	await page.locator('.gallery-shell').scrollIntoViewIfNeeded();
+
+	/* The lightbox src is the ORIGINAL path. A tile's src is a thumb.php URL
+	   whose photo path sits inside an encoded query string, so a raw space
+	   could never show up there — reading tiles would be vacuous for a second,
+	   different reason. */
 	const seen: string[] = [];
 	const comps = competitionTabs(page);
 	const compCount = await comps.count();
@@ -269,19 +319,28 @@ test('every gallery src is a valid URL, spaces encoded', async ({ page }) => {
 		const divCount = await divs.count();
 		for (let d = 0; d < divCount; d++) {
 			await divs.nth(d).click();
-			const batch = await page.evaluate(() =>
-				[...document.querySelectorAll('.gallery__tile img')].map(
-					(img) => img.getAttribute('src') ?? ''
-				)
+
+			const tiles = page.locator('.gallery__tile');
+			if ((await tiles.count()) === 0) continue;
+
+			await tiles.first().click();
+			const dialog = page.getByRole('dialog', { name: 'Photo viewer' });
+			await expect(dialog).toBeVisible();
+
+			const src = await page.evaluate(
+				() => document.querySelector('.lightbox__img')?.getAttribute('src') ?? ''
 			);
-			seen.push(...batch);
+			seen.push(src);
+
+			await page.keyboard.press('Escape');
+			await expect(dialog).toBeHidden();
 		}
 	}
 
 	test.skip(seen.length === 0, 'no photos on disk — nothing to check');
 
-	const withRawSpace = [...new Set(seen.filter((src) => src.includes(' ')))];
-	expect(withRawSpace, 'a raw space in an img src never loads').toEqual([]);
+	const malformed = [...new Set(seen.filter((src) => src.includes(' ') || src === ''))];
+	expect(malformed, 'a raw space in an img src never loads').toEqual([]);
 });
 
 test('media gallery tabs wrap on a phone instead of scrolling the page', async ({ page }) => {

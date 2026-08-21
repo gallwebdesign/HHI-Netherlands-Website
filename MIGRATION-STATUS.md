@@ -146,11 +146,14 @@ Three things that must stay in step, in three files: `GALLERY_TREE`
 (vite.config.ts), `GALLERY_TREE` (gallery.php), and `COMPETITIONS`
 (gallery.ts). A division missing from any one of them is dropped silently.
 
-⚠️ **Filenames are percent-encoded; folder slugs are not.** 83 of the 951
-photos are named `jv crew-N.jpg`, and a raw space in an `img src` never loads.
+⚠️ **Filenames are percent-encoded; folder slugs are not.**
 `encodeURIComponent()` in the plugin, `rawurlencode()` in the PHP — *not*
-`urlencode`, which writes `+`. Both emitted raw spaces until 21 Aug 2026; the
-two manifests were diffed byte for byte to prove they now agree.
+`urlencode`, which writes `+`. A raw space in an `img src` never loads. The
+gallery briefly held 83 files named `jv crew-N.jpg`; they were renamed before
+the FTP upload, so **no filename on disk or on the server contains a space
+today** and the smoke test covering this cannot currently fail. It is kept
+because a camera dump produces `DSC 0001.JPG` sooner or later. The two
+manifests were diffed byte for byte to prove they agree.
 
 **How photos get in.** For production: **FTP them to
 `/httpdocs/img/gallery/2026/<competition-slug>/<division-slug>/` and they

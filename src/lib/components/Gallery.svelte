@@ -233,7 +233,11 @@
 							onclick={(e) => openAt(i, e.currentTarget)}
 							aria-label="Open photo {i + 1} of {photos.length}"
 						>
-							<img src={photo.src} alt={photo.alt} loading="lazy" />
+							<!-- photo.thumb, NOT photo.src. The original is ~318KB and this
+							     tile is ~209px wide; the lightbox is what serves the full-size
+							     file. decoding="async" keeps a batch of 24 off the main thread
+							     so the tabs stay responsive while they land. -->
+							<img src={photo.thumb} alt={photo.alt} loading="lazy" decoding="async" />
 						</button>
 					{/each}
 				</div>

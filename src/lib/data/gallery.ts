@@ -54,8 +54,12 @@ export interface Competition {
 }
 
 export interface GalleryPhoto {
-	/** Root-relative path under static/, already base-prefixed. */
+	/** Root-relative path under static/, already base-prefixed. The FULL-SIZE
+	 *  original — used by the lightbox, where the resolution is looked at. */
 	src: string;
+	/** Small WebP derivative for the grid tile, served by api/thumb.php.
+	 *  See THUMB_ENDPOINT for why the grid must not use `src`. */
+	thumb: string;
 	/** Derived from the competition and division — see photoAlt(). */
 	alt: string;
 	/** Competition slug. */
@@ -136,10 +140,35 @@ interface ManifestRecord {
 function toPhotos(records: readonly ManifestRecord[]): GalleryPhoto[] {
 	return records.map((record) => ({
 		src: withBase(record.src),
+		thumb: thumbUrl(record.src),
 		alt: photoAlt(record.competition, record.division),
 		competition: record.competition,
 		division: record.division
 	}));
+}
+
+/* ============================================================
+   Thumbnails.
+
+   The photos are ~1500x1000 at ~318KB, and a grid tile is about
+   209px wide at a 1440px viewport — so the first screen of 24
+   was 6.6MB, roughly 90% of which the browser throws away after
+   decoding. Measured on the live site 21 Aug 2026.
+
+   api/thumb.php serves a ~480px WebP instead (~30KB), generated
+   on first request and cached on disk. The LIGHTBOX still gets
+   `src`, the untouched original, because that is the one place
+   the full resolution is actually looked at.
+
+   ⚠️ The URL is built here rather than in the PHP so that
+   withBase() applies to both halves — the endpoint path and the
+   photo path inside the query string — which is what makes it
+   resolve under the GitHub Pages sub-path build.
+   ============================================================ */
+export const THUMB_ENDPOINT = withBase('/api/thumb.php');
+
+function thumbUrl(src: string): string {
+	return `${THUMB_ENDPOINT}?src=${encodeURIComponent(withBase(src))}`;
 }
 
 /* ============================================================
