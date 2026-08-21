@@ -711,7 +711,8 @@ body.menu-open{ overflow:hidden; }
      which is the same failure the stage floor and ticker both had. Must
      stay after the blanket `animation-duration` rule above to win. */
   .envelope__body,
-  .envelope__fold{ stroke-dashoffset:0 !important; animation:none !important; }
+  .envelope__fold,
+  .envelope__mouth{ stroke-dashoffset:0 !important; animation:none !important; }
   .envelope__letter{ opacity:1 !important; transform:none !important; animation:none !important; }
 }
 
@@ -993,27 +994,43 @@ body.menu-open{ overflow:hidden; }
 /* Every stroke inherits this, so the whole drawing recolours from one place. */
 .envelope{ color:var(--oranje); }
 
-/* The letter has to read as paper against a near-black ground, which a
-   --panel fill does not — at 28% it came out a muddy grey ghost. It is
-   lifted well clear of the background instead, with its own bright edge. */
-.envelope__paper{ fill:#1c1c28; stroke:currentColor; stroke-width:2; }
-/* Was currentColor at .28, which over --ink reads as brown rather than as
-   an accent. Full-strength orange, kept small so it stays a detail. */
-.envelope__tile{ fill:currentColor; opacity:.85; }
-/* Bone rather than --line: these stand in for text, and --line is a
-   14%-alpha hairline that vanishes at this size. */
-.envelope__rule{ stroke:var(--bone); stroke-width:3; stroke-linecap:round; opacity:.35; }
-/* Back wall. Only a thin band either side of the letter is ever visible,
-   but it closes the silhouette behind the sheet. Stroked as well as filled
-   so that band reads as the envelope's own edge rather than a shadow. */
-.envelope__back{ fill:var(--panel); stroke:currentColor; stroke-width:2.5; opacity:.55; }
-/* Opaque, and deliberately the page ground rather than --panel: this shape's
-   whole job is to hide the part of the letter that is inside the envelope.
-   With fill:none the sheet's bottom edge shows straight through the front
-   and the drawing reads as flat overlapping outlines. */
-.envelope__front{ fill:var(--ink); }
-.envelope__body{ stroke:currentColor; stroke-width:2.5; fill:none; }
-.envelope__fold{ stroke:currentColor; stroke-width:2.5; fill:none; stroke-linecap:round; stroke-linejoin:round; }
+/* ⚠️ The geometry is traced verbatim from Iain's Envelope.svg (21 Aug 2026)
+   in its own 280.69 × 235.35 viewBox. Only the COLOURS are this site's: the
+   source hard-codes #ff4d00, which is --oranje, so every stroke reads
+   currentColor instead and the drawing follows the palette. Stroke widths
+   are the source's 5 user units, which at this viewBox scale matches the
+   2.5 the previous version used in a 240-wide box.
+
+   All strokes share round caps and joins, as the source does — the corners
+   of the splayed top and the fold's apex both depend on it. */
+.envelope__body,
+.envelope__fold,
+.envelope__mouth,
+.envelope__paper{
+  fill:none; stroke:currentColor; stroke-width:5;
+  stroke-linecap:round; stroke-linejoin:round;
+}
+
+/* ⚠️ The sheet stays UNFILLED, as the source has it. The letter paints last,
+   over the envelope, so a fill here would blank out the two mouth diagonals
+   exactly where they are supposed to cross in front of the paper — the one
+   detail that makes the envelope read as open. The sheet is defined by its
+   stroke and its rules, not by a ground. */
+.envelope__paper{ fill:none; }
+
+/* The source's one accent block. Full-strength orange, small enough to stay
+   a detail rather than a second focal point. */
+.envelope__tile{ fill:currentColor; }
+
+/* The source's #bdbec1 rules stand in for text. Expressed as --bone rather
+   than that literal grey so they track the type colour, and held just off
+   full strength so the orange stays the loudest thing in the drawing. */
+.envelope__rule{ fill:var(--bone); opacity:.72; }
+
+/* Painted first and behind everything, with no stroke of its own: it gives
+   the drawing an opaque ground so the fold and mouth lines read against a
+   solid shape rather than against whatever the page puts behind them. */
+.envelope__panel{ fill:var(--ink); }
 
 /* Draw-in. Each stroked path is dashed to its own length and the offset
    animates to zero, so the lines appear to be drawn. The letter fades and
@@ -1027,18 +1044,23 @@ body.menu-open{ overflow:hidden; }
    fades in already-complete. That was measured here, not guessed.
 
    ⚠️ The dasharray values are per-path path lengths — pathLength is NOT set
-   on the SVG, so these are real user units. If a path's geometry changes,
-   its dasharray has to change with it or the line will either stop short or
-   start already-visible. */
-.envelope--animate .envelope__body{ stroke-dasharray:580; stroke-dashoffset:580; }
-.envelope--animate .envelope__fold{ stroke-dasharray:270; stroke-dashoffset:270; }
+   on the SVG, so these are real user units, MEASURED from the traced
+   geometry (605 / 307 / 125) rather than estimated. If a path's geometry
+   changes, its dasharray has to change with it or the line will either stop
+   short or start already-visible. */
+.envelope--animate .envelope__body{ stroke-dasharray:605; stroke-dashoffset:605; }
+.envelope--animate .envelope__fold{ stroke-dasharray:307; stroke-dashoffset:307; }
+/* Both mouth diagonals are ~125; one dasharray covers the pair. */
+.envelope--animate .envelope__mouth{ stroke-dasharray:125; stroke-dashoffset:125; }
 .envelope--animate .envelope__letter{ opacity:0; }
 
 .envelope--animate.envelope--drawn .envelope__body{ animation:envelope-draw 1.1s ease forwards .1s; }
-/* The letter drops in once the envelope exists to receive it, and the V
-   lands last so it reads as folding up over the sheet. */
+/* The letter drops in once the envelope exists to receive it, then the front
+   fold and the mouth edges land last, so the envelope reads as closing up
+   around the sheet rather than the sheet arriving into a finished drawing. */
 .envelope--animate.envelope--drawn .envelope__letter{ animation:envelope-rise .7s ease forwards .55s; }
 .envelope--animate.envelope--drawn .envelope__fold{ animation:envelope-draw .7s ease forwards .85s; }
+.envelope--animate.envelope--drawn .envelope__mouth{ animation:envelope-draw .5s ease forwards 1s; }
 
 @keyframes envelope-draw{ to{ stroke-dashoffset:0; } }
 /* Downward, not up: the letter is being inserted, so it travels INTO the

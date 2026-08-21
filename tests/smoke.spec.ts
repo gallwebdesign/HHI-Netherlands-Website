@@ -1199,31 +1199,45 @@ test('contact page fills its left column with the envelope, and the form is capp
 	const box = await envelope.boundingBox();
 	expect(box!.height).toBeGreaterThan(150);
 
-	/* ⚠️ The letter must sit INSIDE the envelope, which lives entirely in SVG
-	   paint order and has no visual assertion — so it is checked structurally.
-	   Three versions of this drawing were visibly wrong (a sealed envelope, a
-	   letter stuck behind it, an invented flap), and every one of them passed
-	   a fully green suite. Back to front: back wall → letter → front panel. */
+	/* ⚠️ Paint order IS the drawing, and it has no visual assertion — so it is
+	   checked structurally. Three hand-drawn versions were visibly wrong (a
+	   sealed envelope, a letter stuck behind it, an invented flap) and every
+	   one passed a fully green suite. The geometry is now traced from Iain's
+	   Envelope.svg (21 Aug 2026) and follows that file's order:
+	     filled panel → outline → fold → mouth → letter.
+	   The letter paints LAST, in front, which is what lets its side edges and
+	   its last rule cross the envelope's mouth. */
 	const order = await envelope.evaluate((svg) =>
 		[...svg.children].map((child) => child.getAttribute('class') ?? child.tagName)
 	);
 	const indexOf = (name: string) => order.findIndex((c) => c.includes(name));
 
-	// Letter above the back wall but below the front: it is inside the envelope.
-	expect(indexOf('envelope__back')).toBeGreaterThanOrEqual(0);
-	expect(indexOf('envelope__back')).toBeLessThan(indexOf('envelope__letter'));
-	expect(indexOf('envelope__letter')).toBeLessThan(indexOf('envelope__front'));
+	// The opaque panel is the backmost element; the letter is the frontmost.
+	expect(indexOf('envelope__panel')).toBe(0);
+	expect(indexOf('envelope__letter')).toBe(order.length - 1);
+
+	/* The two mouth diagonals must paint BEFORE the letter, or they cross in
+	   front of the paper and the sheet stops reading as being inside. */
+	expect(indexOf('envelope__mouth')).toBeGreaterThanOrEqual(0);
+	expect(indexOf('envelope__mouth')).toBeLessThan(indexOf('envelope__letter'));
 
 	/* No flap element. Two earlier versions invented one and both read wrong;
-	   the reference has none, and "open" comes from the letter being inside. */
+	   the reference has none — "open" comes from the upward fold plus the two
+	   mouth edges, nothing else. */
 	expect(indexOf('envelope__flap')).toBe(-1);
 
-	/* The front panel must be opaque, or the letter's lower half shows
-	   through it and the drawing goes flat. */
-	const frontFill = await page
-		.locator('.envelope__front')
+	/* The panel must be opaque: it is the ground the fold and mouth lines read
+	   against. And the sheet must NOT be filled, or it blanks out the mouth
+	   diagonals exactly where they should cross in front of it. */
+	const panelFill = await page
+		.locator('.envelope__panel')
 		.evaluate((el) => getComputedStyle(el).fill);
-	expect(frontFill).not.toBe('none');
+	expect(panelFill).not.toBe('none');
+
+	const paperFill = await page
+		.locator('.envelope__paper')
+		.evaluate((el) => getComputedStyle(el).fill);
+	expect(paperFill).toBe('none');
 });
 
 test('the envelope draws itself in only once it is on screen', async ({ page }) => {
