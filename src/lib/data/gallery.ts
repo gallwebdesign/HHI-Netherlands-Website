@@ -91,7 +91,8 @@ export const COMPETITIONS: Competition[] = [
 			{ slug: 'varsity', label: 'Varsity' },
 			{ slug: 'adult', label: 'Adult' },
 			{ slug: 'parents', label: 'Parents' },
-			{ slug: 'special-crews', label: 'Special Crews' }
+			{ slug: 'special-crews', label: 'Special Crews' },
+			{ slug: 'awards', label: 'Awards' }
 		]
 	},
 	{
@@ -103,7 +104,8 @@ export const COMPETITIONS: Competition[] = [
 			{ slug: 'adult', label: 'Adult' },
 			{ slug: 'jv-megacrew', label: 'JV MegaCrew' },
 			{ slug: 'minicrew', label: 'MiniCrew' },
-			{ slug: 'megacrew', label: 'MegaCrew' }
+			{ slug: 'megacrew', label: 'MegaCrew' },
+			{ slug: 'awards', label: 'Awards' }
 		]
 	}
 ];

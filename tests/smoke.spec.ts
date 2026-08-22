@@ -141,14 +141,18 @@ test('media gallery switches competitions and shows the right divisions', async 
 
 	/* The two competitions genuinely differ in their divisions — that is the
 	   whole point of the second row reacting to the first. Open Division has
-	   Parents and Special Crews; HHDC has the MegaCrews instead. */
-	await expect(divisionTabs(page)).toHaveCount(6); // All + 5
+	   Parents and Special Crews; HHDC has the MegaCrews instead. Awards is the
+	   one division both share, so it is asserted on each side rather than as a
+	   difference. */
+	await expect(divisionTabs(page)).toHaveCount(7); // All + 6
 	await expect(divisionTabs(page).filter({ hasText: 'Special Crews' })).toHaveCount(1);
+	await expect(divisionTabs(page).filter({ hasText: 'Awards' })).toHaveCount(1);
 
 	await comps.nth(1).click();
-	await expect(divisionTabs(page)).toHaveCount(7); // All + 6
+	await expect(divisionTabs(page)).toHaveCount(8); // All + 7
 	await expect(divisionTabs(page).filter({ hasText: 'MegaCrew' }).first()).toBeAttached();
 	await expect(divisionTabs(page).filter({ hasText: 'Parents' })).toHaveCount(0);
+	await expect(divisionTabs(page).filter({ hasText: 'Awards' })).toHaveCount(1);
 });
 
 test('media gallery resets the division when the competition changes', async ({ page }) => {

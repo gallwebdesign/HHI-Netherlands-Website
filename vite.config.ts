@@ -37,8 +37,16 @@ const GALLERY_ROOT = fileURLToPath(new URL('./static/img/gallery/2026', import.m
    Thumbs.db or a mistyped `juniour/` is skipped rather than inventing a
    division nobody can compete in. */
 const GALLERY_TREE: Record<string, readonly string[]> = {
-	'hhi-open-division': ['junior', 'varsity', 'adult', 'parents', 'special-crews'],
-	'netherlands-hhdc': ['junior', 'varsity', 'adult', 'jv-megacrew', 'minicrew', 'megacrew']
+	'hhi-open-division': ['junior', 'varsity', 'adult', 'parents', 'special-crews', 'awards'],
+	'netherlands-hhdc': [
+		'junior',
+		'varsity',
+		'adult',
+		'jv-megacrew',
+		'minicrew',
+		'megacrew',
+		'awards'
+	]
 };
 
 const PHOTO_RE = /\.(jpe?g|png|webp)$/i;

@@ -56,7 +56,7 @@ since the migration began.
 
 The gallery replaces the flat eight-photo grid on `/media` with competition
 tabs over division tabs, a six-across grid paging 24 at a time, and a
-lightbox. Iain has filled all eleven divisions — **~950 photos** — but they are
+lightbox. Iain has filled all thirteen divisions — **~1,000 photos** — but they are
 **deliberately not in the repo**: he uploads them to the server by FTP by hand,
 and the FTP deploy is configured not to delete them. See *2026 media gallery*
 below, and read the deploy warning there before touching the workflow.
@@ -120,8 +120,8 @@ mailbox, and the photo archive.
 ⚠️ **Two things about the gallery that are not visible from the code**, both
 detailed under *2026 media gallery* below:
 
-1. **The ~950 gallery photos are not in the repo.** Iain uploads them to
-   `/httpdocs/img/gallery/` by FTP by hand. A clone has the eleven division
+1. **The ~1,000 gallery photos are not in the repo.** Iain uploads them to
+   `/httpdocs/img/gallery/` by FTP by hand. A clone has the thirteen division
    folders (via tracked `.gitkeep` files) and no images.
 2. **The FTP deploy excludes `**/img/gallery/**` and must keep doing so.** A
    CI checkout builds an *empty* gallery, the deploy mirrors `build/` and
@@ -169,7 +169,7 @@ Escape, focus returned to the opening tile).
 branch was written there were no 2026 photos at all, so the whole thing was
 designed to work at zero photos and at several thousand; Iain accepted
 `/media` going from eight photos to zero in the interim. He then filled all
-eleven divisions, so that interim never really happened. The empty state still
+thirteen divisions, so that interim never really happened. The empty state still
 renders per division — Special Crews and the smaller HHDC divisions are the
 ones most likely to show it.
 
@@ -348,6 +348,41 @@ gallery, which is correct for a noindex staging preview.
 fresh, confirmed 11 folders and 0 images, ran `npm run build` (succeeds) and
 the media tests (**5 passed, 3 skipped** — the photo-dependent ones self-skip,
 so CI stays green rather than failing on absent content).
+
+### 22 Aug 2026 — an `awards` division, and the fourth slug list
+
+Iain added `awards/` under **both** competitions (19 photos Open Division, 33
+HHDC — the tree is now **1,003 photos across thirteen divisions**) and updated
+the slug lists in `gallery.ts`, `gallery.php` and `thumb.php`.
+
+⚠️ **`GALLERY_TREE` in `vite.config.ts` was missed, and nothing failed loudly.**
+That list is what the build-time walk accepts, so both folders were read and
+then dropped as "unknown division" — a build-log warning nobody reads. The tab
+still rendered, because tabs come from `COMPETITIONS`. And because the runtime
+PHP manifest *had* been updated, **production would have looked correct while
+dev and the test suite showed an empty division** — the exact inverse of the
+21 Aug blank-page outage, and harder to notice.
+
+The lists are written **four** times, not twice as this document and CLAUDE.md
+both previously said. That stale "twice" is the direct cause of the miss. Both
+files now carry the four-way table and describe how each omission fails.
+
+Also updated: the smoke test *"switches competitions and shows the right
+divisions"* hardcodes the tab counts (6→7 and 7→8). It failed, correctly —
+that is the test doing its job, not a test to loosen. Awards is the first
+division **both** competitions share, so it is now asserted on each side
+rather than as a difference between them.
+
+**Verified:** `npm run check` 0/0; `npm run lint` clean; `npm test` **57
+passed, 0 skipped**; build manifest filenames diffed against disk (exact
+match, both new folders); `api/gallery.php` under `php -S` returns all 1,003
+across thirteen divisions; `api/thumb.php` returns 200 `image/webp` at ~31KB
+from ~300KB originals and caches under the new paths.
+
+⚠️ **The photos themselves still need FTPing** to
+`/httpdocs/img/gallery/2026/*/awards/`. The deploy excludes that path, so
+pushing this does not carry them up — the code change only makes the site able
+to show them.
 
 **One bug found and fixed by looking rather than measuring.** The competition
 tablist overflowed 390px — `.tabs` is `width:max-content`, which cannot shrink
@@ -2067,7 +2102,7 @@ npm run check        # svelte-check — expect 0 errors, 0 warnings
 npm run lint         # prettier --check + eslint — expect both clean
 npm run format       # prettier --write
 npm run build        # prerenders all ten routes; this is what proves SSR guards
-npm test             # build + Playwright smoke test — expect 45 passed
+npm test             # build + Playwright smoke test — expect 57 passed
 npm run preview      # trustworthy again since Phase 7
 npx serve build      # second opinion on the real output
 

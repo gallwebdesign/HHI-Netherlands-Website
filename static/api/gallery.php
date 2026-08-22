@@ -63,8 +63,8 @@ const GALLERY_YEAR = 2026;
    than rendered, so a typo cannot invent a division nobody can
    compete in. Mirrors GALLERY_TREE in vite.config.ts. */
 const GALLERY_TREE = [
-    'hhi-open-division' => ['junior', 'varsity', 'adult', 'parents', 'special-crews'],
-    'netherlands-hhdc'  => ['junior', 'varsity', 'adult', 'jv-megacrew', 'minicrew', 'megacrew'],
+    'hhi-open-division' => ['junior', 'varsity', 'adult', 'parents', 'special-crews', 'awards'],
+    'netherlands-hhdc'  => ['junior', 'varsity', 'adult', 'jv-megacrew', 'minicrew', 'megacrew', 'awards'],
 ];
 
 /* Matches the PHOTO_RE in vite.config.ts. Kept in step by hand. */

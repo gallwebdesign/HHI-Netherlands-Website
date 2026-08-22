@@ -49,8 +49,8 @@ const GALLERY_YEAR = 2026;
    but the alternatives are worse: PHP cannot read the TS, and a shared JSON
    would be one more thing to keep deployed and in step. Change all four. */
 const GALLERY_TREE = [
-    'hhi-open-division' => ['junior', 'varsity', 'adult', 'parents', 'special-crews'],
-    'netherlands-hhdc'  => ['junior', 'varsity', 'adult', 'jv-megacrew', 'minicrew', 'megacrew'],
+    'hhi-open-division' => ['junior', 'varsity', 'adult', 'parents', 'special-crews', 'awards'],
+    'netherlands-hhdc'  => ['junior', 'varsity', 'adult', 'jv-megacrew', 'minicrew', 'megacrew', 'awards'],
 ];
 
 /* Long edge of the generated thumbnail.

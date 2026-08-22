@@ -71,7 +71,7 @@ Verify PHP changes against `php -S` separately.
 
 ## The gallery, in one paragraph
 
-The ~951 competition photos are **not in the repo** and must not be added to it.
+The ~1,000 competition photos are **not in the repo** and must not be added to it.
 They are uploaded to `/httpdocs/img/gallery/` by FTP by hand, and the deploy
 excludes that path so the mirror cannot delete them. Because CI therefore
 cannot see them, `/media` asks `api/gallery.php` for the real folder listing at

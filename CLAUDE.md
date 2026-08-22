@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Static marketing site for **HHI Netherlands** — the Netherlands Hip Hop Dance Championship, the official national qualifier of Hip Hop International.
 
-✅ **LIVE at <https://hhi-netherlands.com> since 21 August 2026.** The nameservers were repointed to Cloud86, the contact form was tested end to end and delivers, and the gallery serves ~951 photos. Three things broke on contact with the real host and were fixed the same day — the extensionless-URL 404, the blank gallery, and the 6.6MB first screen. All three are documented below; read the gallery section before touching `/media`, because the two-manifest design there is not obvious and reverting it silently blanks the page in production.
+✅ **LIVE at <https://hhi-netherlands.com> since 21 August 2026.** The nameservers were repointed to Cloud86, the contact form was tested end to end and delivers, and the gallery serves ~1,000 photos. Three things broke on contact with the real host and were fixed the same day — the extensionless-URL 404, the blank gallery, and the 6.6MB first screen. All three are documented below; read the gallery section before touching `/media`, because the two-manifest design there is not obvious and reverting it silently blanks the page in production.
 
 ⚠️ **Most of the Architecture section below is pre-migration and stale.** The site was ported to **SvelteKit** (adapter-static, prerendered) across Phases 0–7; there are no hand-written HTML pages, no `assets/main.js`, and no `data-nl` attributes in the markup any more. Sections describing those are kept only because parts still explain *why* the current code looks as it does. **[MIGRATION-STATUS.md](MIGRATION-STATUS.md) is the authoritative document** — read it first, and trust it over this file wherever they disagree.
 
@@ -123,7 +123,7 @@ The build manifest is the page's initial value; [gallery.ts](src/lib/data/galler
 
 Consequences: **FTP a photo and it appears on the next page load — no rebuild, no push.** That is the whole point of the runtime manifest. `npm run dev` still picks up local drops live. And a CI deploy can no longer blank the gallery, which it could and did before.
 
-⚠️ **The gallery photos are NOT in the repo and must not be added to it.** Iain uploads them to `/httpdocs/img/gallery/` by FTP by hand — **951 files across all eleven divisions** as of 21 Aug 2026. `.gitignore` excludes every image under `static/img/gallery/`, and a tracked `.gitkeep` in each division folder keeps the *tree* in the repo (git cannot store an empty directory), so a clone has the folder names but no images.
+⚠️ **The gallery photos are NOT in the repo and must not be added to it.** Iain uploads them to `/httpdocs/img/gallery/` by FTP by hand — **1,003 files across all thirteen divisions** as of 22 Aug 2026 (an `awards` division was added under both competitions that day). ⚠️ **The photos for a new division still have to be FTP'd separately** — adding the folder to the four slug lists makes the tab work, it does not move any files. `.gitignore` excludes every image under `static/img/gallery/`, and a tracked `.gitkeep` in each division folder keeps the *tree* in the repo (git cannot store an empty directory), so a clone has the folder names but no images.
 
 Two things to know if you ever need to change this. Patterns here must start with `static/` — an earlier attempt used `/img/gallery/…`, which anchors to the repo root and matched nothing. And `.gitignore` has no effect on files already tracked: 316 photos had to be removed with `git rm --cached` before the rules did anything.
 
@@ -139,7 +139,17 @@ The grid is **six across** with a 14px gap and a 1px border per cell (`.gallery-
 
 - The walk happens at build time in a Vite plugin in [vite.config.ts](vite.config.ts), reaching [gallery.ts](src/lib/data/gallery.ts) through the `virtual:gallery-manifest` module (typed in [src/virtual-gallery.d.ts](src/virtual-gallery.d.ts)). `import.meta.glob` cannot do this job — it only sees project source, never `static/`.
 - ⚠️ **All `fs` work must stay inside the plugin's `load` hook.** [eslint.config.js](eslint.config.js) imports `vite.config.ts`, so `npm run lint` executes everything at module scope there; a `readdirSync` at the top level turns a missing folder into a lint failure that reads as completely unrelated.
-- The slug lists are written **twice on purpose** — `GALLERY_TREE` in `vite.config.ts` decides which folders are real, `COMPETITIONS` in `gallery.ts` supplies labels and order. Change both together: a division added only to `COMPETITIONS` shows an empty tab forever, one added only to `GALLERY_TREE` has its photos read and then dropped.
+- ⚠️ **The slug lists are written FOUR times on purpose, and adding a division means editing all four.** PHP cannot read the TS and a shared JSON would be one more thing to keep deployed and in step, so each copy is maintained by hand:
+
+  | File | Const | Job |
+  |---|---|---|
+  | [vite.config.ts](vite.config.ts) | `GALLERY_TREE` | which folders the **build** walk accepts |
+  | [gallery.ts](src/lib/data/gallery.ts) | `COMPETITIONS` | tab **labels and order** |
+  | [static/api/gallery.php](static/api/gallery.php) | `GALLERY_TREE` | which folders the **runtime** listing accepts |
+  | [static/api/thumb.php](static/api/thumb.php) | `GALLERY_TREE` | which paths may be **thumbnailed** |
+
+  Each omission fails differently, and none of them fails loudly: missing from `COMPETITIONS` shows an empty tab forever; missing from `vite.config.ts` reads the photos and drops them (a build-log warning is the only trace, and the runtime manifest **masks it in production** — this happened on 22 Aug 2026 when `awards` was added to three of the four); missing from `gallery.php` hides them on the live site; missing from `thumb.php` 404s every tile in that division while the lightbox still works.
+- ⚠️ **A smoke test hardcodes the division counts** ([tests/smoke.spec.ts](tests/smoke.spec.ts), "switches competitions and shows the right divisions"). Adding or removing a division fails it by design — update the counts, do not delete the assertion.
 - Unrecognised folders are skipped with a build-log warning rather than rendered, so `Thumbs.db` and a mistyped `juniour/` cannot invent a division. **A folder typo therefore ships silently as "no photos"** — check the build log.
 - Filenames sort with `Intl.Collator({numeric:true})` in the plugin and `strnatcasecmp` in the PHP — the same order from both. A plain sort puts `IMG_10` before `IMG_2`, which is exactly what a camera dump produces.
 - ⚠️ **Filenames are percent-encoded, folder slugs are not.** `encodeURIComponent()` in the plugin, `rawurlencode()` in the PHP (**not** `urlencode`, which writes `+`). A raw space in an `img src` is not a valid URL and the browser does not fetch it. ⚠️ **The smoke test for this cannot currently fail** — the gallery briefly held 83 files named `jv crew-N.jpg`, they were renamed before upload, and no filename on disk or on the server now contains a space. The encoding is kept because camera dumps routinely produce `DSC 0001.JPG`; the test is kept for the day one lands. Do not read it as proof the encoding works.
